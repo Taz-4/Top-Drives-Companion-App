@@ -307,7 +307,8 @@
                     car_rq: car.rq,
                     car_id: car.id,
                     pack_group_id: packGroupId,
-                    slot_number: idx + 1
+                    slot_number: idx + 1,
+                    weight_tier: Math.ceil((activeSlotsData.length - idx) / (activeSlotsData.length / 5))
                 };
             }).filter(Boolean);
 
