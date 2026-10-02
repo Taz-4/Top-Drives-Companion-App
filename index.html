@@ -26,12 +26,30 @@
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen p-6 font-sans">
     <div class="max-w-6xl mx-auto space-y-6">
+        <!-- Top Header -->
         <div class="flex justify-between items-center">
             <h1 class="text-2xl font-bold text-emerald-400">Top Drives Pack Logger</h1>
-            <span class="bg-emerald-900/50 text-emerald-400 text-xs px-3 py-1 rounded border border-emerald-700">Database Connected</span>
+            <span id="db-status" class="bg-emerald-900/50 text-emerald-400 text-xs px-3 py-1 rounded border border-emerald-700">Database Connected</span>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Tab Navigation Bar -->
+        <div class="border-b border-slate-800">
+            <nav class="flex space-x-2">
+                <button id="tab-btn-logger" onclick="switchTab('logger')" class="px-4 py-2 text-sm font-medium rounded-t-lg bg-slate-800 text-emerald-400 border-b-2 border-emerald-500 cursor-pointer">
+                    Pack Logger
+                </button>
+                <button id="tab-btn-stats" onclick="switchTab('stats')" class="px-4 py-2 text-sm font-medium rounded-t-lg text-slate-400 hover:text-slate-200 cursor-pointer">
+                    Drop Rate Statistics
+                </button>
+                <button id="tab-btn-finder" onclick="switchTab('finder')" class="px-4 py-2 text-sm font-medium rounded-t-lg text-slate-400 hover:text-slate-200 cursor-pointer">
+                    Collection Flavour Finder
+                </button>
+            </nav>
+        </div>
+
+        <!-- TAB 1: PACK LOGGER -->
+        <div id="tab-content-logger" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <!-- Logger Form -->
             <div class="lg:col-span-6 bg-slate-800 p-6 rounded-lg border border-slate-700 space-y-4">
                 <h2 class="text-lg font-bold text-slate-200">Log New Pack Opening</h2>
 
@@ -87,62 +105,59 @@
                 </button>
             </div>
 
-            <div class="lg:col-span-6 space-y-6">
-                <div class="bg-slate-800 p-6 rounded-lg border border-slate-700 space-y-4">
-                    <div class="flex justify-between items-center">
-                        <h2 class="text-lg font-bold text-slate-200">Drop Rate Statistics</h2>
-                        <select id="stats-pack-filter" onchange="calculateDropRates()" class="bg-slate-900 border border-slate-700 text-xs rounded px-2 py-1 text-slate-200">
-                            <option value="Ceramic">Ceramic</option>
-                            <option value="Carbon Fiber">Carbon Fiber</option>
-                            <option value="Aluminium">Aluminium</option>
-                            <option value="Steel">Steel</option>
-                            <option value="Plastic">Plastic</option>
-                            <option value="Bronze">Bronze</option>
-                            <option value="Silver">Silver</option>
-                            <option value="Gold">Gold</option>
-                            <option value="ALL">All Packs</option>
-                        </select>
-                    </div>
-
-                    <div id="stats-container" class="space-y-3">
-                        <div class="text-xs text-slate-500 text-center py-4">Calculating drop rate stats...</div>
-                    </div>
+            <!-- Recent Pulls Table -->
+            <div class="lg:col-span-6 bg-slate-800 p-6 rounded-lg border border-slate-700 space-y-3">
+                <h2 class="text-lg font-bold text-slate-200">Recent Logged Pulls</h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs text-slate-300">
+                        <thead class="bg-slate-900 text-slate-400 uppercase font-mono">
+                            <tr>
+                                <th class="p-2">Date</th>
+                                <th class="p-2">Pack</th>
+                                <th class="p-2">Subtype</th>
+                                <th class="p-2">Car</th>
+                                <th class="p-2">RQ</th>
+                                <th class="p-2">Rarity</th>
+                                <th class="p-2 text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pulls-table-body">
+                            <tr>
+                                <td colspan="7" class="p-4 text-center text-slate-500">Loading records...</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
+            </div>
+        </div>
 
-                <div class="bg-slate-800 p-6 rounded-lg border border-slate-700 space-y-3">
-                    <h2 class="text-lg font-bold text-slate-200">Collection Flavour Finder</h2>
-                    <div class="flex gap-2">
-                        <input type="text" id="flavour-search" placeholder="Type flavour (e.g. GTI Collection)" class="flex-1 bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100">
-                        <button onclick="searchFlavour()" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded text-sm font-medium">Search</button>
-                    </div>
-                    <div id="flavour-results" class="text-xs text-slate-400">
-                        Enter a flavour above to analyse pull counts across pack types.
-                    </div>
-                </div>
+        <!-- TAB 2: DROP RATE STATISTICS -->
+        <div id="tab-content-stats" class="hidden bg-slate-800 p-6 rounded-lg border border-slate-700 space-y-6">
+            <div class="flex justify-between items-center">
+                <h2 class="text-lg font-bold text-slate-200">Drop Rate Statistics</h2>
+                <select id="stats-pack-type" onchange="loadDropRateStats()" class="bg-slate-900 border border-slate-700 text-xs rounded p-2 text-slate-200">
+                    <option value="Ceramic">Ceramic</option>
+                    <option value="Aluminium">Aluminium</option>
+                    <option value="Carbon Fiber">Carbon Fiber</option>
+                    <option value="Steel">Steel</option>
+                    <option value="Plastic">Plastic</option>
+                    <option value="Bronze">Bronze</option>
+                    <option value="Silver">Silver</option>
+                    <option value="Gold">Gold</option>
+                </select>
+            </div>
+            <div id="stats-display-container" class="space-y-4"></div>
+        </div>
 
-                <div class="bg-slate-800 p-6 rounded-lg border border-slate-700 space-y-3">
-                    <h2 class="text-lg font-bold text-slate-200">Recent Logged Pulls</h2>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-xs text-slate-300">
-                            <thead class="bg-slate-900 text-slate-400 uppercase font-mono">
-                                <tr>
-                                    <th class="p-2">Date</th>
-                                    <th class="p-2">Pack</th>
-                                    <th class="p-2">Subtype</th>
-                                    <th class="p-2">Car</th>
-                                    <th class="p-2">RQ</th>
-                                    <th class="p-2">Rarity</th>
-                                    <th class="p-2 text-center">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="pulls-table-body">
-                                <tr>
-                                    <td colspan="7" class="p-4 text-center text-slate-500">Loading records...</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+        <!-- TAB 3: COLLECTION FLAVOUR FINDER -->
+        <div id="tab-content-finder" class="hidden bg-slate-800 p-6 rounded-lg border border-slate-700 space-y-6">
+            <h2 class="text-lg font-bold text-slate-200">Collection Flavour Finder</h2>
+            <div class="flex gap-2">
+                <input type="text" id="flavour-search-input" placeholder="Type flavour (e.g. GTI Collection)" class="flex-1 bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100">
+                <button onclick="searchFlavourPulls()" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded text-sm font-medium">Search</button>
+            </div>
+            <div id="flavour-results-container" class="text-xs text-slate-400">
+                Enter a flavour above to analyse pull counts across pack types.
             </div>
         </div>
     </div>
@@ -156,15 +171,15 @@
 
         let activeSlotsData = [];
 
-        const officialOdds = {
-            "Carbon Fiber": { "Legendary": 2.5, "Epic": 15.0, "Ultra Rare": 82.5 },
-            "Ceramic": { "Legendary": 1.5, "Epic": 5.0, "Ultra Rare": 14.0, "Super Rare": 79.5 },
-            "Aluminium": { "Legendary": 0.25, "Epic": 1.75, "Ultra Rare": 10.0, "Super Rare": 88.0 },
-            "Gold": { "Epic": 0.5, "Ultra Rare": 3.5, "Super Rare": 14.0, "Rare": 82.0 },
-            "Silver": { "Ultra Rare": 0.5, "Super Rare": 4.5, "Rare": 75.0, "Uncommon": 20.0 },
-            "Bronze": { "Super Rare": 1.0, "Rare": 4.0, "Uncommon": 80.0, "Common": 15.0 },
-            "Steel": { "Super Rare": 3.0, "Rare": 15.0, "Uncommon": 82.0 },
-            "Plastic": { "Rare": 2.0, "Uncommon": 18.0, "Common": 80.0 }
+        const OFFICIAL_ODDS = {
+            'Plastic': { 'Rare': 1.50, 'Uncommon': 68.50, 'Common': 30.00 },
+            'Steel': { 'Super Rare': 1.00, 'Rare': 37.50, 'Uncommon': 61.50 },
+            'Bronze': { 'Super Rare': 1.00, 'Rare': 4.00, 'Uncommon': 80.00, 'Common': 15.00 },
+            'Silver': { 'Ultra Rare': 0.50, 'Super Rare': 4.50, 'Rare': 75.00, 'Uncommon': 20.00 },
+            'Gold': { 'Epic': 0.50, 'Ultra Rare': 3.50, 'Super Rare': 14.00, 'Rare': 82.00 },
+            'Aluminium': { 'Ultra Rare': 1.50, 'Super Rare': 18.50, 'Rare': 80.00 },
+            'Ceramic': { 'Legendary': 0.65, 'Epic': 2.50, 'Ultra Rare': 14.00, 'Super Rare': 82.85 },
+            'Carbon Fiber': { 'Legendary': 2.50, 'Epic': 17.75, 'Ultra Rare': 79.75 }
         };
 
         function getRarityClass(rarity) {
@@ -177,6 +192,25 @@
             if (r.includes('uncommon')) return { text: 'rarity-uncommon', badge: 'badge-uncommon' };
             if (r.includes('common')) return { text: 'rarity-common', badge: 'badge-common' };
             return { text: 'text-slate-400', badge: 'bg-slate-800 text-slate-400' };
+        }
+
+        function switchTab(tabName) {
+            const tabs = ['logger', 'stats', 'finder'];
+            tabs.forEach(t => {
+                const content = document.getElementById(`tab-content-${t}`);
+                const btn = document.getElementById(`tab-btn-${t}`);
+                if (t === tabName) {
+                    content.classList.remove('hidden');
+                    btn.className = "px-4 py-2 text-sm font-medium rounded-t-lg bg-slate-800 text-emerald-400 border-b-2 border-emerald-500 cursor-pointer";
+                } else {
+                    content.classList.add('hidden');
+                    btn.className = "px-4 py-2 text-sm font-medium rounded-t-lg text-slate-400 hover:text-slate-200 cursor-pointer";
+                }
+            });
+
+            if (tabName === 'stats') {
+                loadDropRateStats();
+            }
         }
 
         function generateCardSlots() {
@@ -293,78 +327,103 @@
             } else {
                 generateCardSlots();
                 loadPulls();
-                calculateDropRates();
             }
         }
 
-        async function calculateDropRates() {
-            const selectedPack = document.getElementById('stats-pack-filter').value;
-            const container = document.getElementById('stats-container');
+        async function loadDropRateStats() {
+            const packType = document.getElementById('stats-pack-type').value;
+            const statsContainer = document.getElementById('stats-display-container');
 
-            let query = db.from('pulls').select('car_rarity, pack_type, slot_number');
-            if (selectedPack !== 'ALL') {
-                query = query.eq('pack_type', selectedPack);
-            }
+            const { data: pulls, error } = await db
+                .from('pulls')
+                .select('car_rarity, slot_number, pack_group_id')
+                .eq('pack_type', packType);
 
-            const { data, error } = await query;
-
-            if (error) {
-                container.innerHTML = `<div class="text-xs text-red-400">Error loading stats: ${error.message}</div>`;
+            if (error || !pulls || pulls.length === 0) {
+                statsContainer.innerHTML = `<div class="p-4 text-center text-slate-400 text-xs">No logged pulls found for ${packType}.</div>`;
                 return;
             }
 
-            if (!data || data.length === 0) {
-                container.innerHTML = `<div class="text-xs text-slate-500 text-center py-4">No logged pulls for ${selectedPack}.</div>`;
-                return;
-            }
-
-            const total = data.length;
-            const counts = {};
-            data.forEach(p => {
-                const r = p.car_rarity || 'Unknown';
-                counts[r] = (counts[r] || 0) + 1;
+            const packGroups = {};
+            pulls.forEach(p => {
+                const gid = p.pack_group_id || ('single_' + Math.random());
+                if (!packGroups[gid]) packGroups[gid] = [];
+                packGroups[gid].push(p);
             });
 
-            const raritiesOrder = ["Legendary", "Epic", "Ultra Rare", "Super Rare", "Rare", "Uncommon", "Common"];
-            const benchmark = officialOdds[selectedPack] || null;
+            let topSlotPulls = [];
+            Object.values(packGroups).forEach(group => {
+                const maxSlot = Math.max(...group.map(g => g.slot_number || 1));
+                const topCard = group.find(g => (g.slot_number || 1) === maxSlot);
+                if (topCard) topSlotPulls.push(topCard);
+            });
+
+            const totalPacks = topSlotPulls.length;
+            const totalCards = pulls.length;
+
+            const rarityCounts = {
+                'Legendary': 0,
+                'Epic': 0,
+                'Ultra Rare': 0,
+                'Super Rare': 0,
+                'Rare': 0,
+                'Uncommon': 0,
+                'Common': 0
+            };
+
+            topSlotPulls.forEach(p => {
+                if (rarityCounts[p.car_rarity] !== undefined) {
+                    rarityCounts[p.car_rarity]++;
+                }
+            });
+
+            const packOdds = OFFICIAL_ODDS[packType] || {};
 
             let html = `
-                <div class="flex justify-between items-center bg-slate-900 p-2.5 rounded border border-slate-700 text-xs font-mono">
-                    <span class="text-slate-400">Total Cards Logged:</span>
-                    <span class="text-emerald-400 font-bold">${total}</span>
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="bg-slate-900 p-4 rounded border border-slate-700">
+                        <div class="text-xs text-slate-400">Total Packs Opened</div>
+                        <div class="text-2xl font-bold font-mono text-emerald-400">${totalPacks}</div>
+                    </div>
+                    <div class="bg-slate-900 p-4 rounded border border-slate-700">
+                        <div class="text-xs text-slate-400">Total Cards Logged</div>
+                        <div class="text-2xl font-bold font-mono text-slate-100">${totalCards}</div>
+                    </div>
                 </div>
-                <div class="space-y-2">
+
+                <div class="space-y-3">
+                    <div class="text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Top Slot Drop Rates vs Official Odds</div>
             `;
 
-            raritiesOrder.forEach(r => {
-                const count = counts[r] || 0;
-                if (count === 0 && !benchmark?.[r]) return;
+            const rarities = ['Legendary', 'Epic', 'Ultra Rare', 'Super Rare', 'Rare', 'Uncommon', 'Common'];
 
-                const actualPct = ((count / total) * 100).toFixed(1);
-                const expectedPct = benchmark?.[r] ? `${benchmark[r]}%` : 'N/A';
-                const classes = getRarityClass(r);
+            rarities.forEach(rarity => {
+                const count = rarityCounts[rarity];
+                const actualPct = totalPacks > 0 ? ((count / totalPacks) * 100).toFixed(1) : '0.0';
+                const officialPct = packOdds[rarity] !== undefined ? `${packOdds[rarity]}%` : 'N/A';
+                const classes = getRarityClass(rarity);
 
                 html += `
-                    <div class="bg-slate-900 p-2.5 rounded border border-slate-800 space-y-1">
-                        <div class="flex justify-between items-center text-xs">
-                            <span class="font-semibold ${classes.text}">${r}</span>
-                            <span class="font-mono text-slate-200">${count} pulled <span class="text-slate-400">(${actualPct}%)</span></span>
+                    <div class="bg-slate-900 p-3 rounded border border-slate-700 space-y-1">
+                        <div class="flex justify-between items-center">
+                            <span class="font-medium text-xs ${classes.text}">${rarity}</span>
+                            <span class="font-mono text-xs text-slate-200">${count} pulled (${actualPct}%)</span>
                         </div>
-                        <div class="flex justify-between items-center text-[10px] text-slate-500 font-mono">
+                        <div class="flex justify-between items-center text-[11px] text-slate-400 font-mono">
                             <span>Official Top Slot Odds:</span>
-                            <span>${expectedPct}</span>
+                            <span class="text-slate-300">${officialPct}</span>
                         </div>
                     </div>
                 `;
             });
 
             html += `</div>`;
-            container.innerHTML = html;
+            statsContainer.innerHTML = html;
         }
 
-        async function searchFlavour() {
-            const query = document.getElementById('flavour-search').value.trim();
-            const container = document.getElementById('flavour-results');
+        async function searchFlavourPulls() {
+            const query = document.getElementById('flavour-search-input').value.trim();
+            const container = document.getElementById('flavour-results-container');
 
             if (!query) {
                 container.innerHTML = 'Enter a flavour above to analyse pull counts across pack types.';
@@ -423,8 +482,6 @@
                 alert('Error deleting pull: ' + error.message);
             } else {
                 loadPulls();
-                calculateDropRates();
-                searchFlavour();
             }
         }
 
@@ -470,7 +527,6 @@
 
         generateCardSlots();
         loadPulls();
-        calculateDropRates();
     </script>
 </body>
 </html>
