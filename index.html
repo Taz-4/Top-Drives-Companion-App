@@ -4,529 +4,407 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Top Drives Pack Logger</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        .rarity-legendary { color: #fbbf24; }
-        .rarity-epic { color: #c084fc; }
-        .rarity-ultra-rare { color: #f87171; }
-        .rarity-super-rare { color: #fde047; }
-        .rarity-rare { color: #60a5fa; }
-        .rarity-uncommon { color: #4ade80; }
-        .rarity-common { color: #9ca3af; }
+        :root {
+            --bg-dark: #0f172a;
+            --panel-bg: #1e293b;
+            --panel-border: #334155;
+            --accent-green: #10b981;
+            --accent-green-hover: #059669;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --input-bg: #0f172a;
+        }
 
-        .badge-legendary { background-color: rgba(251, 191, 36, 0.15); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.4); }
-        .badge-epic { background-color: rgba(192, 132, 252, 0.15); color: #c084fc; border: 1px solid rgba(192, 132, 252, 0.4); }
-        .badge-ultra-rare { background-color: rgba(248, 113, 113, 0.15); color: #f87171; border: 1px solid rgba(248, 113, 113, 0.4); }
-        .badge-super-rare { background-color: rgba(253, 224, 71, 0.15); color: #fde047; border: 1px solid rgba(253, 224, 71, 0.4); }
-        .badge-rare { background-color: rgba(96, 165, 250, 0.15); color: #60a5fa; border: 1px solid rgba(96, 165, 250, 0.4); }
-        .badge-uncommon { background-color: rgba(74, 222, 128, 0.15); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.4); }
-        .badge-common { background-color: rgba(156, 163, 175, 0.15); color: #9ca3af; border: 1px solid rgba(156, 163, 175, 0.4); }
+        body {
+            margin: 0;
+            padding: 20px;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .title {
+            color: var(--accent-green);
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .nav-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 14px;
+            border-bottom: 2px solid transparent;
+        }
+
+        .nav-btn.active {
+            color: var(--accent-green);
+            border-bottom-color: var(--accent-green);
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .panel {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            background-color: var(--input-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 4px;
+            color: var(--text-main);
+            box-sizing: border-box;
+        }
+
+        .submit-btn {
+            width: 100%;
+            background-color: var(--accent-green);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+
+        .submit-btn:hover {
+            background-color: var(--accent-green-hover);
+        }
+
+        .card-row {
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: var(--input-bg);
+            border-radius: 4px;
+            border: 1px solid var(--panel-border);
+        }
+
+        .stat-card {
+            background-color: var(--input-bg);
+            border: 1px solid var(--panel-border);
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 8px;
+            border-bottom: 1px solid var(--panel-border);
+        }
+
+        th {
+            color: var(--text-muted);
+        }
     </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen p-6 font-sans">
-    <div class="max-w-6xl mx-auto space-y-6">
-        <!-- Top Header -->
-        <div class="flex justify-between items-center">
-            <h1 class="text-2xl font-bold text-emerald-400">Top Drives Pack Logger</h1>
-            <span id="db-status" class="bg-emerald-900/50 text-emerald-400 text-xs px-3 py-1 rounded border border-emerald-700">Database Connected</span>
-        </div>
+<body>
 
-        <!-- Tab Navigation Bar -->
-        <div class="border-b border-slate-800">
-            <nav class="flex space-x-2">
-                <button id="tab-btn-logger" onclick="switchTab('logger')" class="px-4 py-2 text-sm font-medium rounded-t-lg bg-slate-800 text-emerald-400 border-b-2 border-emerald-500 cursor-pointer">
-                    Pack Logger
-                </button>
-                <button id="tab-btn-stats" onclick="switchTab('stats')" class="px-4 py-2 text-sm font-medium rounded-t-lg text-slate-400 hover:text-slate-200 cursor-pointer">
-                    Drop Rate Statistics
-                </button>
-                <button id="tab-btn-finder" onclick="switchTab('finder')" class="px-4 py-2 text-sm font-medium rounded-t-lg text-slate-400 hover:text-slate-200 cursor-pointer">
-                    Collection Flavour Finder
-                </button>
-            </nav>
-        </div>
+    <div class="header">
+        <h1 class="title">Top Drives Pack Logger</h1>
+        <div id="dbStatus" style="color: var(--accent-green); font-size: 12px;">Database Connected</div>
+    </div>
 
-        <!-- TAB 1: PACK LOGGER -->
-        <div id="tab-content-logger" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <!-- Logger Form -->
-            <div class="lg:col-span-6 bg-slate-800 p-6 rounded-lg border border-slate-700 space-y-4">
-                <h2 class="text-lg font-bold text-slate-200">Log New Pack Opening</h2>
+    <div class="nav-tabs">
+        <button class="nav-btn active" onclick="switchTab('logger')">Pack Logger</button>
+        <button class="nav-btn" onclick="switchTab('stats')">Drop Rate Statistics</button>
+    </div>
 
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs text-slate-400 mb-1">Date Pulled</label>
-                        <input type="date" id="date-pulled" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100">
+    <!-- TAB 1: LOGGER -->
+    <div id="loggerTab" class="tab-content active">
+        <div class="grid-container">
+            <div class="panel">
+                <h3>Log New Pack Opening</h3>
+                <form id="packForm">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div class="form-group">
+                            <label>Date Pulled</label>
+                            <input type="date" id="datePulled" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Pack Count (N)</label>
+                            <input type="number" id="packCount" value="1" min="1" required>
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-xs text-slate-400 mb-1">Card Count</label>
-                        <select id="card-count-select" onchange="generateCardSlots()" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100">
-                            <option value="5" selected>5 Cards (Standard Pack)</option>
-                            <option value="10">10 Cards (Double Pack)</option>
-                            <option value="15">15 Cards (Triple Pack)</option>
-                            <option value="1">1 Card (Single Reward)</option>
-                            <option value="3">3 Cards (Small Pack)</option>
-                        </select>
-                    </div>
-                </div>
 
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs text-slate-400 mb-1">Pack Type</label>
-                        <select id="pack-type" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100">
-                            <option value="Ceramic">Ceramic</option>
-                            <option value="Carbon Fiber">Carbon Fiber</option>
-                            <option value="Aluminium">Aluminium</option>
-                            <option value="Steel">Steel</option>
-                            <option value="Plastic">Plastic</option>
-                            <option value="Bronze">Bronze</option>
-                            <option value="Silver">Silver</option>
-                            <option value="Gold">Gold</option>
-                        </select>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div class="form-group">
+                            <label>Pack Type</label>
+                            <select id="packType">
+                                <option value="Ceramic">Ceramic</option>
+                                <option value="Aluminium">Aluminium</option>
+                                <option value="Steel">Steel</option>
+                                <option value="Plastic">Plastic</option>
+                                <option value="Carbon Fiber">Carbon Fiber</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Pack Subtype / Flavour</label>
+                            <input type="text" id="packSubtype" placeholder="e.g. Regular or Cadillac Premium">
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-xs text-slate-400 mb-1">Pack Subtype / Flavour</label>
-                        <input type="text" id="pack-subtype" placeholder="e.g. Regular or GTI Collection" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100">
+
+                    <h4>Cards Revealed (Lowest to Highest RQ)</h4>
+                    <div id="cardsInputsContainer">
+                        <!-- Dynamic Card Inputs Generated Here -->
                     </div>
-                </div>
 
-                <hr class="border-slate-700/60 my-2">
-
-                <div>
-                    <div class="flex justify-between items-center mb-2">
-                        <label class="block text-xs font-semibold text-slate-300">Cards Revealed (Lowest to Highest RQ)</label>
-                        <span class="text-[10px] text-slate-500">Auto advances to next slot</span>
-                    </div>
-                    <div id="slots-container" class="space-y-2 max-h-96 overflow-y-auto pr-1"></div>
-                </div>
-
-                <button onclick="submitPack()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2.5 rounded text-sm transition mt-4">
-                    Submit Entire Pack
-                </button>
+                    <button type="submit" class="submit-btn">Submit Entire Pack</button>
+                </form>
             </div>
 
-            <!-- Recent Pulls Table -->
-            <div class="lg:col-span-6 bg-slate-800 p-6 rounded-lg border border-slate-700 space-y-3">
-                <h2 class="text-lg font-bold text-slate-200">Recent Logged Pulls</h2>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-xs text-slate-300">
-                        <thead class="bg-slate-900 text-slate-400 uppercase font-mono">
-                            <tr>
-                                <th class="p-2">Date</th>
-                                <th class="p-2">Pack</th>
-                                <th class="p-2">Subtype</th>
-                                <th class="p-2">Car</th>
-                                <th class="p-2">RQ</th>
-                                <th class="p-2">Rarity</th>
-                                <th class="p-2 text-center">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="pulls-table-body">
-                            <tr>
-                                <td colspan="7" class="p-4 text-center text-slate-500">Loading records...</td>
-                            </tr>
-                        </tbody>
-                    </table>
+            <div class="panel">
+                <h3>Recent Logged Pulls</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>DATE</th>
+                            <th>PACK</th>
+                            <th>SUBTYPE</th>
+                            <th>CAR</th>
+                            <th>RQ</th>
+                            <th>RARITY</th>
+                            <th>TOP SLOT</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recentPullsTable">
+                        <!-- Dynamic Rows -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 2: DROP RATE STATS -->
+    <div id="statsTab" class="tab-content">
+        <div class="panel">
+            <h3>Drop Rate Statistics (Official Top Slots Only)</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                <div class="stat-card">
+                    <label>Total Packs Opened</label>
+                    <h2 id="statTotalPacks">0</h2>
+                </div>
+                <div class="stat-card">
+                    <label>Total Top Slots Evaluated</label>
+                    <h2 id="statTopSlots">0</h2>
                 </div>
             </div>
-        </div>
 
-        <!-- TAB 2: DROP RATE STATISTICS -->
-        <div id="tab-content-stats" class="hidden bg-slate-800 p-6 rounded-lg border border-slate-700 space-y-6">
-            <div class="flex justify-between items-center">
-                <h2 class="text-lg font-bold text-slate-200">Drop Rate Statistics</h2>
-                <select id="stats-pack-type" onchange="loadDropRateStats()" class="bg-slate-900 border border-slate-700 text-xs rounded p-2 text-slate-200">
-                    <option value="Ceramic">Ceramic</option>
-                    <option value="Aluminium">Aluminium</option>
-                    <option value="Carbon Fiber">Carbon Fiber</option>
-                    <option value="Steel">Steel</option>
-                    <option value="Plastic">Plastic</option>
-                    <option value="Bronze">Bronze</option>
-                    <option value="Silver">Silver</option>
-                    <option value="Gold">Gold</option>
-                </select>
-            </div>
-            <div id="stats-display-container" class="space-y-4"></div>
-        </div>
-
-        <!-- TAB 3: COLLECTION FLAVOUR FINDER -->
-        <div id="tab-content-finder" class="hidden bg-slate-800 p-6 rounded-lg border border-slate-700 space-y-6">
-            <h2 class="text-lg font-bold text-slate-200">Collection Flavour Finder</h2>
-            <div class="flex gap-2">
-                <input type="text" id="flavour-search-input" placeholder="Type flavour (e.g. GTI Collection)" class="flex-1 bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100">
-                <button onclick="searchFlavourPulls()" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded text-sm font-medium">Search</button>
-            </div>
-            <div id="flavour-results-container" class="text-xs text-slate-400">
-                Enter a flavour above to analyse pull counts across pack types.
+            <div id="rarityBreakdown">
+                <!-- Calculated Rarity Statistics -->
             </div>
         </div>
     </div>
 
     <script>
-        const SUPABASE_URL = "https://rsoiigloqrnxxfjnaxwz.supabase.co";
-        const SUPABASE_KEY = "sb_publishable_hwRaYHIp6HAYIUO9HKawSQ_k7eV0pUq";
-        const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // Supabase Client Config (Replace with your actual URL and Key)
+        const SUPABASE_URL = 'https://YOUR_SUPABASE_PROJECT.supabase.co';
+        const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY';
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        document.getElementById('date-pulled').valueAsDate = new Date();
+        // Set Default Date to Today
+        document.getElementById('datePulled').valueAsDate = new Date();
 
-        let activeSlotsData = [];
-
-        const OFFICIAL_ODDS = {
-            'Plastic': { 'Rare': 1.50, 'Uncommon': 68.50, 'Common': 30.00 },
-            'Steel': { 'Super Rare': 1.00, 'Rare': 37.50, 'Uncommon': 61.50 },
-            'Bronze': { 'Super Rare': 1.00, 'Rare': 4.00, 'Uncommon': 80.00, 'Common': 15.00 },
-            'Silver': { 'Ultra Rare': 0.50, 'Super Rare': 4.50, 'Rare': 75.00, 'Uncommon': 20.00 },
-            'Gold': { 'Epic': 0.50, 'Ultra Rare': 3.50, 'Super Rare': 14.00, 'Rare': 82.00 },
-            'Aluminium': { 'Ultra Rare': 1.50, 'Super Rare': 18.50, 'Rare': 80.00 },
-            'Ceramic': { 'Legendary': 0.65, 'Epic': 2.50, 'Ultra Rare': 14.00, 'Super Rare': 82.85 },
-            'Carbon Fiber': { 'Legendary': 2.50, 'Epic': 17.75, 'Ultra Rare': 79.75 }
-        };
-
-        function getRarityClass(rarity) {
-            const r = (rarity || '').toLowerCase();
-            if (r.includes('legendary')) return { text: 'rarity-legendary', badge: 'badge-legendary' };
-            if (r.includes('epic')) return { text: 'rarity-epic', badge: 'badge-epic' };
-            if (r.includes('ultra rare')) return { text: 'rarity-ultra-rare', badge: 'badge-ultra-rare' };
-            if (r.includes('super rare')) return { text: 'rarity-super-rare', badge: 'badge-super-rare' };
-            if (r.includes('rare')) return { text: 'rarity-rare', badge: 'badge-rare' };
-            if (r.includes('uncommon')) return { text: 'rarity-uncommon', badge: 'badge-uncommon' };
-            if (r.includes('common')) return { text: 'rarity-common', badge: 'badge-common' };
-            return { text: 'text-slate-400', badge: 'bg-slate-800 text-slate-400' };
-        }
-
-        function switchTab(tabName) {
-            const tabs = ['logger', 'stats', 'finder'];
-            tabs.forEach(t => {
-                const content = document.getElementById(`tab-content-${t}`);
-                const btn = document.getElementById(`tab-btn-${t}`);
-                if (t === tabName) {
-                    content.classList.remove('hidden');
-                    btn.className = "px-4 py-2 text-sm font-medium rounded-t-lg bg-slate-800 text-emerald-400 border-b-2 border-emerald-500 cursor-pointer";
-                } else {
-                    content.classList.add('hidden');
-                    btn.className = "px-4 py-2 text-sm font-medium rounded-t-lg text-slate-400 hover:text-slate-200 cursor-pointer";
-                }
-            });
-
-            if (tabName === 'stats') {
-                loadDropRateStats();
-            }
-        }
-
-        function generateCardSlots() {
-            const count = parseInt(document.getElementById('card-count-select').value) || 5;
-            const container = document.getElementById('slots-container');
+        // Dynamically Generate Card Input Fields
+        function renderCardInputs(count = 5) {
+            const container = document.getElementById('cardsInputsContainer');
             container.innerHTML = '';
-            activeSlotsData = new Array(count).fill(null);
-
-            for (let i = 0; i < count; i++) {
-                const slotNum = i + 1;
-                const slotDiv = document.createElement('div');
-                slotDiv.className = "relative bg-slate-900 border border-slate-700/80 p-2.5 rounded space-y-1";
-                slotDiv.innerHTML = `
-                    <div class="flex justify-between items-center text-[11px] text-slate-400">
-                        <span class="font-mono font-semibold text-slate-300">Card ${slotNum}</span>
-                        <span id="slot-badge-${i}" class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-800">Pending</span>
-                    </div>
-                    <input type="text" id="slot-input-${i}" oninput="searchCarsForSlot(${i})" placeholder="Search car name..." class="w-full bg-slate-800 border border-slate-700 rounded p-1.5 text-xs text-slate-100 focus:outline-none focus:border-emerald-500">
-                    <div id="slot-suggestions-${i}" class="absolute left-0 right-0 top-14 bg-slate-900 border border-slate-700 rounded shadow-xl max-h-60 overflow-y-auto hidden z-20"></div>
-                `;
-                container.appendChild(slotDiv);
-            }
-        }
-
-        async function searchCarsForSlot(slotIndex) {
-            const query = document.getElementById(`slot-input-${slotIndex}`).value.trim();
-            const suggestions = document.getElementById(`slot-suggestions-${slotIndex}`);
-
-            if (query.length < 2) {
-                suggestions.classList.add('hidden');
-                return;
-            }
-
-            const { data, error } = await db
-                .from('cars')
-                .select('id, name, rarity, rq')
-                .ilike('name', `%${query}%`)
-                .limit(50);
-
-            if (error || !data || data.length === 0) {
-                suggestions.innerHTML = '<div class="p-2 text-xs text-slate-500">No matching cars</div>';
-                suggestions.classList.remove('hidden');
-                return;
-            }
-
-            suggestions.innerHTML = data.map(car => {
-                const classes = getRarityClass(car.rarity);
-                const safeName = car.name.replace(/'/g, "\\'");
-                return `
-                    <div onclick="selectCarForSlot(${slotIndex}, '${car.id}', '${safeName}', '${car.rarity}', ${car.rq})" 
-                         class="p-2 hover:bg-slate-800 cursor-pointer text-xs flex justify-between items-center border-b border-slate-800 last:border-0">
-                        <span class="text-slate-100 font-medium">${car.name}</span>
-                        <span class="font-mono ${classes.text}">RQ ${car.rq} • ${car.rarity}</span>
+            for (let i = 1; i <= count; i++) {
+                container.innerHTML += `
+                    <div class="card-row">
+                        <label>Card ${i}</label>
+                        <input type="text" placeholder="Car Name" class="car-name" required style="margin-bottom: 5px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <input type="number" placeholder="RQ" class="car-rq" required>
+                            <select class="car-rarity">
+                                <option value="Common">Common</option>
+                                <option value="Uncommon">Uncommon</option>
+                                <option value="Rare">Rare</option>
+                                <option value="Super Rare">Super Rare</option>
+                                <option value="Ultra Rare">Ultra Rare</option>
+                                <option value="Epic">Epic</option>
+                                <option value="Legendary">Legendary</option>
+                            </select>
+                        </div>
                     </div>
                 `;
-            }).join('');
-
-            suggestions.classList.remove('hidden');
+            }
         }
+        renderCardInputs(5);
 
-        function selectCarForSlot(slotIndex, id, name, rarity, rq) {
-            activeSlotsData[slotIndex] = { id, name, rarity, rq };
-
-            const input = document.getElementById(`slot-input-${slotIndex}`);
-            input.value = `${name} (RQ ${rq})`;
-
-            const badge = document.getElementById(`slot-badge-${slotIndex}`);
-            const classes = getRarityClass(rarity);
-            badge.textContent = rarity;
-            badge.className = `text-[10px] font-mono px-1.5 py-0.5 rounded font-semibold ${classes.badge}`;
-
-            document.getElementById(`slot-suggestions-${slotIndex}`).classList.add('hidden');
-
-            const nextIndex = slotIndex + 1;
-            const nextInput = document.getElementById(`slot-input-${nextIndex}`);
-            if (nextInput) {
-                nextInput.focus();
+        // Tab Switcher
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+            
+            if (tab === 'logger') {
+                document.getElementById('loggerTab').classList.add('active');
+                event.target.classList.add('active');
+            } else {
+                document.getElementById('statsTab').classList.add('active');
+                event.target.classList.add('active');
+                loadStatistics();
             }
         }
 
-        async function submitPack() {
-            const date = document.getElementById('date-pulled').value;
-            const packType = document.getElementById('pack-type').value;
-            const packSubtype = document.getElementById('pack-subtype').value;
+        // Form Submission Logic with Top Slot Calculation (C - N + 1)
+        document.getElementById('packForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
 
-            const filledSlots = activeSlotsData.filter(item => item !== null);
+            const datePulled = document.getElementById('datePulled').value;
+            const packCount = parseInt(document.getElementById('packCount').value) || 1;
+            const packType = document.getElementById('packType').value;
+            const packSubtype = document.getElementById('packSubtype').value.trim() || 'Regular';
+            const isRegular = packSubtype.toLowerCase() === 'regular';
 
-            if (filledSlots.length === 0) {
-                alert('Please select at least one car before submitting.');
-                return;
-            }
+            const cardNames = Array.from(document.querySelectorAll('.car-name')).map(i => i.value);
+            const cardRqs = Array.from(document.querySelectorAll('.car-rq')).map(i => parseInt(i.value));
+            const cardRarities = Array.from(document.querySelectorAll('.car-rarity')).map(i => i.value);
 
-            const packGroupId = crypto.randomUUID();
+            const totalCards = cardNames.length;
+            const topSlotStartIndex = totalCards - packCount + 1; // Formula: C - N + 1
 
-            const rowsToInsert = activeSlotsData.map((car, idx) => {
-                if (!car) return null;
+            const recordsToInsert = cardNames.map((name, index) => {
+                const slotNumber = index + 1;
+                const isTopSlot = slotNumber >= topSlotStartIndex;
+
                 return {
-                    date: date,
+                    date_pulled: datePulled,
                     pack_type: packType,
                     pack_subtype: packSubtype,
-                    car_name: car.name,
-                    car_rarity: car.rarity,
-                    car_rq: car.rq,
-                    car_id: car.id,
-                    pack_group_id: packGroupId,
-                    slot_number: idx + 1
+                    car_name: name,
+                    rq: cardRqs[index],
+                    rarity: cardRarities[index],
+                    slot_number: slotNumber,
+                    is_top_slot: isTopSlot,
+                    is_regular_pack: isRegular
                 };
-            }).filter(Boolean);
+            });
 
-            const { error } = await db.from('pulls').insert(rowsToInsert);
+            const { data, error } = await supabase.from('pack_pulls').insert(recordsToInsert);
 
             if (error) {
-                alert('Error submitting pack: ' + error.message);
+                alert('Error saving pack: ' + error.message);
             } else {
-                generateCardSlots();
-                loadPulls();
+                alert('Pack logged successfully!');
+                document.getElementById('packForm').reset();
+                document.getElementById('datePulled').valueAsDate = new Date();
+                renderCardInputs(5);
+                loadRecentPulls();
             }
-        }
+        });
 
-        async function loadDropRateStats() {
-            const packType = document.getElementById('stats-pack-type').value;
-            const statsContainer = document.getElementById('stats-display-container');
-
-            const { data: pulls, error } = await db
-                .from('pulls')
-                .select('car_rarity, slot_number, pack_group_id')
-                .eq('pack_type', packType);
-
-            if (error || !pulls || pulls.length === 0) {
-                statsContainer.innerHTML = `<div class="p-4 text-center text-slate-400 text-xs">No logged pulls found for ${packType}.</div>`;
-                return;
-            }
-
-            const packGroups = {};
-            pulls.forEach(p => {
-                const gid = p.pack_group_id || ('single_' + Math.random());
-                if (!packGroups[gid]) packGroups[gid] = [];
-                packGroups[gid].push(p);
-            });
-
-            let topSlotPulls = [];
-            Object.values(packGroups).forEach(group => {
-                const maxSlot = Math.max(...group.map(g => g.slot_number || 1));
-                const topCard = group.find(g => (g.slot_number || 1) === maxSlot);
-                if (topCard) topSlotPulls.push(topCard);
-            });
-
-            const totalPacks = topSlotPulls.length;
-            const totalCards = pulls.length;
-
-            const rarityCounts = {
-                'Legendary': 0,
-                'Epic': 0,
-                'Ultra Rare': 0,
-                'Super Rare': 0,
-                'Rare': 0,
-                'Uncommon': 0,
-                'Common': 0
-            };
-
-            topSlotPulls.forEach(p => {
-                if (rarityCounts[p.car_rarity] !== undefined) {
-                    rarityCounts[p.car_rarity]++;
-                }
-            });
-
-            const packOdds = OFFICIAL_ODDS[packType] || {};
-
-            let html = `
-                <div class="grid grid-cols-2 gap-4 mb-6">
-                    <div class="bg-slate-900 p-4 rounded border border-slate-700">
-                        <div class="text-xs text-slate-400">Total Packs Opened</div>
-                        <div class="text-2xl font-bold font-mono text-emerald-400">${totalPacks}</div>
-                    </div>
-                    <div class="bg-slate-900 p-4 rounded border border-slate-700">
-                        <div class="text-xs text-slate-400">Total Cards Logged</div>
-                        <div class="text-2xl font-bold font-mono text-slate-100">${totalCards}</div>
-                    </div>
-                </div>
-
-                <div class="space-y-3">
-                    <div class="text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Top Slot Drop Rates vs Official Odds</div>
-            `;
-
-            const rarities = ['Legendary', 'Epic', 'Ultra Rare', 'Super Rare', 'Rare', 'Uncommon', 'Common'];
-
-            rarities.forEach(rarity => {
-                const count = rarityCounts[rarity];
-                const actualPct = totalPacks > 0 ? ((count / totalPacks) * 100).toFixed(1) : '0.0';
-                const officialPct = packOdds[rarity] !== undefined ? `${packOdds[rarity]}%` : 'N/A';
-                const classes = getRarityClass(rarity);
-
-                html += `
-                    <div class="bg-slate-900 p-3 rounded border border-slate-700 space-y-1">
-                        <div class="flex justify-between items-center">
-                            <span class="font-medium text-xs ${classes.text}">${rarity}</span>
-                            <span class="font-mono text-xs text-slate-200">${count} pulled (${actualPct}%)</span>
-                        </div>
-                        <div class="flex justify-between items-center text-[11px] text-slate-400 font-mono">
-                            <span>Official Top Slot Odds:</span>
-                            <span class="text-slate-300">${officialPct}</span>
-                        </div>
-                    </div>
-                `;
-            });
-
-            html += `</div>`;
-            statsContainer.innerHTML = html;
-        }
-
-        async function searchFlavourPulls() {
-            const query = document.getElementById('flavour-search-input').value.trim();
-            const container = document.getElementById('flavour-results-container');
-
-            if (!query) {
-                container.innerHTML = 'Enter a flavour above to analyse pull counts across pack types.';
-                return;
-            }
-
-            const { data, error } = await db
-                .from('pulls')
-                .select('pack_type, car_rarity')
-                .ilike('pack_subtype', `%${query}%`);
-
-            if (error) {
-                container.innerHTML = `<span class="text-red-400">Error: ${error.message}</span>`;
-                return;
-            }
-
-            if (!data || data.length === 0) {
-                container.innerHTML = `<span class="text-slate-500">No logged pulls matching "${query}".</span>`;
-                return;
-            }
-
-            const packCounts = {};
-            data.forEach(pull => {
-                const pack = pull.pack_type || 'Unknown';
-                packCounts[pack] = (packCounts[pack] || 0) + 1;
-            });
-
-            let html = `
-                <div class="mt-2 p-3 bg-slate-900 rounded border border-slate-700 space-y-2">
-                    <div class="flex justify-between items-center text-xs font-semibold text-slate-300">
-                        <span>Matching Flavour Logs:</span>
-                        <span class="text-emerald-400 font-mono">${data.length} Total</span>
-                    </div>
-                    <div class="grid grid-cols-2 gap-2">
-            `;
-
-            for (const [pack, count] of Object.entries(packCounts)) {
-                html += `
-                    <div class="flex justify-between bg-slate-800 p-2 rounded border border-slate-700/50">
-                        <span class="text-slate-300">${pack}</span>
-                        <span class="font-mono text-emerald-400 font-bold">${count}</span>
-                    </div>
-                `;
-            }
-
-            html += `</div></div>`;
-            container.innerHTML = html;
-        }
-
-        async function deletePull(id) {
-            if (!confirm('Are you sure you want to delete this logged pull?')) return;
-
-            const { error } = await db.from('pulls').delete().eq('id', id);
-
-            if (error) {
-                alert('Error deleting pull: ' + error.message);
-            } else {
-                loadPulls();
-            }
-        }
-
-        async function loadPulls() {
-            const { data, error } = await db
-                .from('pulls')
+        // Load Recent Logged Pulls
+        async function loadRecentPulls() {
+            const { data, error } = await supabase
+                .from('pack_pulls')
                 .select('*')
-                .order('created_at', { ascending: false })
-                .limit(12);
+                .order('id', { ascending: false })
+                .limit(10);
 
-            const tbody = document.getElementById('pulls-table-body');
+            if (error) return;
 
-            if (error || !data || data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-slate-500">No logged pulls found</td></tr>';
-                return;
-            }
-
-            tbody.innerHTML = data.map(pull => {
-                const classes = getRarityClass(pull.car_rarity);
-                const rqDisplay = pull.car_rq ? pull.car_rq : '-';
-
-                return `
-                    <tr class="border-b border-slate-800">
-                        <td class="p-2">${pull.date || ''}</td>
-                        <td class="p-2">${pull.pack_type || ''}</td>
-                        <td class="p-2 text-slate-400">${pull.pack_subtype || ''}</td>
-                        <td class="p-2 font-medium text-slate-100">${pull.car_name || 'N/A'}</td>
-                        <td class="p-2 font-mono ${classes.text}">${rqDisplay}</td>
-                        <td class="p-2">
-                            <span class="px-2 py-0.5 rounded text-[10px] font-semibold ${classes.badge}">
-                                ${pull.car_rarity || ''}
-                            </span>
-                        </td>
-                        <td class="p-2 text-center">
-                            <button onclick="deletePull(${pull.id})" class="text-slate-500 hover:text-red-400 font-bold px-1 transition" title="Delete Entry">
-                                ✕
-                            </button>
-                        </td>
+            const tbody = document.getElementById('recentPullsTable');
+            tbody.innerHTML = '';
+            data.forEach(pull => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${pull.date_pulled}</td>
+                        <td>${pull.pack_type}</td>
+                        <td>${pull.pack_subtype}</td>
+                        <td>${pull.car_name}</td>
+                        <td>${pull.rq}</td>
+                        <td>${pull.rarity}</td>
+                        <td>${pull.is_top_slot ? 'YES' : 'NO'}</td>
                     </tr>
                 `;
-            }).join('');
+            });
         }
 
-        generateCardSlots();
-        loadPulls();
+        // Load Drop Rate Statistics Filtered by Top Slots & Regular Packs
+        async function loadStatistics() {
+            const { data, error } = await supabase
+                .from('pack_pulls')
+                .select('*')
+                .eq('is_top_slot', true)
+                .eq('is_regular_pack', true);
+
+            if (error) return;
+
+            const totalTopSlots = data.length;
+            document.getElementById('statTopSlots').innerText = totalTopSlots;
+
+            const rarities = ['Legendary', 'Epic', 'Ultra Rare', 'Super Rare', 'Rare', 'Uncommon', 'Common'];
+            const container = document.getElementById('rarityBreakdown');
+            container.innerHTML = '';
+
+            rarities.forEach(rarity => {
+                const count = data.filter(p => p.rarity === rarity).length;
+                const percentage = totalTopSlots > 0 ? ((count / totalTopSlots) * 100).toFixed(1) : '0.0';
+
+                container.innerHTML += `
+                    <div class="stat-card" style="display: flex; justify-content: space-between; align-items: center;">
+                        <span>${rarity}</span>
+                        <span><strong>${count} pulled</strong> (${percentage}%)</span>
+                    </div>
+                `;
+            });
+        }
+
+        // Initial Load
+        loadRecentPulls();
     </script>
 </body>
 </html>
