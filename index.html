@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Top Drives Pack Logger</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        .rarity-legendary { color: #fbbf24; }
+        .rarity-epic { color: #c084fc; }
+        .rarity-ultra-rare { color: #f87171; }
+        .rarity-super-rare { color: #fde047; }
+        .rarity-rare { color: #60a5fa; }
+        .rarity-uncommon { color: #4ade80; }
+        .rarity-common { color: #9ca3af; }
+
+        .badge-legendary { background-color: rgba(251, 191, 36, 0.15); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.4); }
+        .badge-epic { background-color: rgba(192, 132, 252, 0.15); color: #c084fc; border: 1px solid rgba(192, 132, 252, 0.4); }
+        .badge-ultra-rare { background-color: rgba(248, 113, 113, 0.15); color: #f87171; border: 1px solid rgba(248, 113, 113, 0.4); }
+        .badge-super-rare { background-color: rgba(253, 224, 71, 0.15); color: #fde047; border: 1px solid rgba(253, 224, 71, 0.4); }
+        .badge-rare { background-color: rgba(96, 165, 250, 0.15); color: #60a5fa; border: 1px solid rgba(96, 165, 250, 0.4); }
+        .badge-uncommon { background-color: rgba(74, 222, 128, 0.15); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.4); }
+        .badge-common { background-color: rgba(156, 163, 175, 0.15); color: #9ca3af; border: 1px solid rgba(156, 163, 175, 0.4); }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen p-8 font-sans">
+    <div class="max-w-6xl mx-auto space-y-6">
+        <div class="flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-emerald-400">Top Drives Pack Logger</h1>
+            <span class="bg-emerald-900/50 text-emerald-400 text-xs px-3 py-1 rounded border border-emerald-700">Database Connected</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-slate-800 p-6 rounded-lg border border-slate-700 space-y-4">
+                <h2 class="text-lg font-bold text-slate-200">Log New Pack Pull</h2>
+
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">Date Pulled</label>
+                    <input type="date" id="date-pulled" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100">
+                </div>
+
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">Pack Type</label>
+                    <select id="pack-type" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100">
+                        <option value="Plastic">Plastic</option>
+                        <option value="Steel">Steel</option>
+                        <option value="Bronze">Bronze</option>
+                        <option value="Silver">Silver</option>
+                        <option value="Gold">Gold</option>
+                        <option value="Aluminium">Aluminium</option>
+                        <option value="Carbon Fiber">Carbon Fiber</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">Pack Sub Type / Flavour</label>
+                    <input type="text" id="pack-subtype" placeholder="e.g. Regular or GTI Collection" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100">
+                </div>
+
+                <div class="relative">
+                    <label class="block text-xs text-slate-400 mb-1">Car Name</label>
+                    <input type="text" id="car-search" oninput="searchCars()" placeholder="Type car name to search database..." class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100">
+                    <div id="suggestions" class="absolute left-0 right-0 mt-1 bg-slate-900 border border-slate-700 rounded shadow-lg max-h-48 overflow-y-auto hidden z-10"></div>
+                </div>
+
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">Car Rarity & RQ</label>
+                    <input type="text" id="car-rarity" readonly placeholder="Populates automatically when car is selected" class="w-full bg-slate-900/60 border border-slate-700 rounded p-2 text-sm font-semibold transition">
+                </div>
+
+                <button onclick="submitPull()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2.5 rounded text-sm transition">
+                    Submit Pull
+                </button>
+            </div>
+
+            <div class="space-y-6">
+                <div class="bg-slate-800 p-6 rounded-lg border border-slate-700 space-y-3">
+                    <h2 class="text-lg font-bold text-slate-200">Collection Flavour Finder</h2>
+                    <div class="flex gap-2">
+                        <input type="text" id="flavour-search" placeholder="Type flavour (e.g. GTI Collection)" class="flex-1 bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100">
+                        <button onclick="searchFlavour()" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded text-sm font-medium">Search</button>
+                    </div>
+                    <div id="flavour-results" class="text-xs text-slate-400">
+                        Enter a flavour above to analyse pull counts across pack types.
+                    </div>
+                </div>
+
+                <div class="bg-slate-800 p-6 rounded-lg border border-slate-700 space-y-3">
+                    <h2 class="text-lg font-bold text-slate-200">Recent Logged Pulls</h2>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs text-slate-300">
+                            <thead class="bg-slate-900 text-slate-400 uppercase font-mono">
+                                <tr>
+                                    <th class="p-2">Date</th>
+                                    <th class="p-2">Pack</th>
+                                    <th class="p-2">Sub Type</th>
+                                    <th class="p-2">Car</th>
+                                    <th class="p-2">RQ</th>
+                                    <th class="p-2">Rarity</th>
+                                    <th class="p-2 text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pulls-table-body">
+                                <tr>
+                                    <td colspan="7" class="p-4 text-center text-slate-500">Loading records...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = "https://rsoiigloqrnxxfjnaxwz.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_hwRaYHIp6HAYIUO9HKawSQ_k7eV0pUq";
+        const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        document.getElementById('date-pulled').valueAsDate = new Date();
+
+        let selectedCarId = null;
+        let selectedCarRq = null;
+
+        function getRarityClass(rarity) {
+            const r = (rarity || '').toLowerCase();
+            if (r.includes('legendary')) return { text: 'rarity-legendary', badge: 'badge-legendary' };
+            if (r.includes('epic')) return { text: 'rarity-epic', badge: 'badge-epic' };
+            if (r.includes('ultra rare')) return { text: 'rarity-ultra-rare', badge: 'badge-ultra-rare' };
+            if (r.includes('super rare')) return { text: 'rarity-super-rare', badge: 'badge-super-rare' };
+            if (r.includes('rare')) return { text: 'rarity-rare', badge: 'badge-rare' };
+            if (r.includes('uncommon')) return { text: 'rarity-uncommon', badge: 'badge-uncommon' };
+            if (r.includes('common')) return { text: 'rarity-common', badge: 'badge-common' };
+            return { text: 'text-slate-400', badge: 'bg-slate-800 text-slate-400' };
+        }
+
+        async function searchCars() {
+            const query = document.getElementById('car-search').value.trim();
+            const suggestions = document.getElementById('suggestions');
+
+            if (query.length < 2) {
+                suggestions.classList.add('hidden');
+                return;
+            }
+
+            const { data, error } = await db
+                .from('cars')
+                .select('id, name, rarity, rq')
+                .ilike('name', `%${query}%`)
+                .limit(8);
+
+            if (error || !data || data.length === 0) {
+                suggestions.innerHTML = '<div class="p-2 text-xs text-slate-500">No matching cars found</div>';
+                suggestions.classList.remove('hidden');
+                return;
+            }
+
+            suggestions.innerHTML = data.map(car => {
+                const classes = getRarityClass(car.rarity);
+                const safeName = car.name.replace(/'/g, "\\'");
+                return `
+                    <div onclick="selectCar('${car.id}', '${safeName}', '${car.rarity}', ${car.rq})" 
+                         class="p-2 hover:bg-slate-800 cursor-pointer text-xs flex justify-between items-center border-b border-slate-800 last:border-0">
+                        <span class="text-slate-100 font-medium">${car.name}</span>
+                        <span class="font-mono ${classes.text}">RQ ${car.rq} • ${car.rarity}</span>
+                    </div>
+                `;
+            }).join('');
+
+            suggestions.classList.remove('hidden');
+        }
+
+        function selectCar(id, name, rarity, rq) {
+            selectedCarId = id;
+            selectedCarRq = rq;
+            document.getElementById('car-search').value = name;
+            
+            const rarityInput = document.getElementById('car-rarity');
+            rarityInput.value = `${rarity} (RQ ${rq})`;
+            
+            const classes = getRarityClass(rarity);
+            rarityInput.className = `w-full border border-slate-700 rounded p-2 text-sm font-semibold ${classes.badge}`;
+            
+            document.getElementById('suggestions').classList.add('hidden');
+        }
+
+        async function submitPull() {
+            const date = document.getElementById('date-pulled').value;
+            const packType = document.getElementById('pack-type').value;
+            const packSubtype = document.getElementById('pack-subtype').value;
+            const carName = document.getElementById('car-search').value;
+            const rawRarityText = document.getElementById('car-rarity').value;
+
+            if (!carName) {
+                alert('Please select a car before submitting.');
+                return;
+            }
+
+            const cleanRarity = rawRarityText.split(' (RQ')[0];
+
+            const { error } = await db.from('pulls').insert([{
+                date: date,
+                pack_type: packType,
+                pack_subtype: packSubtype,
+                car_name: carName,
+                car_rarity: cleanRarity,
+                car_rq: selectedCarRq,
+                car_id: selectedCarId
+            }]);
+
+            if (error) {
+                alert('Error submitting pull: ' + error.message);
+            } else {
+                document.getElementById('car-search').value = '';
+                const rarityInput = document.getElementById('car-rarity');
+                rarityInput.value = '';
+                rarityInput.className = 'w-full bg-slate-900/60 border border-slate-700 rounded p-2 text-sm font-semibold';
+                selectedCarId = null;
+                selectedCarRq = null;
+                loadPulls();
+            }
+        }
+
+        async function searchFlavour() {
+            const query = document.getElementById('flavour-search').value.trim();
+            const container = document.getElementById('flavour-results');
+
+            if (!query) {
+                container.innerHTML = 'Enter a flavour above to analyse pull counts across pack types.';
+                return;
+            }
+
+            const { data, error } = await db
+                .from('pulls')
+                .select('pack_type, car_rarity')
+                .ilike('pack_subtype', `%${query}%`);
+
+            if (error) {
+                container.innerHTML = `<span class="text-red-400">Error: ${error.message}</span>`;
+                return;
+            }
+
+            if (!data || data.length === 0) {
+                container.innerHTML = `<span class="text-slate-500">No logged pulls matching "${query}".</span>`;
+                return;
+            }
+
+            const packCounts = {};
+            data.forEach(pull => {
+                const pack = pull.pack_type || 'Unknown';
+                packCounts[pack] = (packCounts[pack] || 0) + 1;
+            });
+
+            let html = `
+                <div class="mt-2 p-3 bg-slate-900 rounded border border-slate-700 space-y-2">
+                    <div class="flex justify-between items-center text-xs font-semibold text-slate-300">
+                        <span>Matching Flavour Logs:</span>
+                        <span class="text-emerald-400 font-mono">${data.length} Total</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+            `;
+
+            for (const [pack, count] of Object.entries(packCounts)) {
+                html += `
+                    <div class="flex justify-between bg-slate-800 p-2 rounded border border-slate-700/50">
+                        <span class="text-slate-300">${pack}</span>
+                        <span class="font-mono text-emerald-400 font-bold">${count}</span>
+                    </div>
+                `;
+            }
+
+            html += `</div></div>`;
+            container.innerHTML = html;
+        }
+
+        async function deletePull(id) {
+            if (!confirm('Are you sure you want to delete this logged pull?')) return;
+
+            const { error } = await db.from('pulls').delete().eq('id', id);
+
+            if (error) {
+                alert('Error deleting pull: ' + error.message);
+            } else {
+                loadPulls();
+                searchFlavour();
+            }
+        }
+
+        async function loadPulls() {
+            const { data, error } = await db
+                .from('pulls')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(10);
+
+            const tbody = document.getElementById('pulls-table-body');
+
+            if (error || !data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-slate-500">No logged pulls found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = data.map(pull => {
+                const classes = getRarityClass(pull.car_rarity);
+                const rqDisplay = pull.car_rq ? pull.car_rq : '-';
+
+                return `
+                    <tr class="border-b border-slate-800">
+                        <td class="p-2">${pull.date || ''}</td>
+                        <td class="p-2">${pull.pack_type || ''}</td>
+                        <td class="p-2 text-slate-400">${pull.pack_subtype || ''}</td>
+                        <td class="p-2 font-medium text-slate-100">${pull.car_name || 'N/A'}</td>
+                        <td class="p-2 font-mono ${classes.text}">${rqDisplay}</td>
+                        <td class="p-2">
+                            <span class="px-2 py-0.5 rounded text-[10px] font-semibold ${classes.badge}">
+                                ${pull.car_rarity || ''}
+                            </span>
+                        </td>
+                        <td class="p-2 text-center">
+                            <button onclick="deletePull(${pull.id})" class="text-slate-500 hover:text-red-400 font-bold px-1 transition" title="Delete Entry">
+                                ✕
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        loadPulls();
+    </script>
+</body>
+</html>
