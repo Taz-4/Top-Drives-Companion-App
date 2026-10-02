@@ -24,57 +24,91 @@
         .badge-common { background-color: rgba(156, 163, 175, 0.15); color: #9ca3af; border: 1px solid rgba(156, 163, 175, 0.4); }
     </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen p-8 font-sans">
+<body class="bg-slate-900 text-slate-100 min-h-screen p-6 font-sans">
     <div class="max-w-6xl mx-auto space-y-6">
         <div class="flex justify-between items-center">
             <h1 class="text-2xl font-bold text-emerald-400">Top Drives Pack Logger</h1>
             <span class="bg-emerald-900/50 text-emerald-400 text-xs px-3 py-1 rounded border border-emerald-700">Database Connected</span>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="bg-slate-800 p-6 rounded-lg border border-slate-700 space-y-4">
-                <h2 class="text-lg font-bold text-slate-200">Log New Pack Pull</h2>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-6 bg-slate-800 p-6 rounded-lg border border-slate-700 space-y-4">
+                <h2 class="text-lg font-bold text-slate-200">Log New Pack Opening</h2>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Date Pulled</label>
+                        <input type="date" id="date-pulled" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Card Count</label>
+                        <select id="card-count-select" onchange="generateCardSlots()" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100">
+                            <option value="5" selected>5 Cards (Standard Pack)</option>
+                            <option value="10">10 Cards (Double Pack)</option>
+                            <option value="15">15 Cards (Triple Pack)</option>
+                            <option value="1">1 Card (Single Reward)</option>
+                            <option value="3">3 Cards (Small Pack)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Pack Type</label>
+                        <select id="pack-type" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100">
+                            <option value="Ceramic">Ceramic</option>
+                            <option value="Carbon Fiber">Carbon Fiber</option>
+                            <option value="Aluminium">Aluminium</option>
+                            <option value="Steel">Steel</option>
+                            <option value="Plastic">Plastic</option>
+                            <option value="Bronze">Bronze</option>
+                            <option value="Silver">Silver</option>
+                            <option value="Gold">Gold</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Pack Subtype / Flavour</label>
+                        <input type="text" id="pack-subtype" placeholder="e.g. Regular or GTI Collection" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100">
+                    </div>
+                </div>
+
+                <hr class="border-slate-700/60 my-2">
 
                 <div>
-                    <label class="block text-xs text-slate-400 mb-1">Date Pulled</label>
-                    <input type="date" id="date-pulled" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="block text-xs font-semibold text-slate-300">Cards Revealed (Lowest to Highest RQ)</label>
+                        <span class="text-[10px] text-slate-500">Auto advances to next slot</span>
+                    </div>
+                    <div id="slots-container" class="space-y-2 max-h-96 overflow-y-auto pr-1"></div>
                 </div>
 
-                <div>
-                    <label class="block text-xs text-slate-400 mb-1">Pack Type</label>
-                    <select id="pack-type" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100">
-                        <option value="Plastic">Plastic</option>
-                        <option value="Steel">Steel</option>
-                        <option value="Bronze">Bronze</option>
-                        <option value="Silver">Silver</option>
-                        <option value="Gold">Gold</option>
-                        <option value="Aluminium">Aluminium</option>
-                        <option value="Carbon Fiber">Carbon Fiber</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block text-xs text-slate-400 mb-1">Pack Sub Type / Flavour</label>
-                    <input type="text" id="pack-subtype" placeholder="e.g. Regular or GTI Collection" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100">
-                </div>
-
-                <div class="relative">
-                    <label class="block text-xs text-slate-400 mb-1">Car Name</label>
-                    <input type="text" id="car-search" oninput="searchCars()" placeholder="Type car name to search database..." class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100">
-                    <div id="suggestions" class="absolute left-0 right-0 mt-1 bg-slate-900 border border-slate-700 rounded shadow-lg max-h-48 overflow-y-auto hidden z-10"></div>
-                </div>
-
-                <div>
-                    <label class="block text-xs text-slate-400 mb-1">Car Rarity & RQ</label>
-                    <input type="text" id="car-rarity" readonly placeholder="Populates automatically when car is selected" class="w-full bg-slate-900/60 border border-slate-700 rounded p-2 text-sm font-semibold transition">
-                </div>
-
-                <button onclick="submitPull()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2.5 rounded text-sm transition">
-                    Submit Pull
+                <button onclick="submitPack()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2.5 rounded text-sm transition mt-4">
+                    Submit Entire Pack
                 </button>
             </div>
 
-            <div class="space-y-6">
+            <div class="lg:col-span-6 space-y-6">
+                <div class="bg-slate-800 p-6 rounded-lg border border-slate-700 space-y-4">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-lg font-bold text-slate-200">Drop Rate Statistics</h2>
+                        <select id="stats-pack-filter" onchange="calculateDropRates()" class="bg-slate-900 border border-slate-700 text-xs rounded px-2 py-1 text-slate-200">
+                            <option value="Ceramic">Ceramic</option>
+                            <option value="Carbon Fiber">Carbon Fiber</option>
+                            <option value="Aluminium">Aluminium</option>
+                            <option value="Steel">Steel</option>
+                            <option value="Plastic">Plastic</option>
+                            <option value="Bronze">Bronze</option>
+                            <option value="Silver">Silver</option>
+                            <option value="Gold">Gold</option>
+                            <option value="ALL">All Packs</option>
+                        </select>
+                    </div>
+
+                    <div id="stats-container" class="space-y-3">
+                        <div class="text-xs text-slate-500 text-center py-4">Calculating drop rate stats...</div>
+                    </div>
+                </div>
+
                 <div class="bg-slate-800 p-6 rounded-lg border border-slate-700 space-y-3">
                     <h2 class="text-lg font-bold text-slate-200">Collection Flavour Finder</h2>
                     <div class="flex gap-2">
@@ -94,7 +128,7 @@
                                 <tr>
                                     <th class="p-2">Date</th>
                                     <th class="p-2">Pack</th>
-                                    <th class="p-2">Sub Type</th>
+                                    <th class="p-2">Subtype</th>
                                     <th class="p-2">Car</th>
                                     <th class="p-2">RQ</th>
                                     <th class="p-2">Rarity</th>
@@ -120,8 +154,18 @@
 
         document.getElementById('date-pulled').valueAsDate = new Date();
 
-        let selectedCarId = null;
-        let selectedCarRq = null;
+        let activeSlotsData = [];
+
+        const officialOdds = {
+            "Carbon Fiber": { "Legendary": 2.5, "Epic": 15.0, "Ultra Rare": 82.5 },
+            "Ceramic": { "Legendary": 1.5, "Epic": 5.0, "Ultra Rare": 14.0, "Super Rare": 79.5 },
+            "Aluminium": { "Legendary": 0.25, "Epic": 1.75, "Ultra Rare": 10.0, "Super Rare": 88.0 },
+            "Gold": { "Epic": 0.5, "Ultra Rare": 3.5, "Super Rare": 14.0, "Rare": 82.0 },
+            "Silver": { "Ultra Rare": 0.5, "Super Rare": 4.5, "Rare": 75.0, "Uncommon": 20.0 },
+            "Bronze": { "Super Rare": 1.0, "Rare": 4.0, "Uncommon": 80.0, "Common": 15.0 },
+            "Steel": { "Super Rare": 3.0, "Rare": 15.0, "Uncommon": 82.0 },
+            "Plastic": { "Rare": 2.0, "Uncommon": 18.0, "Common": 80.0 }
+        };
 
         function getRarityClass(rarity) {
             const r = (rarity || '').toLowerCase();
@@ -135,9 +179,31 @@
             return { text: 'text-slate-400', badge: 'bg-slate-800 text-slate-400' };
         }
 
-        async function searchCars() {
-            const query = document.getElementById('car-search').value.trim();
-            const suggestions = document.getElementById('suggestions');
+        function generateCardSlots() {
+            const count = parseInt(document.getElementById('card-count-select').value) || 5;
+            const container = document.getElementById('slots-container');
+            container.innerHTML = '';
+            activeSlotsData = new Array(count).fill(null);
+
+            for (let i = 0; i < count; i++) {
+                const slotNum = i + 1;
+                const slotDiv = document.createElement('div');
+                slotDiv.className = "relative bg-slate-900 border border-slate-700/80 p-2.5 rounded space-y-1";
+                slotDiv.innerHTML = `
+                    <div class="flex justify-between items-center text-[11px] text-slate-400">
+                        <span class="font-mono font-semibold text-slate-300">Card ${slotNum}</span>
+                        <span id="slot-badge-${i}" class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-800">Pending</span>
+                    </div>
+                    <input type="text" id="slot-input-${i}" oninput="searchCarsForSlot(${i})" placeholder="Search car name..." class="w-full bg-slate-800 border border-slate-700 rounded p-1.5 text-xs text-slate-100 focus:outline-none focus:border-emerald-500">
+                    <div id="slot-suggestions-${i}" class="absolute left-0 right-0 top-14 bg-slate-900 border border-slate-700 rounded shadow-xl max-h-40 overflow-y-auto hidden z-20"></div>
+                `;
+                container.appendChild(slotDiv);
+            }
+        }
+
+        async function searchCarsForSlot(slotIndex) {
+            const query = document.getElementById(`slot-input-${slotIndex}`).value.trim();
+            const suggestions = document.getElementById(`slot-suggestions-${slotIndex}`);
 
             if (query.length < 2) {
                 suggestions.classList.add('hidden');
@@ -148,10 +214,10 @@
                 .from('cars')
                 .select('id, name, rarity, rq')
                 .ilike('name', `%${query}%`)
-                .limit(8);
+                .limit(6);
 
             if (error || !data || data.length === 0) {
-                suggestions.innerHTML = '<div class="p-2 text-xs text-slate-500">No matching cars found</div>';
+                suggestions.innerHTML = '<div class="p-2 text-xs text-slate-500">No matching cars</div>';
                 suggestions.classList.remove('hidden');
                 return;
             }
@@ -160,7 +226,7 @@
                 const classes = getRarityClass(car.rarity);
                 const safeName = car.name.replace(/'/g, "\\'");
                 return `
-                    <div onclick="selectCar('${car.id}', '${safeName}', '${car.rarity}', ${car.rq})" 
+                    <div onclick="selectCarForSlot(${slotIndex}, '${car.id}', '${safeName}', '${car.rarity}', ${car.rq})" 
                          class="p-2 hover:bg-slate-800 cursor-pointer text-xs flex justify-between items-center border-b border-slate-800 last:border-0">
                         <span class="text-slate-100 font-medium">${car.name}</span>
                         <span class="font-mono ${classes.text}">RQ ${car.rq} • ${car.rarity}</span>
@@ -171,55 +237,129 @@
             suggestions.classList.remove('hidden');
         }
 
-        function selectCar(id, name, rarity, rq) {
-            selectedCarId = id;
-            selectedCarRq = rq;
-            document.getElementById('car-search').value = name;
-            
-            const rarityInput = document.getElementById('car-rarity');
-            rarityInput.value = `${rarity} (RQ ${rq})`;
-            
+        function selectCarForSlot(slotIndex, id, name, rarity, rq) {
+            activeSlotsData[slotIndex] = { id, name, rarity, rq };
+
+            const input = document.getElementById(`slot-input-${slotIndex}`);
+            input.value = `${name} (RQ ${rq})`;
+
+            const badge = document.getElementById(`slot-badge-${slotIndex}`);
             const classes = getRarityClass(rarity);
-            rarityInput.className = `w-full border border-slate-700 rounded p-2 text-sm font-semibold ${classes.badge}`;
-            
-            document.getElementById('suggestions').classList.add('hidden');
+            badge.textContent = rarity;
+            badge.className = `text-[10px] font-mono px-1.5 py-0.5 rounded font-semibold ${classes.badge}`;
+
+            document.getElementById(`slot-suggestions-${slotIndex}`).classList.add('hidden');
+
+            const nextIndex = slotIndex + 1;
+            const nextInput = document.getElementById(`slot-input-${nextIndex}`);
+            if (nextInput) {
+                nextInput.focus();
+            }
         }
 
-        async function submitPull() {
+        async function submitPack() {
             const date = document.getElementById('date-pulled').value;
             const packType = document.getElementById('pack-type').value;
             const packSubtype = document.getElementById('pack-subtype').value;
-            const carName = document.getElementById('car-search').value;
-            const rawRarityText = document.getElementById('car-rarity').value;
 
-            if (!carName) {
-                alert('Please select a car before submitting.');
+            const filledSlots = activeSlotsData.filter(item => item !== null);
+
+            if (filledSlots.length === 0) {
+                alert('Please select at least one car before submitting.');
                 return;
             }
 
-            const cleanRarity = rawRarityText.split(' (RQ')[0];
+            const packGroupId = crypto.randomUUID();
 
-            const { error } = await db.from('pulls').insert([{
-                date: date,
-                pack_type: packType,
-                pack_subtype: packSubtype,
-                car_name: carName,
-                car_rarity: cleanRarity,
-                car_rq: selectedCarRq,
-                car_id: selectedCarId
-            }]);
+            const rowsToInsert = activeSlotsData.map((car, idx) => {
+                if (!car) return null;
+                return {
+                    date: date,
+                    pack_type: packType,
+                    pack_subtype: packSubtype,
+                    car_name: car.name,
+                    car_rarity: car.rarity,
+                    car_rq: car.rq,
+                    car_id: car.id,
+                    pack_group_id: packGroupId,
+                    slot_number: idx + 1
+                };
+            }).filter(Boolean);
+
+            const { error } = await db.from('pulls').insert(rowsToInsert);
 
             if (error) {
-                alert('Error submitting pull: ' + error.message);
+                alert('Error submitting pack: ' + error.message);
             } else {
-                document.getElementById('car-search').value = '';
-                const rarityInput = document.getElementById('car-rarity');
-                rarityInput.value = '';
-                rarityInput.className = 'w-full bg-slate-900/60 border border-slate-700 rounded p-2 text-sm font-semibold';
-                selectedCarId = null;
-                selectedCarRq = null;
+                generateCardSlots();
                 loadPulls();
+                calculateDropRates();
             }
+        }
+
+        async function calculateDropRates() {
+            const selectedPack = document.getElementById('stats-pack-filter').value;
+            const container = document.getElementById('stats-container');
+
+            let query = db.from('pulls').select('car_rarity, pack_type, slot_number');
+            if (selectedPack !== 'ALL') {
+                query = query.eq('pack_type', selectedPack);
+            }
+
+            const { data, error } = await query;
+
+            if (error) {
+                container.innerHTML = `<div class="text-xs text-red-400">Error loading stats: ${error.message}</div>`;
+                return;
+            }
+
+            if (!data || data.length === 0) {
+                container.innerHTML = `<div class="text-xs text-slate-500 text-center py-4">No logged pulls for ${selectedPack}.</div>`;
+                return;
+            }
+
+            const total = data.length;
+            const counts = {};
+            data.forEach(p => {
+                const r = p.car_rarity || 'Unknown';
+                counts[r] = (counts[r] || 0) + 1;
+            });
+
+            const raritiesOrder = ["Legendary", "Epic", "Ultra Rare", "Super Rare", "Rare", "Uncommon", "Common"];
+            const benchmark = officialOdds[selectedPack] || null;
+
+            let html = `
+                <div class="flex justify-between items-center bg-slate-900 p-2.5 rounded border border-slate-700 text-xs font-mono">
+                    <span class="text-slate-400">Total Cards Logged:</span>
+                    <span class="text-emerald-400 font-bold">${total}</span>
+                </div>
+                <div class="space-y-2">
+            `;
+
+            raritiesOrder.forEach(r => {
+                const count = counts[r] || 0;
+                if (count === 0 && !benchmark?.[r]) return;
+
+                const actualPct = ((count / total) * 100).toFixed(1);
+                const expectedPct = benchmark?.[r] ? `${benchmark[r]}%` : 'N/A';
+                const classes = getRarityClass(r);
+
+                html += `
+                    <div class="bg-slate-900 p-2.5 rounded border border-slate-800 space-y-1">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="font-semibold ${classes.text}">${r}</span>
+                            <span class="font-mono text-slate-200">${count} pulled <span class="text-slate-400">(${actualPct}%)</span></span>
+                        </div>
+                        <div class="flex justify-between items-center text-[10px] text-slate-500 font-mono">
+                            <span>Official Top Slot Odds:</span>
+                            <span>${expectedPct}</span>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `</div>`;
+            container.innerHTML = html;
         }
 
         async function searchFlavour() {
@@ -283,6 +423,7 @@
                 alert('Error deleting pull: ' + error.message);
             } else {
                 loadPulls();
+                calculateDropRates();
                 searchFlavour();
             }
         }
@@ -292,7 +433,7 @@
                 .from('pulls')
                 .select('*')
                 .order('created_at', { ascending: false })
-                .limit(10);
+                .limit(12);
 
             const tbody = document.getElementById('pulls-table-body');
 
@@ -327,7 +468,9 @@
             }).join('');
         }
 
+        generateCardSlots();
         loadPulls();
+        calculateDropRates();
     </script>
 </body>
 </html>
