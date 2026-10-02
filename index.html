@@ -195,7 +195,7 @@
                         <span id="slot-badge-${i}" class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-800">Pending</span>
                     </div>
                     <input type="text" id="slot-input-${i}" oninput="searchCarsForSlot(${i})" placeholder="Search car name..." class="w-full bg-slate-800 border border-slate-700 rounded p-1.5 text-xs text-slate-100 focus:outline-none focus:border-emerald-500">
-                    <div id="slot-suggestions-${i}" class="absolute left-0 right-0 top-14 bg-slate-900 border border-slate-700 rounded shadow-xl max-h-40 overflow-y-auto hidden z-20"></div>
+                    <div id="slot-suggestions-${i}" class="absolute left-0 right-0 top-14 bg-slate-900 border border-slate-700 rounded shadow-xl max-h-60 overflow-y-auto hidden z-20"></div>
                 `;
                 container.appendChild(slotDiv);
             }
@@ -214,7 +214,7 @@
                 .from('cars')
                 .select('id, name, rarity, rq')
                 .ilike('name', `%${query}%`)
-                .limit(6);
+                .limit(50);
 
             if (error || !data || data.length === 0) {
                 suggestions.innerHTML = '<div class="p-2 text-xs text-slate-500">No matching cars</div>';
