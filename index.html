@@ -65,26 +65,27 @@ text-align: center;
             <div class="lg:col-span-5 bg-slate-800 p-6 rounded-lg border border-slate-700 space-y-4">
                 <h2 class="text-lg font-bold text-slate-200">Log New Pack Opening</h2>
 
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs text-slate-400 mb-1">Date Pulled</label>
-                        <input type="date" id="date-pulled" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100">
-                    </div>
-                    <div>
-                        <label class="block text-xs text-slate-400 mb-1">Card Count</label>
-                        <select id="card-count-select" onchange="generateCardSlots()" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100">
-                            <option value="5" selected>5 Cards (Standard Pack)</option>
-                            <option value="10">10 Cards (Double Pack)</option>
-                            <option value="15">15 Cards (Triple Pack)</option>
-                            <option value="1">1 Card (Single Reward)</option>
-                            <option value="3">3 Cards (Small Pack)</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs text-slate-400 mb-1">Pack Type</label>
+                <hr class="border-slate-700/60 my-2">
+<div class="grid grid-cols-2 gap-3">
+ 
+<div>
+<label class="block text-xs text-slate-400 mb-1">Date Pulled</label>
+<input type="date" id="date-pulled" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100">
+</div>
+ 
+<div>
+<label class="block text-xs text-slate-400 mb-1">Card Count</label>
+<select id="card-count-select" onchange="generateCardSlots()" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100">
+<option value="5" selected>5 Cards (Standard Pack)</option>
+<option value="10">10 Cards (Double Pack)</option>
+<option value="15">15 Cards (Triple Pack)</option>
+<option value="1">1 Card (Single Reward)</option>
+<option value="3">3 Cards (Small Pack)</option>
+</select>
+</div>
+ 
+<div>
+<label class="block text-xs text-slate-400 mb-1">Pack Type</label>
 <select id="pack-type" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100">
 <option value="Ceramic">Ceramic</option>
 <option value="Carbon Fiber">Carbon Fiber</option>
@@ -104,15 +105,11 @@ text-align: center;
  
 </div>
  
-<div id="flavour-container" class="hidden">
+<div id="flavour-container" class="hidden mt-3">
 <label class="block text-xs text-slate-400 mb-1">Collection Flavour</label>
 <input list="flavour-list" id="pack-subtype" placeholder="e.g. GTI Collection" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100">
 <datalist id="flavour-list"></datalist>
 </div>
-                </div>
-
-                <hr class="border-slate-700/60 my-2">
-
                 <div>
                     <div class="flex justify-between items-center mb-2">
                         <label class="block text-xs font-semibold text-slate-300">Cards Revealed (Lowest to Highest RQ)</label>
