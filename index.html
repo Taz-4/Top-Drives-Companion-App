@@ -303,7 +303,20 @@ el.classList.add('hidden');
             const date = document.getElementById('date-pulled').value;
             const packType = document.getElementById('pack-type').value;
             const packSubtype = document.getElementById('pack-subtype').value;
-
+if (!datePulled) {
+alert('Please select a date.');
+return;
+}
+ 
+if (!packType) {
+alert('Please select a pack type.');
+return;
+}
+ 
+if (!packSubtype.trim()) {
+alert('Please enter a pack subtype/flavour.');
+return;
+}
             const filledSlots = activeSlotsData.filter(item => item !== null);
 
             if (filledSlots.length === 0) {
@@ -312,7 +325,12 @@ el.classList.add('hidden');
             }
 
             const packGroupId = crypto.randomUUID();
-
+const missingCard = activeSlotsData.find(card => !card);
+ 
+if (missingCard !== undefined) {
+alert('Please select a car for every card slot.');
+return;
+}
             const rowsToInsert = activeSlotsData.map((car, idx) => {
                 if (!car) return null;
                 return {
@@ -525,9 +543,9 @@ return `${date.getDate()}-${months[date.getMonth()]}-${date.getFullYear()}`;
 
                 return `
                     <tr class="border-b border-slate-800">
-                        <td class="p-2">${formatDisplayDate(pull.date)}</td>
-                        <td class="p-2">${pull.pack_type || ''}</td>
-                        <td class="p-2 text-slate-400">${pull.pack_subtype || ''}</td>
+                        <td class="p-2 whitespace-nowrap">${formatDisplayDate(pull.date)}</td>
+                        <td class="p-2 whitespace-nowrap">${pull.pack_type}</td>
+                        <td class="p-2 whitespace-nowrap">${pull.pack_subtype || '-'}</td>
                         <td class="p-2 font-medium text-slate-100">${pull.car_name || 'N/A'}</td>
                         <td class="p-2 font-mono ${classes.text}">${rqDisplay}</td>
                         <td class="p-2">
