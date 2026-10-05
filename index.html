@@ -76,26 +76,13 @@
                     <div>
                         <label class="block text-xs text-slate-400 mb-1">Card Count <span class="text-red-400">*</span></label>
                         <select id="card-count-select" onchange="generateCardSlots()" required class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
-                            <option value="5" selected>5 Cards (Standard Pack)</option>
-                            <option value="10">10 Cards (Double Pack)</option>
-                            <option value="15">15 Cards (Triple Pack)</option>
-                            <option value="25">25 Cards (5x Pack)</option>
-                            <option value="50">50 Cards (10x Carbon Fibre)</option>
-                            <option value="3">3 Cards (Small Pack)</option>
-                            <option value="1">1 Card (Single Reward)</option>
                         </select>
                     </div>
 
                     <div>
                         <label class="block text-xs text-slate-400 mb-1">Pack Type <span class="text-red-400">*</span></label>
-                        <select id="pack-type" required class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
-                            <option value="">Select Pack Type</option>
-                            <option value="Ceramic">Ceramic</option>
-                            <option value="Carbon Fiber">Carbon Fiber</option>
-                            <option value="Aluminium">Aluminium</option>
-                            <option value="Steel">Steel</option>
-                            <option value="Plastic">Plastic</option>
-                        </select>
+                        <input list="pack-type-list" id="pack-type" placeholder="Select or type..." required class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
+                        <datalist id="pack-type-list"></datalist>
                     </div>
 
                     <div>
@@ -120,7 +107,7 @@
                     <span class="text-[10px] text-slate-500">Auto advances</span>
                 </div>
 
-                <div id="slots-container" class="space-y-2 pr-1 max-h-[420px] overflow-y-auto"></div>
+                <div id="slots-container" class="space-y-3"></div>
 
                 <button onclick="submitPack()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2.5 rounded text-sm transition mt-4">
                     Submit Entire Pack
@@ -159,11 +146,6 @@
             <div class="flex justify-between items-center">
                 <h2 class="text-lg font-bold text-slate-200">Drop Rate Statistics</h2>
                 <select id="stats-pack-type" onchange="loadDropRateStats()" class="bg-slate-900 border border-slate-700 text-xs rounded p-2 text-slate-200 focus:outline-none focus:border-emerald-500">
-                    <option value="Ceramic">Ceramic</option>
-                    <option value="Aluminium">Aluminium</option>
-                    <option value="Carbon Fiber">Carbon Fiber</option>
-                    <option value="Steel">Steel</option>
-                    <option value="Plastic">Plastic</option>
                 </select>
             </div>
             <div id="stats-display-container" class="space-y-4"></div>
@@ -193,9 +175,20 @@
                 <label class="block text-xs text-slate-400 mb-1">Search Replacement Car</label>
                 <input type="text" id="edit-car-search" oninput="searchCarsForEdit()" placeholder="Type car name..." class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
             </div>
-            <div id="edit-car-results" class="max-h-60 overflow-y-auto space-y-1 bg-slate-900 border border-slate-700 rounded p-2 hidden"></div>
+            <div id="edit-car-results" class="max-h-48 overflow-y-auto space-y-1 bg-slate-900 border border-slate-700 rounded p-2 hidden"></div>
+
+            <!-- Confirmation Preview Box -->
+            <div id="edit-selected-preview" class="hidden p-3 bg-slate-900/90 border border-emerald-500/50 rounded space-y-1">
+                <div class="text-[10px] text-emerald-400 font-semibold uppercase tracking-wider">Selected Replacement</div>
+                <div class="flex justify-between items-center">
+                    <span id="preview-car-name" class="text-sm font-medium text-slate-100"></span>
+                    <span id="preview-car-badge" class="px-2 py-0.5 rounded text-[10px] font-semibold"></span>
+                </div>
+            </div>
+
             <div class="flex justify-end gap-2 pt-2">
                 <button onclick="closeEditModal()" class="px-3 py-1.5 text-xs font-medium text-slate-400 hover:text-slate-200 bg-slate-700 rounded">Cancel</button>
+                <button id="confirm-edit-btn" onclick="saveEditedCar()" disabled class="px-3 py-1.5 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed rounded">Confirm Replacement</button>
             </div>
         </div>
     </div>
@@ -209,7 +202,9 @@
 
         let activeSlotsData = [];
         let currentEditPullId = null;
-        let currentEditSearchResults = [];
+        let pendingEditSelection = null;
+
+        const DEFAULT_PACK_TYPES = ['Ceramic', 'Carbon Fiber', 'Aluminium', 'Steel', 'Plastic', 'Titanium', 'Platinum', 'Racing Pack'];
 
         const OFFICIAL_ODDS = {
             'Plastic': { 'Rare': 1.50, 'Uncommon': 68.50, 'Common': 30.00 },
@@ -218,6 +213,39 @@
             'Ceramic': { 'Legendary': 0.65, 'Epic': 2.50, 'Ultra Rare': 14.00, 'Super Rare': 82.85 },
             'Carbon Fiber': { 'Legendary': 2.50, 'Epic': 17.75, 'Ultra Rare': 79.75 }
         };
+
+        function populateCardCountOptions() {
+            const select = document.getElementById('card-count-select');
+            select.innerHTML = '';
+            for (let i = 1; i <= 100; i++) {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = `${i} ${i === 1 ? 'Card' : 'Cards'}`;
+                if (i === 5) opt.selected = true;
+                select.appendChild(opt);
+            }
+        }
+
+        function loadPackTypes() {
+            let customTypes = JSON.parse(localStorage.getItem('savedPackTypes') || '[]');
+            const allTypes = Array.from(new Set([...DEFAULT_PACK_TYPES, ...customTypes]));
+            
+            const datalist = document.getElementById('pack-type-list');
+            datalist.innerHTML = allTypes.map(t => `<option value="${t}">`).join('');
+
+            const statsSelect = document.getElementById('stats-pack-type');
+            statsSelect.innerHTML = allTypes.map(t => `<option value="${t}">${t}</option>`).join('');
+        }
+
+        function savePackType(type) {
+            if (!type) return;
+            let customTypes = JSON.parse(localStorage.getItem('savedPackTypes') || '[]');
+            if (!DEFAULT_PACK_TYPES.includes(type) && !customTypes.includes(type)) {
+                customTypes.push(type);
+                localStorage.setItem('savedPackTypes', JSON.stringify(customTypes));
+                loadPackTypes();
+            }
+        }
 
         function getRarityClass(rarity) {
             const r = (rarity || '').toLowerCase();
@@ -299,7 +327,7 @@
                         <span id="slot-badge-${i}" class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-800">Pending</span>
                     </div>
                     <input type="text" id="slot-input-${i}" oninput="searchCarsForSlot(${i})" placeholder="Search car name..." class="w-full bg-slate-800 border border-slate-700 rounded p-1.5 text-xs text-slate-100 focus:outline-none focus:border-emerald-500">
-                    <div id="slot-suggestions-${i}" class="absolute left-0 right-0 top-14 bg-slate-900 border border-slate-700 rounded shadow-xl max-h-60 overflow-y-auto hidden z-20"></div>
+                    <div id="slot-suggestions-${i}" class="absolute left-0 right-0 top-14 bg-slate-900 border border-slate-700 rounded shadow-2xl max-h-60 overflow-y-auto hidden z-30"></div>
                 `;
                 container.appendChild(slotDiv);
             }
@@ -369,7 +397,7 @@
 
         async function submitPack() {
             const date = document.getElementById('date-pulled').value;
-            const packType = document.getElementById('pack-type').value;
+            const packType = document.getElementById('pack-type').value.trim();
             const regularPack = document.getElementById('regular-pack').value;
             let packSubtype = document.getElementById('pack-subtype').value.trim();
 
@@ -379,9 +407,11 @@
             }
 
             if (!packType) {
-                alert('Please select a pack type.');
+                alert('Please select or type a pack type.');
                 return;
             }
+
+            savePackType(packType);
 
             if (regularPack === 'Yes') {
                 packSubtype = 'Regular';
@@ -416,7 +446,7 @@
                     car_id: car.id,
                     pack_group_id: packGroupId,
                     slot_number: idx + 1,
-                    weight_tier: Math.ceil((count - idx) / (count / 5))
+                    weight_tier: Math.ceil((count - idx) / Math.max(1, (count / 5)))
                 };
             });
 
@@ -433,15 +463,21 @@
         /* Modal & Edit Logic */
         function openEditModal(pullId) {
             currentEditPullId = pullId;
+            pendingEditSelection = null;
             document.getElementById('edit-car-search').value = '';
             document.getElementById('edit-car-results').innerHTML = '';
             document.getElementById('edit-car-results').classList.add('hidden');
+            
+            document.getElementById('edit-selected-preview').classList.add('hidden');
+            const confirmBtn = document.getElementById('confirm-edit-btn');
+            confirmBtn.disabled = true;
+
             document.getElementById('edit-modal').classList.remove('hidden');
         }
 
         function closeEditModal() {
             currentEditPullId = null;
-            currentEditSearchResults = [];
+            pendingEditSelection = null;
             document.getElementById('edit-modal').classList.add('hidden');
         }
 
@@ -466,12 +502,11 @@
                 return;
             }
 
-            currentEditSearchResults = data;
-
-            container.innerHTML = data.map((car, index) => {
+            container.innerHTML = data.map(car => {
                 const classes = getRarityClass(car.rarity);
+                const safeName = car.name.replace(/'/g, "\\'");
                 return `
-                    <div onclick="saveEditedCarByIndex(${index})" 
+                    <div onclick="selectReplacementCar('${car.id}', '${safeName}', '${car.rarity}', ${car.rq})" 
                          class="p-2 hover:bg-slate-800 cursor-pointer text-xs flex justify-between items-center border-b border-slate-800 last:border-0 rounded">
                         <span class="text-slate-100 font-medium">${car.name}</span>
                         <span class="font-mono ${classes.text}">RQ ${car.rq} • ${car.rarity}</span>
@@ -482,25 +517,38 @@
             container.classList.remove('hidden');
         }
 
-        async function saveEditedCarByIndex(index) {
-            if (!currentEditPullId || !currentEditSearchResults[index]) return;
+        function selectReplacementCar(id, name, rarity, rq) {
+            pendingEditSelection = { id, name, rarity, rq };
 
-            const selectedCar = currentEditSearchResults[index];
+            document.getElementById('preview-car-name').textContent = `${name} (RQ ${rq})`;
+            
+            const badge = document.getElementById('preview-car-badge');
+            const classes = getRarityClass(rarity);
+            badge.textContent = rarity;
+            badge.className = `px-2 py-0.5 rounded text-[10px] font-semibold ${classes.badge}`;
+
+            document.getElementById('edit-selected-preview').classList.remove('hidden');
+            document.getElementById('confirm-edit-btn').disabled = false;
+            document.getElementById('edit-car-results').classList.add('hidden');
+        }
+
+        async function saveEditedCar() {
+            if (!currentEditPullId || !pendingEditSelection) return;
 
             const { error, count } = await db
                 .from('pulls')
                 .update({
-                    car_id: selectedCar.id,
-                    car_name: selectedCar.name,
-                    car_rarity: selectedCar.rarity,
-                    car_rq: selectedCar.rq
+                    car_id: pendingEditSelection.id,
+                    car_name: pendingEditSelection.name,
+                    car_rarity: pendingEditSelection.rarity,
+                    car_rq: pendingEditSelection.rq
                 }, { count: 'exact' })
                 .eq('id', currentEditPullId);
 
             if (error) {
                 alert('Error updating pull: ' + error.message);
             } else if (count === 0) {
-                alert('Update failed: 0 records were updated in Supabase. Please ensure your Supabase Row Level Security (RLS) policies allow UPDATE operations for anon users.');
+                alert('Update failed: 0 records were updated in Supabase. Please ensure your Supabase RLS policy allows UPDATE.');
             } else {
                 closeEditModal();
                 loadPulls();
@@ -518,7 +566,7 @@
             if (error) {
                 alert('Error deleting pull: ' + error.message);
             } else if (count === 0) {
-                alert('Delete failed: 0 records were deleted in Supabase. Please ensure your Supabase Row Level Security (RLS) policies allow DELETE operations for anon users.');
+                alert('Delete failed: 0 records were deleted in Supabase. Please ensure your Supabase RLS policy allows DELETE.');
             } else {
                 loadPulls();
             }
@@ -730,6 +778,8 @@
             }
         });
 
+        populateCardCountOptions();
+        loadPackTypes();
         generateCardSlots();
         loadPulls();
         loadFlavours();
