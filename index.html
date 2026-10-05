@@ -79,6 +79,8 @@
                             <option value="5" selected>5 Cards (Standard Pack)</option>
                             <option value="10">10 Cards (Double Pack)</option>
                             <option value="15">15 Cards (Triple Pack)</option>
+                            <option value="25">25 Cards (5x Pack)</option>
+                            <option value="50">50 Cards (10x Carbon Fibre)</option>
                             <option value="3">3 Cards (Small Pack)</option>
                             <option value="1">1 Card (Single Reward)</option>
                         </select>
@@ -105,7 +107,7 @@
                     </div>
 
                     <div id="flavour-container" class="col-span-2 hidden">
-                        <label class="block text-xs text-slate-400 mb-1">Collection Flavour <span class="text-red-400">*</span></label>
+                        <label class="block text-xs text-slate-400 mb-1">Collection / Flavour <span class="text-red-400">*</span></label>
                         <input list="flavour-list" id="pack-subtype" placeholder="e.g. GTI Collection" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
                         <datalist id="flavour-list"></datalist>
                     </div>
@@ -118,7 +120,8 @@
                     <span class="text-[10px] text-slate-500">Auto advances to next slot</span>
                 </div>
 
-                <div id="slots-container" class="space-y-2 pr-1"></div>
+                <!-- Scrollable slots container for handling large numbers of cards cleanly -->
+                <div id="slots-container" class="space-y-2 pr-1 max-h-[420px] overflow-y-auto"></div>
 
                 <button onclick="submitPack()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2.5 rounded text-sm transition mt-4">
                     Submit Entire Pack
@@ -134,16 +137,17 @@
                             <tr>
                                 <th class="p-2">Date</th>
                                 <th class="p-2">Pack</th>
-                                <th class="p-2">Subtype</th>
+                                <th class="p-2">Collection / Flavour</th>
                                 <th class="p-2">Car</th>
                                 <th class="p-2">RQ</th>
                                 <th class="p-2">Rarity</th>
-                                <th class="p-2 text-center">Action</th>
+                                <th class="p-2 text-center">Edit</th>
+                                <th class="p-2 text-center">Delete</th>
                             </tr>
                         </thead>
                         <tbody id="pulls-table-body">
                             <tr>
-                                <td colspan="7" class="p-4 text-center text-slate-500">Loading records...</td>
+                                <td colspan="8" class="p-4 text-center text-slate-500">Loading records...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -179,6 +183,24 @@
         </div>
     </div>
 
+    <!-- EDIT CAR MODAL -->
+    <div id="edit-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-slate-800 border border-slate-700 rounded-lg p-6 max-w-md w-full space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center">
+                <h3 class="text-base font-bold text-slate-200">Edit Logged Car</h3>
+                <button onclick="closeEditModal()" class="text-slate-400 hover:text-slate-200 font-bold text-lg">&times;</button>
+            </div>
+            <div>
+                <label class="block text-xs text-slate-400 mb-1">Search Replacement Car</label>
+                <input type="text" id="edit-car-search" oninput="searchCarsForEdit()" placeholder="Type car name..." class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
+            </div>
+            <div id="edit-car-results" class="max-h-60 overflow-y-auto space-y-1 bg-slate-900 border border-slate-700 rounded p-2 hidden"></div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="closeEditModal()" class="px-3 py-1.5 text-xs font-medium text-slate-400 hover:text-slate-200 bg-slate-700 rounded">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const SUPABASE_URL = "https://rsoiigloqrnxxfjnaxwz.supabase.co";
         const SUPABASE_KEY = "sb_publishable_hwRaYHIp6HAYIUO9HKawSQ_k7eV0pUq";
@@ -187,6 +209,7 @@
         document.getElementById('date-pulled').valueAsDate = new Date();
 
         let activeSlotsData = [];
+        let currentEditPullId = null;
 
         const OFFICIAL_ODDS = {
             'Plastic': { 'Rare': 1.50, 'Uncommon': 68.50, 'Common': 30.00 },
@@ -407,6 +430,139 @@
             }
         }
 
+        /* Modal & Edit Logic */
+        function openEditModal(pullId) {
+            currentEditPullId = pullId;
+            document.getElementById('edit-car-search').value = '';
+            document.getElementById('edit-car-results').innerHTML = '';
+            document.getElementById('edit-car-results').classList.add('hidden');
+            document.getElementById('edit-modal').classList.remove('hidden');
+        }
+
+        function closeEditModal() {
+            currentEditPullId = null;
+            document.getElementById('edit-modal').classList.add('hidden');
+        }
+
+        async function searchCarsForEdit() {
+            const query = document.getElementById('edit-car-search').value.trim();
+            const container = document.getElementById('edit-car-results');
+
+            if (query.length < 2) {
+                container.classList.add('hidden');
+                return;
+            }
+
+            const { data, error } = await db
+                .from('cars')
+                .select('id, name, rarity, rq')
+                .ilike('name', `%${query}%`)
+                .limit(30);
+
+            if (error || !data || data.length === 0) {
+                container.innerHTML = '<div class="p-2 text-xs text-slate-500">No matching cars found</div>';
+                container.classList.remove('hidden');
+                return;
+            }
+
+            container.innerHTML = data.map(car => {
+                const classes = getRarityClass(car.rarity);
+                const safeName = car.name.replace(/'/g, "\\'");
+                return `
+                    <div onclick="saveEditedCar('${car.id}', '${safeName}', '${car.rarity}', ${car.rq})" 
+                         class="p-2 hover:bg-slate-800 cursor-pointer text-xs flex justify-between items-center border-b border-slate-800 last:border-0 rounded">
+                        <span class="text-slate-100 font-medium">${car.name}</span>
+                        <span class="font-mono ${classes.text}">RQ ${car.rq} • ${car.rarity}</span>
+                    </div>
+                `;
+            }).join('');
+
+            container.classList.remove('hidden');
+        }
+
+        async function saveEditedCar(carId, carName, carRarity, carRq) {
+            if (!currentEditPullId) return;
+
+            const { error } = await db
+                .from('pulls')
+                .update({
+                    car_id: carId,
+                    car_name: carName,
+                    car_rarity: carRarity,
+                    car_rq: carRq
+                })
+                .eq('id', currentEditPullId);
+
+            if (error) {
+                alert('Error updating pull: ' + error.message);
+            } else {
+                closeEditModal();
+                loadPulls();
+            }
+        }
+
+        async function deletePull(id) {
+            if (!confirm('Are you sure you want to delete this logged pull?')) return;
+            const { error } = await db.from('pulls').delete().eq('id', id);
+            if (error) {
+                alert('Error deleting pull: ' + error.message);
+            } else {
+                loadPulls();
+            }
+        }
+
+        function formatDisplayDate(dateString) {
+            if (!dateString) return '';
+            const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            const date = new Date(dateString);
+            return `${date.getDate()}-${months[date.getMonth()]}-${date.getFullYear()}`;
+        }
+
+        async function loadPulls() {
+            const { data, error } = await db
+                .from('pulls')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(12);
+
+            const tbody = document.getElementById('pulls-table-body');
+
+            if (error || !data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="p-4 text-center text-slate-500">No logged pulls found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = data.map(pull => {
+                const classes = getRarityClass(pull.car_rarity);
+                const rqDisplay = pull.car_rq ? pull.car_rq : '-';
+
+                return `
+                    <tr class="border-b border-slate-800">
+                        <td class="p-2 whitespace-nowrap">${formatDisplayDate(pull.date)}</td>
+                        <td class="p-2 whitespace-nowrap">${pull.pack_type}</td>
+                        <td class="p-2 whitespace-nowrap">${pull.pack_subtype || '-'}</td>
+                        <td class="p-2 font-medium text-slate-100">${pull.car_name || 'N/A'}</td>
+                        <td class="p-2 font-mono ${classes.text}">${rqDisplay}</td>
+                        <td class="p-2">
+                            <span class="px-2 py-0.5 rounded text-[10px] font-semibold whitespace-nowrap inline-block ${classes.badge}">
+                                ${pull.car_rarity || ''}
+                            </span>
+                        </td>
+                        <td class="p-2 text-center">
+                            <button onclick="openEditModal('${pull.id}')" class="text-slate-400 hover:text-emerald-400 text-xs px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700 transition" title="Edit Car">
+                                ✎
+                            </button>
+                        </td>
+                        <td class="p-2 text-center">
+                            <button onclick="deletePull('${pull.id}')" class="text-slate-500 hover:text-red-400 font-bold px-1 transition" title="Delete Entry">
+                                ✕
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
         async function loadDropRateStats() {
             const packType = document.getElementById('stats-pack-type').value;
             const statsContainer = document.getElementById('stats-display-container');
@@ -548,63 +704,6 @@
 
             html += `</div></div>`;
             container.innerHTML = html;
-        }
-
-        async function deletePull(id) {
-            if (!confirm('Are you sure you want to delete this logged pull?')) return;
-            const { error } = await db.from('pulls').delete().eq('id', id);
-            if (error) {
-                alert('Error deleting pull: ' + error.message);
-            } else {
-                loadPulls();
-            }
-        }
-
-        function formatDisplayDate(dateString) {
-            if (!dateString) return '';
-            const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-            const date = new Date(dateString);
-            return `${date.getDate()}-${months[date.getMonth()]}-${date.getFullYear()}`;
-        }
-
-        async function loadPulls() {
-            const { data, error } = await db
-                .from('pulls')
-                .select('*')
-                .order('created_at', { ascending: false })
-                .limit(12);
-
-            const tbody = document.getElementById('pulls-table-body');
-
-            if (error || !data || data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-slate-500">No logged pulls found</td></tr>';
-                return;
-            }
-
-            tbody.innerHTML = data.map(pull => {
-                const classes = getRarityClass(pull.car_rarity);
-                const rqDisplay = pull.car_rq ? pull.car_rq : '-';
-
-                return `
-                    <tr class="border-b border-slate-800">
-                        <td class="p-2 whitespace-nowrap">${formatDisplayDate(pull.date)}</td>
-                        <td class="p-2 whitespace-nowrap">${pull.pack_type}</td>
-                        <td class="p-2 whitespace-nowrap">${pull.pack_subtype || '-'}</td>
-                        <td class="p-2 font-medium text-slate-100">${pull.car_name || 'N/A'}</td>
-                        <td class="p-2 font-mono ${classes.text}">${rqDisplay}</td>
-                        <td class="p-2">
-                            <span class="px-2 py-0.5 rounded text-[10px] font-semibold whitespace-nowrap inline-block ${classes.badge}">
-                                ${pull.car_rarity || ''}
-                            </span>
-                        </td>
-                        <td class="p-2 text-center">
-                            <button onclick="deletePull(${pull.id})" class="text-slate-500 hover:text-red-400 font-bold px-1 transition" title="Delete Entry">
-                                ✕
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
         }
 
         document.addEventListener('click', function(event) {
