@@ -79,13 +79,21 @@
                         </select>
                     </div>
 
-                    <div>
+                    <!-- Pack Type Field -->
+                    <div class="relative custom-dropdown-container">
                         <label class="block text-xs text-slate-400 mb-1">Pack Type <span class="text-red-400">*</span></label>
-                        <input list="pack-type-list" id="pack-type" placeholder="Select or type..." required class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
-                        <datalist id="pack-type-list"></datalist>
+                        <input type="text" id="pack-type" placeholder="Select or type..." required autocomplete="off" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
+                        <div id="pack-type-dropdown" class="custom-dropdown-list absolute left-0 right-0 top-full mt-1 bg-slate-900 border border-slate-700 rounded shadow-2xl max-h-48 overflow-y-auto hidden z-40"></div>
                     </div>
 
-                    <div>
+                    <!-- Obtained Field (Featured Before Regular Question) -->
+                    <div class="relative custom-dropdown-container">
+                        <label class="block text-xs text-slate-400 mb-1">Obtained <span class="text-red-400">*</span></label>
+                        <input type="text" id="obtained" placeholder="Select or type..." required autocomplete="off" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
+                        <div id="obtained-dropdown" class="custom-dropdown-list absolute left-0 right-0 top-full mt-1 bg-slate-900 border border-slate-700 rounded shadow-2xl max-h-48 overflow-y-auto hidden z-40"></div>
+                    </div>
+
+                    <div class="col-span-2">
                         <label class="block text-xs text-slate-400 mb-1">Regular Pack? <span class="text-red-400">*</span></label>
                         <select id="regular-pack" onchange="toggleFlavourField()" required class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
                             <option value="Yes" selected>Yes</option>
@@ -121,19 +129,20 @@
                     <table class="w-full text-left text-xs text-slate-300">
                         <thead class="bg-slate-900 text-slate-400 uppercase font-mono">
                             <tr>
-                                <th class="py-3 px-3 w-28">Date</th>
+                                <th class="py-3 px-3 w-24">Date</th>
                                 <th class="py-3 px-3 w-28">Pack</th>
-                                <th class="py-3 px-3 w-36">Collection / Flavour</th>
+                                <th class="py-3 px-3 w-28">Obtained</th>
+                                <th class="py-3 px-3 w-32">Collection / Flavour</th>
                                 <th class="py-3 px-3">Car</th>
                                 <th class="py-3 px-3 text-right w-16">RQ</th>
-                                <th class="py-3 px-3 w-32">Rarity</th>
-                                <th class="py-3 px-2 text-center w-16">Edit</th>
-                                <th class="py-3 px-2 text-center w-16">Delete</th>
+                                <th class="py-3 px-3 w-28">Rarity</th>
+                                <th class="py-3 px-2 text-center w-12">Edit</th>
+                                <th class="py-3 px-2 text-center w-12">Delete</th>
                             </tr>
                         </thead>
                         <tbody id="pulls-table-body" class="divide-y divide-slate-800">
                             <tr>
-                                <td colspan="8" class="p-4 text-center text-slate-500">Loading records...</td>
+                                <td colspan="9" class="p-4 text-center text-slate-500">Loading records...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -204,7 +213,37 @@
         let currentEditPullId = null;
         let pendingEditSelection = null;
 
-        const DEFAULT_PACK_TYPES = ['Ceramic', 'Carbon Fiber', 'Aluminium', 'Steel', 'Plastic', 'Titanium', 'Platinum', 'Racing Pack'];
+        // Default Pack Types (Alphabetical)
+        const DEFAULT_PACK_TYPES = [
+            'Aluminium',
+            'Carbon Fiber',
+            'Ceramic',
+            'Plastic',
+            'Platinum',
+            'Racing Pack',
+            'Steel',
+            'Titanium'
+        ];
+
+        // Default Obtained Options (Alphabetical)
+        const DEFAULT_OBTAINED_OPTIONS = [
+            'Adverts',
+            'Air Miles',
+            'Builder Coins',
+            'Cash',
+            'Challenge',
+            'Daily',
+            'Event',
+            'Free',
+            'Gold',
+            'IRL Money',
+            'Nismo',
+            'Objectives',
+            'Oddities Coin',
+            'Racing Coin',
+            'Spotted',
+            'Tri-series'
+        ];
 
         const OFFICIAL_ODDS = {
             'Plastic': { 'Rare': 1.50, 'Uncommon': 68.50, 'Common': 30.00 },
@@ -213,6 +252,142 @@
             'Ceramic': { 'Legendary': 0.65, 'Epic': 2.50, 'Ultra Rare': 14.00, 'Super Rare': 82.85 },
             'Carbon Fiber': { 'Legendary': 2.50, 'Epic': 17.75, 'Ultra Rare': 79.75 }
         };
+
+        /* Custom Creatable & Deletable Dropdown Class */
+        class CustomDropdown {
+            constructor({ inputId, dropdownId, storageKey, defaultOptions, onUpdate }) {
+                this.input = document.getElementById(inputId);
+                this.dropdown = document.getElementById(dropdownId);
+                this.storageKey = storageKey;
+                this.defaultOptions = defaultOptions;
+                this.onUpdate = onUpdate;
+                this.options = this.loadOptions();
+
+                this.init();
+            }
+
+            loadOptions() {
+                const saved = JSON.parse(localStorage.getItem(this.storageKey) || 'null');
+                let list = saved !== null ? saved : [...this.defaultOptions];
+                return this.sortOptions(list);
+            }
+
+            saveOptions() {
+                localStorage.setItem(this.storageKey, JSON.stringify(this.options));
+                if (this.onUpdate) this.onUpdate(this.options);
+            }
+
+            sortOptions(arr) {
+                return [...arr].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+            }
+
+            addOption(val) {
+                const trimmed = (val || '').trim();
+                if (!trimmed) return;
+                if (!this.options.some(opt => opt.toLowerCase() === trimmed.toLowerCase())) {
+                    this.options.push(trimmed);
+                    this.options = this.sortOptions(this.options);
+                    this.saveOptions();
+                }
+            }
+
+            deleteOption(optionToDelete, e) {
+                if (e) e.stopPropagation();
+                this.options = this.options.filter(opt => opt !== optionToDelete);
+                this.saveOptions();
+                if (this.input.value === optionToDelete) {
+                    this.input.value = '';
+                }
+                this.render();
+            }
+
+            render() {
+                const query = this.input.value.trim().toLowerCase();
+                const filtered = this.options.filter(opt => opt.toLowerCase().includes(query));
+
+                this.dropdown.innerHTML = '';
+
+                const exactMatch = this.options.some(opt => opt.toLowerCase() === query);
+                if (query && !exactMatch) {
+                    const addRow = document.createElement('div');
+                    addRow.className = 'p-2 text-xs text-emerald-400 hover:bg-slate-800 cursor-pointer font-semibold border-b border-slate-800';
+                    addRow.textContent = `+ Add "${this.input.value.trim()}"`;
+                    addRow.onmousedown = (e) => {
+                        e.preventDefault();
+                        const val = this.input.value.trim();
+                        this.addOption(val);
+                        this.input.value = val;
+                        this.close();
+                    };
+                    this.dropdown.appendChild(addRow);
+                }
+
+                filtered.forEach(opt => {
+                    const row = document.createElement('div');
+                    row.className = 'p-2 hover:bg-slate-800 cursor-pointer text-xs flex justify-between items-center border-b border-slate-800/60 last:border-0 text-slate-100';
+
+                    const textSpan = document.createElement('span');
+                    textSpan.textContent = opt;
+                    textSpan.className = 'flex-1';
+                    textSpan.onmousedown = (e) => {
+                        e.preventDefault();
+                        this.input.value = opt;
+                        this.close();
+                    };
+
+                    const delBtn = document.createElement('button');
+                    delBtn.type = 'button';
+                    delBtn.className = 'text-slate-500 hover:text-red-400 font-bold px-1.5 py-0.5 rounded text-xs ml-2 hover:bg-slate-700/50 transition';
+                    delBtn.textContent = '✕';
+                    delBtn.title = 'Delete option';
+                    delBtn.onmousedown = (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        this.deleteOption(opt, e);
+                    };
+
+                    row.appendChild(textSpan);
+                    row.appendChild(delBtn);
+                    this.dropdown.appendChild(row);
+                });
+
+                if (filtered.length === 0 && !query) {
+                    const empty = document.createElement('div');
+                    empty.className = 'p-2 text-xs text-slate-500 text-center';
+                    empty.textContent = 'No options available';
+                    this.dropdown.appendChild(empty);
+                }
+            }
+
+            open() {
+                document.querySelectorAll('.custom-dropdown-list').forEach(el => el.classList.add('hidden'));
+                this.render();
+                this.dropdown.classList.remove('hidden');
+            }
+
+            close() {
+                this.dropdown.classList.add('hidden');
+            }
+
+            init() {
+                this.input.addEventListener('focus', () => this.open());
+                this.input.addEventListener('input', () => {
+                    this.open();
+                    this.render();
+                });
+                this.input.addEventListener('blur', () => {
+                    setTimeout(() => this.close(), 180);
+                });
+            }
+        }
+
+        let packTypeDropdown;
+        let obtainedDropdown;
+
+        function syncStatsPackTypeOptions(types) {
+            const statsSelect = document.getElementById('stats-pack-type');
+            statsSelect.innerHTML = types.map(t => `<option value="${t}">${t}</option>`).join('');
+        }
 
         function populateCardCountOptions() {
             const select = document.getElementById('card-count-select');
@@ -223,27 +398,6 @@
                 opt.textContent = `${i} ${i === 1 ? 'Card' : 'Cards'}`;
                 if (i === 5) opt.selected = true;
                 select.appendChild(opt);
-            }
-        }
-
-        function loadPackTypes() {
-            let customTypes = JSON.parse(localStorage.getItem('savedPackTypes') || '[]');
-            const allTypes = Array.from(new Set([...DEFAULT_PACK_TYPES, ...customTypes]));
-            
-            const datalist = document.getElementById('pack-type-list');
-            datalist.innerHTML = allTypes.map(t => `<option value="${t}">`).join('');
-
-            const statsSelect = document.getElementById('stats-pack-type');
-            statsSelect.innerHTML = allTypes.map(t => `<option value="${t}">${t}</option>`).join('');
-        }
-
-        function savePackType(type) {
-            if (!type) return;
-            let customTypes = JSON.parse(localStorage.getItem('savedPackTypes') || '[]');
-            if (!DEFAULT_PACK_TYPES.includes(type) && !customTypes.includes(type)) {
-                customTypes.push(type);
-                localStorage.setItem('savedPackTypes', JSON.stringify(customTypes));
-                loadPackTypes();
             }
         }
 
@@ -336,7 +490,7 @@
         async function searchCarsForSlot(slotIndex) {
             const query = document.getElementById(`slot-input-${slotIndex}`).value.trim();
             const suggestions = document.getElementById(`slot-suggestions-${slotIndex}`);
-            
+
             document.querySelectorAll('[id^="slot-suggestions-"]').forEach(el => {
                 if (el.id !== `slot-suggestions-${slotIndex}`) {
                     el.classList.add('hidden');
@@ -398,6 +552,7 @@
         async function submitPack() {
             const date = document.getElementById('date-pulled').value;
             const packType = document.getElementById('pack-type').value.trim();
+            const obtained = document.getElementById('obtained').value.trim();
             const regularPack = document.getElementById('regular-pack').value;
             let packSubtype = document.getElementById('pack-subtype').value.trim();
 
@@ -411,7 +566,13 @@
                 return;
             }
 
-            savePackType(packType);
+            if (!obtained) {
+                alert('Please select or type how the pack was obtained.');
+                return;
+            }
+
+            packTypeDropdown.addOption(packType);
+            obtainedDropdown.addOption(obtained);
 
             if (regularPack === 'Yes') {
                 packSubtype = 'Regular';
@@ -439,6 +600,7 @@
                 return {
                     date: date,
                     pack_type: packType,
+                    obtained: obtained,
                     pack_subtype: packSubtype,
                     car_name: car.name,
                     car_rarity: car.rarity,
@@ -467,7 +629,7 @@
             document.getElementById('edit-car-search').value = '';
             document.getElementById('edit-car-results').innerHTML = '';
             document.getElementById('edit-car-results').classList.add('hidden');
-            
+
             document.getElementById('edit-selected-preview').classList.add('hidden');
             const confirmBtn = document.getElementById('confirm-edit-btn');
             confirmBtn.disabled = true;
@@ -521,7 +683,7 @@
             pendingEditSelection = { id, name, rarity, rq };
 
             document.getElementById('preview-car-name').textContent = `${name} (RQ ${rq})`;
-            
+
             const badge = document.getElementById('preview-car-badge');
             const classes = getRarityClass(rarity);
             badge.textContent = rarity;
@@ -557,7 +719,7 @@
 
         async function deletePull(id) {
             if (!confirm('Are you sure you want to delete this logged pull?')) return;
-            
+
             const { error, count } = await db
                 .from('pulls')
                 .delete({ count: 'exact' })
@@ -590,7 +752,7 @@
             const tbody = document.getElementById('pulls-table-body');
 
             if (error || !data || data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" class="p-4 text-center text-slate-500">No logged pulls found</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" class="p-4 text-center text-slate-500">No logged pulls found</td></tr>';
                 return;
             }
 
@@ -601,7 +763,8 @@
                 return `
                     <tr class="hover:bg-slate-800/50 transition">
                         <td class="py-2.5 px-3 whitespace-nowrap">${formatDisplayDate(pull.date)}</td>
-                        <td class="py-2.5 px-3 whitespace-nowrap">${pull.pack_type}</td>
+                        <td class="py-2.5 px-3 whitespace-nowrap">${pull.pack_type || '-'}</td>
+                        <td class="py-2.5 px-3 whitespace-nowrap text-slate-300">${pull.obtained || '-'}</td>
                         <td class="py-2.5 px-3 whitespace-nowrap">${pull.pack_subtype || '-'}</td>
                         <td class="py-2.5 px-3 font-medium text-slate-100 min-w-[160px]">${pull.car_name || 'N/A'}</td>
                         <td class="py-2.5 px-3 font-mono text-right pr-4 ${classes.text}">${rqDisplay}</td>
@@ -768,6 +931,7 @@
             container.innerHTML = html;
         }
 
+        // Close slot search suggestions when clicking outside
         document.addEventListener('click', function(event) {
             if (
                 !event.target.closest('[id^="slot-input-"]') &&
@@ -777,10 +941,31 @@
                     el.classList.add('hidden');
                 });
             }
+
+            if (!event.target.closest('.custom-dropdown-container')) {
+                document.querySelectorAll('.custom-dropdown-list').forEach(el => el.classList.add('hidden'));
+            }
         });
 
+        // Initialize Dropdowns
+        packTypeDropdown = new CustomDropdown({
+            inputId: 'pack-type',
+            dropdownId: 'pack-type-dropdown',
+            storageKey: 'savedPackTypes_v2',
+            defaultOptions: DEFAULT_PACK_TYPES,
+            onUpdate: syncStatsPackTypeOptions
+        });
+
+        obtainedDropdown = new CustomDropdown({
+            inputId: 'obtained',
+            dropdownId: 'obtained-dropdown',
+            storageKey: 'savedObtainedOptions_v1',
+            defaultOptions: DEFAULT_OBTAINED_OPTIONS
+        });
+
+        syncStatsPackTypeOptions(packTypeDropdown.options);
+
         populateCardCountOptions();
-        loadPackTypes();
         generateCardSlots();
         loadPulls();
         loadFlavours();
