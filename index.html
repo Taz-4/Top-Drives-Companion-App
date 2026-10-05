@@ -584,7 +584,8 @@
                 .from('pulls')
                 .select('*')
                 .order('created_at', { ascending: false })
-                .limit(12);
+                .order('slot_number', { ascending: false })
+                .limit(25);
 
             const tbody = document.getElementById('pulls-table-body');
 
