@@ -8,17 +8,17 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         .badge-legendary,
-.badge-epic,
-.badge-ultra-rare,
-.badge-super-rare,
-.badge-rare,
-.badge-uncommon,
-.badge-common {
-white-space: nowrap;
-display: inline-block;
-min-width: 80px;
-text-align: center;
-}
+        .badge-epic,
+        .badge-ultra-rare,
+        .badge-super-rare,
+        .badge-rare,
+        .badge-uncommon,
+        .badge-common {
+            white-space: nowrap;
+            display: inline-block;
+            min-width: 80px;
+            text-align: center;
+        }
         .rarity-legendary { color: #fbbf24; }
         .rarity-epic { color: #c084fc; }
         .rarity-ultra-rare { color: #f87171; }
@@ -64,61 +64,61 @@ text-align: center;
             <!-- Logger Form -->
             <div class="lg:col-span-6 bg-slate-800 p-6 rounded-lg border border-slate-700 space-y-4">
                 <h2 class="text-lg font-bold text-slate-200">Log New Pack Opening</h2>
-<hr class="border-slate-700/60 my-2">
- 
-<div class="grid grid-cols-2 gap-3">
- 
-<div>
-<label class="block text-xs text-slate-400 mb-1">Date Pulled</label>
-<input type="date" id="date-pulled" required class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100">
-</div>
- 
-<div>
-<label class="block text-xs text-slate-400 mb-1">Card Count</label>
-<select id="card-count-select" onchange="generateCardSlots()" required class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100">
-<option value="5" selected>5 Cards (Standard Pack)</option>
-<option value="10">10 Cards (Double Pack)</option>
-<option value="15">15 Cards (Triple Pack)</option>
-<option value="3">3 Cards (Small Pack)</option>
-<option value="1">1 Card (Single Reward)</option>
-</select>
-</div>
- 
-<div>
-<label class="block text-xs text-slate-400 mb-1">Pack Type</label>
-<select id="pack-type" required class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100">
-<option value="">Select Pack Type</option>
-<option value="Ceramic">Ceramic</option>
-<option value="Carbon Fiber">Carbon Fiber</option>
-<option value="Aluminium">Aluminium</option>
-<option value="Steel">Steel</option>
-<option value="Plastic">Plastic</option>
-</select>
-</div>
- 
-<div>
-<label class="block text-xs text-slate-400 mb-1">Regular Pack?</label>
-<select id="regular-pack" onchange="toggleFlavourField()" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100">
-<option value="Yes" selected>Yes</option>
-<option value="No">No</option>
-</select>
-</div>
- 
-</div>
- 
-<div id="flavour-container" class="hidden mt-3">
-<label class="block text-xs text-slate-400 mb-1">Collection Flavour</label>
-<input list="flavour-list" id="pack-subtype" placeholder="e.g. GTI Collection" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100">
-<datalist id="flavour-list"></datalist>
-</div>
- 
-<hr class="border-slate-700/60 my-2">
-<div class="flex justify-between items-center mb-2">
-                        <label class="block text-xs font-semibold text-slate-300">Cards Revealed (Lowest to Highest RQ)</label>
-                        <span class="text-[10px] text-slate-500">Auto advances to next slot</span>
+                <hr class="border-slate-700/60 my-2">
+
+                <!-- Input Grid -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Date Pulled <span class="text-red-400">*</span></label>
+                        <input type="date" id="date-pulled" required class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
                     </div>
-                    <div id="slots-container" class="space-y-2 pr-1"></div>
+
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Card Count <span class="text-red-400">*</span></label>
+                        <select id="card-count-select" onchange="generateCardSlots()" required class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
+                            <option value="5" selected>5 Cards (Standard Pack)</option>
+                            <option value="10">10 Cards (Double Pack)</option>
+                            <option value="15">15 Cards (Triple Pack)</option>
+                            <option value="3">3 Cards (Small Pack)</option>
+                            <option value="1">1 Card (Single Reward)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Pack Type <span class="text-red-400">*</span></label>
+                        <select id="pack-type" required class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
+                            <option value="">Select Pack Type</option>
+                            <option value="Ceramic">Ceramic</option>
+                            <option value="Carbon Fiber">Carbon Fiber</option>
+                            <option value="Aluminium">Aluminium</option>
+                            <option value="Steel">Steel</option>
+                            <option value="Plastic">Plastic</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Regular Pack? <span class="text-red-400">*</span></label>
+                        <select id="regular-pack" onchange="toggleFlavourField()" required class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
+                            <option value="Yes" selected>Yes</option>
+                            <option value="No">No</option>
+                        </select>
+                    </div>
+
+                    <div id="flavour-container" class="col-span-2 hidden">
+                        <label class="block text-xs text-slate-400 mb-1">Collection Flavour <span class="text-red-400">*</span></label>
+                        <input list="flavour-list" id="pack-subtype" placeholder="e.g. GTI Collection" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
+                        <datalist id="flavour-list"></datalist>
+                    </div>
                 </div>
+
+                <hr class="border-slate-700/60 my-2">
+
+                <div class="flex justify-between items-center mb-2">
+                    <label class="block text-xs font-semibold text-slate-300">Cards Revealed (Lowest to Highest RQ) <span class="text-red-400">*</span></label>
+                    <span class="text-[10px] text-slate-500">Auto advances to next slot</span>
+                </div>
+
+                <div id="slots-container" class="space-y-2 pr-1"></div>
 
                 <button onclick="submitPack()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2.5 rounded text-sm transition mt-4">
                     Submit Entire Pack
@@ -155,7 +155,7 @@ text-align: center;
         <div id="tab-content-stats" class="hidden bg-slate-800 p-6 rounded-lg border border-slate-700 space-y-6">
             <div class="flex justify-between items-center">
                 <h2 class="text-lg font-bold text-slate-200">Drop Rate Statistics</h2>
-                <select id="stats-pack-type" onchange="loadDropRateStats()" class="bg-slate-900 border border-slate-700 text-xs rounded p-2 text-slate-200">
+                <select id="stats-pack-type" onchange="loadDropRateStats()" class="bg-slate-900 border border-slate-700 text-xs rounded p-2 text-slate-200 focus:outline-none focus:border-emerald-500">
                     <option value="Ceramic">Ceramic</option>
                     <option value="Aluminium">Aluminium</option>
                     <option value="Carbon Fiber">Carbon Fiber</option>
@@ -170,7 +170,7 @@ text-align: center;
         <div id="tab-content-finder" class="hidden bg-slate-800 p-6 rounded-lg border border-slate-700 space-y-6">
             <h2 class="text-lg font-bold text-slate-200">Collection Flavour Finder</h2>
             <div class="flex gap-2">
-                <input type="text" id="flavour-search-input" placeholder="Type flavour (e.g. GTI Collection)" class="flex-1 bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100">
+                <input type="text" id="flavour-search-input" placeholder="Type flavour (e.g. GTI Collection)" class="flex-1 bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
                 <button onclick="searchFlavourPulls()" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded text-sm font-medium">Search</button>
             </div>
             <div id="flavour-results-container" class="text-xs text-slate-400">
@@ -207,44 +207,40 @@ text-align: center;
             if (r.includes('common')) return { text: 'rarity-common', badge: 'badge-common' };
             return { text: 'text-slate-400', badge: 'bg-slate-800 text-slate-400' };
         }
-function toggleFlavourField() {
-const regular = document.getElementById('regular-pack').value;
-const container = document.getElementById('flavour-container');
- 
-if (regular === 'No') {
-container.classList.remove('hidden');
-} else {
-container.classList.add('hidden');
-}
-}
- 
-function loadFlavours() {
-const flavours =
-JSON.parse(localStorage.getItem('savedFlavours') || '[]');
- 
-const datalist =
-document.getElementById('flavour-list');
- 
-datalist.innerHTML =
-flavours.map(f => `<option value="${f}">`).join('');
-}
- 
-function saveFlavour(flavour) {
- 
-if (!flavour) return;
- 
-let flavours =
-JSON.parse(localStorage.getItem('savedFlavours') || '[]');
- 
-if (!flavours.includes(flavour)) {
-flavours.push(flavour);
- 
-localStorage.setItem(
-'savedFlavours',
-JSON.stringify(flavours)
-);
-}
-}
+
+        function toggleFlavourField() {
+            const regular = document.getElementById('regular-pack').value;
+            const container = document.getElementById('flavour-container');
+            const subtypeInput = document.getElementById('pack-subtype');
+
+            if (regular === 'No') {
+                container.classList.remove('hidden');
+                if (subtypeInput.value === 'Regular') {
+                    subtypeInput.value = '';
+                }
+                subtypeInput.required = true;
+            } else {
+                container.classList.add('hidden');
+                subtypeInput.value = 'Regular';
+                subtypeInput.required = false;
+            }
+        }
+
+        function loadFlavours() {
+            const flavours = JSON.parse(localStorage.getItem('savedFlavours') || '[]');
+            const datalist = document.getElementById('flavour-list');
+            datalist.innerHTML = flavours.map(f => `<option value="${f}">`).join('');
+        }
+
+        function saveFlavour(flavour) {
+            if (!flavour) return;
+            let flavours = JSON.parse(localStorage.getItem('savedFlavours') || '[]');
+            if (!flavours.includes(flavour)) {
+                flavours.push(flavour);
+                localStorage.setItem('savedFlavours', JSON.stringify(flavours));
+            }
+        }
+
         function switchTab(tabName) {
             const tabs = ['logger', 'stats', 'finder'];
             tabs.forEach(t => {
@@ -289,11 +285,12 @@ JSON.stringify(flavours)
         async function searchCarsForSlot(slotIndex) {
             const query = document.getElementById(`slot-input-${slotIndex}`).value.trim();
             const suggestions = document.getElementById(`slot-suggestions-${slotIndex}`);
+            
             document.querySelectorAll('[id^="slot-suggestions-"]').forEach(el => {
-if (el.id !== `slot-suggestions-${slotIndex}`) {
-el.classList.add('hidden');
-}
-});
+                if (el.id !== `slot-suggestions-${slotIndex}`) {
+                    el.classList.add('hidden');
+                }
+            });
 
             if (query.length < 2) {
                 suggestions.classList.add('hidden');
@@ -350,47 +347,42 @@ el.classList.add('hidden');
         async function submitPack() {
             const date = document.getElementById('date-pulled').value;
             const packType = document.getElementById('pack-type').value;
-            const packSubtype = document.getElementById('pack-subtype').value;
-if (!date) {
-alert('Please select a date.');
-return;
-}
- 
-if (!packType) {
-alert('Please select a pack type.');
-return;
-}
- 
-if (
-document.getElementById('regular-pack').value === 'No' &&
-!packSubtype.trim()
-) {
-alert('Please select or enter a collection flavour.');
-return;
-}
-            if (
-document.getElementById('regular-pack').value === 'Yes'
-) {
-document.getElementById('pack-subtype').value = 'Regular';
-} else {
-saveFlavour(packSubtype);
-}
-            const filledSlots = activeSlotsData.filter(item => item !== null);
+            const regularPack = document.getElementById('regular-pack').value;
+            let packSubtype = document.getElementById('pack-subtype').value.trim();
 
-            if (filledSlots.length === 0) {
-                alert('Please select at least one car before submitting.');
+            if (!date) {
+                alert('Please select a date.');
                 return;
             }
 
+            if (!packType) {
+                alert('Please select a pack type.');
+                return;
+            }
+
+            if (regularPack === 'Yes') {
+                packSubtype = 'Regular';
+                document.getElementById('pack-subtype').value = 'Regular';
+            } else {
+                if (!packSubtype) {
+                    alert('Please select or enter a collection flavour.');
+                    return;
+                }
+                saveFlavour(packSubtype);
+            }
+
+            const count = parseInt(document.getElementById('card-count-select').value) || 5;
+
+            for (let i = 0; i < count; i++) {
+                if (!activeSlotsData[i]) {
+                    alert(`Please select a car for Card ${i + 1}.`);
+                    return;
+                }
+            }
+
             const packGroupId = crypto.randomUUID();
-const missingCard = activeSlotsData.find(card => !card);
- 
-if (missingCard !== undefined) {
-alert('Please select a car for every card slot.');
-return;
-}
-            const rowsToInsert = activeSlotsData.map((car, idx) => {
-                if (!car) return null;
+
+            const rowsToInsert = activeSlotsData.slice(0, count).map((car, idx) => {
                 return {
                     date: date,
                     pack_type: packType,
@@ -401,9 +393,9 @@ return;
                     car_id: car.id,
                     pack_group_id: packGroupId,
                     slot_number: idx + 1,
-                    weight_tier: Math.ceil((activeSlotsData.length - idx) / (activeSlotsData.length / 5))
+                    weight_tier: Math.ceil((count - idx) / (count / 5))
                 };
-            }).filter(Boolean);
+            });
 
             const { error } = await db.from('pulls').insert(rowsToInsert);
 
@@ -558,33 +550,23 @@ return;
             container.innerHTML = html;
         }
 
-async function deletePull(id) {
-console.log('DELETE CLICKED', id);
- 
-if (!confirm('Are you sure you want to delete this logged pull?')) return;
- 
-const { error } = await db.from('pulls').delete().eq('id', id);
- 
-console.log('DELETE RESULT', error);
- 
-if (error) {
-alert('Error deleting pull: ' + error.message);
-} else {
-loadPulls();
-}
-}
-function formatDisplayDate(dateString) {
-if (!dateString) return '';
- 
-const months = [
-'Jan','Feb','Mar','Apr','May','Jun',
-'Jul','Aug','Sep','Oct','Nov','Dec'
-];
- 
-const date = new Date(dateString);
- 
-return `${date.getDate()}-${months[date.getMonth()]}-${date.getFullYear()}`;
-}
+        async function deletePull(id) {
+            if (!confirm('Are you sure you want to delete this logged pull?')) return;
+            const { error } = await db.from('pulls').delete().eq('id', id);
+            if (error) {
+                alert('Error deleting pull: ' + error.message);
+            } else {
+                loadPulls();
+            }
+        }
+
+        function formatDisplayDate(dateString) {
+            if (!dateString) return '';
+            const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            const date = new Date(dateString);
+            return `${date.getDate()}-${months[date.getMonth()]}-${date.getFullYear()}`;
+        }
+
         async function loadPulls() {
             const { data, error } = await db
                 .from('pulls')
@@ -624,20 +606,22 @@ return `${date.getDate()}-${months[date.getMonth()]}-${date.getFullYear()}`;
                 `;
             }).join('');
         }
-document.addEventListener('click', function(event) {
-if (
-!event.target.closest('[id^="slot-input-"]') &&
-!event.target.closest('[id^="slot-suggestions-"]')
-) {
-document.querySelectorAll('[id^="slot-suggestions-"]').forEach(el => {
-el.classList.add('hidden');
-});
-}
-});
+
+        document.addEventListener('click', function(event) {
+            if (
+                !event.target.closest('[id^="slot-input-"]') &&
+                !event.target.closest('[id^="slot-suggestions-"]')
+            ) {
+                document.querySelectorAll('[id^="slot-suggestions-"]').forEach(el => {
+                    el.classList.add('hidden');
+                });
+            }
+        });
+
         generateCardSlots();
-loadPulls();
-loadFlavours();
-toggleFlavourField();
+        loadPulls();
+        loadFlavours();
+        toggleFlavourField();
     </script>
 </body>
 </html>
