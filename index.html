@@ -94,9 +94,35 @@ text-align: center;
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs text-slate-400 mb-1">Pack Subtype / Flavour</label>
-                        <input type="text" id="pack-subtype" placeholder="e.g. Regular or GTI Collection" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100">
-                    </div>
+                        <div>
+<label class="block text-xs text-slate-400 mb-1">
+Regular Pack?
+</label>
+ 
+<select
+id="regular-pack"
+onchange="toggleFlavourField()"
+class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100">
+ 
+<option value="Yes" selected>Yes</option>
+<option value="No">No</option>
+ 
+</select>
+</div>
+ 
+<div id="flavour-container" class="hidden">
+<label class="block text-xs text-slate-400 mb-1">
+Collection Flavour
+</label>
+ 
+<input
+list="flavour-list"
+id="pack-subtype"
+placeholder="e.g. GTI Collection"
+class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100">
+ 
+<datalist id="flavour-list"></datalist>
+</div>
                 </div>
 
                 <hr class="border-slate-700/60 my-2">
@@ -196,7 +222,44 @@ text-align: center;
             if (r.includes('common')) return { text: 'rarity-common', badge: 'badge-common' };
             return { text: 'text-slate-400', badge: 'bg-slate-800 text-slate-400' };
         }
-
+function toggleFlavourField() {
+const regular = document.getElementById('regular-pack').value;
+const container = document.getElementById('flavour-container');
+ 
+if (regular === 'No') {
+container.classList.remove('hidden');
+} else {
+container.classList.add('hidden');
+}
+}
+ 
+function loadFlavours() {
+const flavours =
+JSON.parse(localStorage.getItem('savedFlavours') || '[]');
+ 
+const datalist =
+document.getElementById('flavour-list');
+ 
+datalist.innerHTML =
+flavours.map(f => `<option value="${f}">`).join('');
+}
+ 
+function saveFlavour(flavour) {
+ 
+if (!flavour) return;
+ 
+let flavours =
+JSON.parse(localStorage.getItem('savedFlavours') || '[]');
+ 
+if (!flavours.includes(flavour)) {
+flavours.push(flavour);
+ 
+localStorage.setItem(
+'savedFlavours',
+JSON.stringify(flavours)
+);
+}
+}
         function switchTab(tabName) {
             const tabs = ['logger', 'stats', 'finder'];
             tabs.forEach(t => {
@@ -303,7 +366,7 @@ el.classList.add('hidden');
             const date = document.getElementById('date-pulled').value;
             const packType = document.getElementById('pack-type').value;
             const packSubtype = document.getElementById('pack-subtype').value;
-if (!datePulled) {
+if (!date) {
 alert('Please select a date.');
 return;
 }
@@ -313,9 +376,19 @@ alert('Please select a pack type.');
 return;
 }
  
-if (!packSubtype.trim()) {
-alert('Please enter a pack subtype/flavour.');
+if (
+document.getElementById('regular-pack').value === 'No' &&
+!packSubtype.trim()
+) {
+alert('Please select or enter a collection flavour.');
 return;
+}
+            if (
+document.getElementById('regular-pack').value === 'Yes'
+) {
+document.getElementById('pack-subtype').value = 'Regular';
+} else {
+saveFlavour(packSubtype);
 }
             const filledSlots = activeSlotsData.filter(item => item !== null);
 
@@ -573,7 +646,9 @@ el.classList.add('hidden');
 }
 });
         generateCardSlots();
-        loadPulls();
+loadPulls();
+loadFlavours();
+toggleFlavourField();
     </script>
 </body>
 </html>
