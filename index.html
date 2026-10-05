@@ -96,19 +96,18 @@ text-align: center;
  
 <div>
 <label class="block text-xs text-slate-400 mb-1">Regular Pack?</label>
- 
 <select id="regular-pack" onchange="toggleFlavourField()" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100">
 <option value="Yes" selected>Yes</option>
 <option value="No">No</option>
 </select>
 </div>
-<div id="flavour-container" class="hidden mt-3">
-<label class="block text-xs text-slate-400 mb-1">Collection Flavour</label>
  
-<input list="flavour-list" id="pack-subtype" placeholder="e.g. GTI Collection" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100">
- 
-<datalist id="flavour-list"></datalist>
 </div>
+ 
+<div id="flavour-container" class="hidden">
+<label class="block text-xs text-slate-400 mb-1">Collection Flavour</label>
+<input list="flavour-list" id="pack-subtype" placeholder="e.g. GTI Collection" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100">
+<datalist id="flavour-list"></datalist>
 </div>
                 </div>
 
