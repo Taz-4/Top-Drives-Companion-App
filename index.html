@@ -110,7 +110,7 @@
                 </button>
             </div>
 
-            <!-- Logger Recent Table (Fixed View - No Sorting Headers) -->
+            <!-- Logger Recent Table -->
             <div class="lg:col-span-8 bg-slate-800 p-6 rounded-lg border border-slate-700 space-y-3">
                 <div class="flex justify-between items-center">
                     <h2 class="text-lg font-bold text-slate-200">Recent Logged Pulls <span class="text-xs text-slate-500 font-normal">(Last 30 Cards)</span></h2>
@@ -121,9 +121,9 @@
                         <thead class="bg-slate-900 text-slate-400 uppercase font-mono select-none">
                             <tr>
                                 <th class="py-3 px-3 w-28">Date</th>
-                                <th class="py-3 px-3 w-28">Pack</th>
+                                <th class="py-3 px-3 w-32">Pack & Slot</th>
                                 <th class="py-3 px-3 w-28">Obtained</th>
-                                <th class="py-3 px-3 w-32">Flavour</th>
+                                <th class="py-3 px-3 w-28">Flavour</th>
                                 <th class="py-3 px-3">Car</th>
                                 <th class="py-3 px-3 text-right w-16">RQ</th>
                                 <th class="py-3 px-3 w-28">Rarity</th>
@@ -156,9 +156,9 @@
                     <thead class="bg-slate-900 text-slate-400 uppercase font-mono select-none">
                         <tr>
                             <th onclick="toggleSort('date')" class="py-3 px-3 w-28 cursor-pointer hover:text-emerald-400 transition">Date ↕</th>
-                            <th onclick="toggleSort('pack_type')" class="py-3 px-3 w-28 cursor-pointer hover:text-emerald-400 transition">Pack ↕</th>
+                            <th onclick="toggleSort('pack_type')" class="py-3 px-3 w-32 cursor-pointer hover:text-emerald-400 transition">Pack & Slot ↕</th>
                             <th onclick="toggleSort('obtained')" class="py-3 px-3 w-28 cursor-pointer hover:text-emerald-400 transition">Obtained ↕</th>
-                            <th onclick="toggleSort('pack_subtype')" class="py-3 px-3 w-32 cursor-pointer hover:text-emerald-400 transition">Flavour ↕</th>
+                            <th onclick="toggleSort('pack_subtype')" class="py-3 px-3 w-28 cursor-pointer hover:text-emerald-400 transition">Flavour ↕</th>
                             <th onclick="toggleSort('car_name')" class="py-3 px-3 cursor-pointer hover:text-emerald-400 transition">Car ↕</th>
                             <th onclick="toggleSort('car_rq')" class="py-3 px-3 text-right w-16 cursor-pointer hover:text-emerald-400 transition">RQ ↕</th>
                             <th onclick="toggleSort('car_rarity')" class="py-3 px-3 w-28 cursor-pointer hover:text-emerald-400 transition">Rarity ↕</th>
@@ -623,16 +623,25 @@
                 const safeType = (pull.pack_type || '').replace(/'/g, "\\'");
                 const safeObtained = (pull.obtained || '').replace(/'/g, "\\'");
                 const safeSubtype = (pull.pack_subtype || '').replace(/'/g, "\\'");
-                
-                // Option 1: Minimal Legacy Pill Badge
+
+                // Option 1 & 4 Combined: Minimal Badge + Left Border Accent
                 const legacyBadge = pull.is_legacy 
                     ? `<span class="ml-1.5 px-1.5 py-0.5 text-[9px] font-mono tracking-wider text-slate-400 bg-slate-800 border border-slate-700/80 rounded uppercase select-none">Legacy</span>`
                     : '';
+                
+                const borderAccent = pull.is_legacy
+                    ? `border-l-2 border-slate-600/60`
+                    : `border-l-2 border-emerald-500/60`;
+
+                // Slot Number Indicator (Card X of Pack)
+                const slotText = pull.slot_number ? `<span class="text-[10px] text-slate-500 font-mono"> #${pull.slot_number}</span>` : '';
 
                 return `
-                    <tr class="hover:bg-slate-800/50 transition">
+                    <tr class="hover:bg-slate-800/50 transition ${borderAccent}">
                         <td class="py-2.5 px-3 whitespace-nowrap">${formatDisplayDate(pull.date)}</td>
-                        <td class="py-2.5 px-3 whitespace-nowrap">${pull.pack_type || '-'}</td>
+                        <td class="py-2.5 px-3 whitespace-nowrap font-medium text-slate-200">
+                            ${pull.pack_type || '-'}${slotText}
+                        </td>
                         <td class="py-2.5 px-3 whitespace-nowrap text-slate-300">${pull.obtained || '-'}</td>
                         <td class="py-2.5 px-3 whitespace-nowrap">${pull.pack_subtype || '-'}</td>
                         <td class="py-2.5 px-3 font-medium text-slate-100 min-w-[160px]">
