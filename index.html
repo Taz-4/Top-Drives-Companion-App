@@ -44,23 +44,8 @@
             <span id="db-status" class="bg-emerald-900/50 text-emerald-400 text-xs px-3 py-1 rounded border border-emerald-700">Database Connected</span>
         </div>
 
-        <!-- Tab Navigation Bar -->
-        <div class="border-b border-slate-800">
-            <nav class="flex space-x-2">
-                <button id="tab-btn-logger" onclick="switchTab('logger')" class="px-4 py-2 text-sm font-medium rounded-t-lg bg-slate-800 text-emerald-400 border-b-2 border-emerald-500 cursor-pointer">
-                    Pack Logger
-                </button>
-                <button id="tab-btn-stats" onclick="switchTab('stats')" class="px-4 py-2 text-sm font-medium rounded-t-lg text-slate-400 hover:text-slate-200 cursor-pointer">
-                    Drop Rate Statistics
-                </button>
-                <button id="tab-btn-finder" onclick="switchTab('finder')" class="px-4 py-2 text-sm font-medium rounded-t-lg text-slate-400 hover:text-slate-200 cursor-pointer">
-                    Collection Flavour Finder
-                </button>
-            </nav>
-        </div>
-
-        <!-- TAB 1: PACK LOGGER -->
-        <div id="tab-content-logger" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- MAIN LOGGER LAYOUT -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <!-- Logger Form (33% Width) -->
             <div class="lg:col-span-4 bg-slate-800 p-6 rounded-lg border border-slate-700 space-y-4 h-fit">
                 <h2 class="text-lg font-bold text-slate-200">Log New Pack Opening</h2>
@@ -86,7 +71,7 @@
                         <div id="pack-type-dropdown" class="custom-dropdown-list absolute left-0 right-0 top-full mt-1 bg-slate-900 border border-slate-700 rounded shadow-2xl max-h-48 overflow-y-auto hidden z-40"></div>
                     </div>
 
-                    <!-- Obtained Field (Featured Before Regular Question) -->
+                    <!-- Obtained Field -->
                     <div class="relative custom-dropdown-container">
                         <label class="block text-xs text-slate-400 mb-1">Obtained <span class="text-red-400">*</span></label>
                         <input type="text" id="obtained" placeholder="Select or type..." required autocomplete="off" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
@@ -101,10 +86,11 @@
                         </select>
                     </div>
 
-                    <div id="flavour-container" class="col-span-2 hidden">
+                    <!-- Collection / Flavour Field (Custom Dropdown) -->
+                    <div id="flavour-container" class="col-span-2 hidden relative custom-dropdown-container">
                         <label class="block text-xs text-slate-400 mb-1">Collection / Flavour <span class="text-red-400">*</span></label>
-                        <input list="flavour-list" id="pack-subtype" placeholder="e.g. GTI Collection" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
-                        <datalist id="flavour-list"></datalist>
+                        <input type="text" id="pack-subtype" placeholder="e.g. GTI Collection" autocomplete="off" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
+                        <div id="pack-subtype-dropdown" class="custom-dropdown-list absolute left-0 right-0 top-full mt-1 bg-slate-900 border border-slate-700 rounded shadow-2xl max-h-48 overflow-y-auto hidden z-40"></div>
                     </div>
                 </div>
 
@@ -147,28 +133,6 @@
                         </tbody>
                     </table>
                 </div>
-            </div>
-        </div>
-
-        <!-- TAB 2: DROP RATE STATISTICS -->
-        <div id="tab-content-stats" class="hidden bg-slate-800 p-6 rounded-lg border border-slate-700 space-y-6">
-            <div class="flex justify-between items-center">
-                <h2 class="text-lg font-bold text-slate-200">Drop Rate Statistics</h2>
-                <select id="stats-pack-type" onchange="loadDropRateStats()" class="bg-slate-900 border border-slate-700 text-xs rounded p-2 text-slate-200 focus:outline-none focus:border-emerald-500">
-                </select>
-            </div>
-            <div id="stats-display-container" class="space-y-4"></div>
-        </div>
-
-        <!-- TAB 3: COLLECTION FLAVOUR FINDER -->
-        <div id="tab-content-finder" class="hidden bg-slate-800 p-6 rounded-lg border border-slate-700 space-y-6">
-            <h2 class="text-lg font-bold text-slate-200">Collection Flavour Finder</h2>
-            <div class="flex gap-2">
-                <input type="text" id="flavour-search-input" placeholder="Type flavour (e.g. GTI Collection)" class="flex-1 bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
-                <button onclick="searchFlavourPulls()" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded text-sm font-medium">Search</button>
-            </div>
-            <div id="flavour-results-container" class="text-xs text-slate-400">
-                Enter a flavour above to analyse pull counts across pack types.
             </div>
         </div>
     </div>
@@ -245,22 +209,16 @@
             'Tri-series'
         ];
 
-        const OFFICIAL_ODDS = {
-            'Plastic': { 'Rare': 1.50, 'Uncommon': 68.50, 'Common': 30.00 },
-            'Steel': { 'Super Rare': 1.00, 'Rare': 37.50, 'Uncommon': 61.50 },
-            'Aluminium': { 'Ultra Rare': 1.50, 'Super Rare': 18.50, 'Rare': 80.00 },
-            'Ceramic': { 'Legendary': 0.65, 'Epic': 2.50, 'Ultra Rare': 14.00, 'Super Rare': 82.85 },
-            'Carbon Fiber': { 'Legendary': 2.50, 'Epic': 17.75, 'Ultra Rare': 79.75 }
-        };
+        // Default Collection / Flavours
+        const DEFAULT_FLAVOUR_OPTIONS = [];
 
         /* Custom Creatable & Deletable Dropdown Class */
         class CustomDropdown {
-            constructor({ inputId, dropdownId, storageKey, defaultOptions, onUpdate }) {
+            constructor({ inputId, dropdownId, storageKey, defaultOptions }) {
                 this.input = document.getElementById(inputId);
                 this.dropdown = document.getElementById(dropdownId);
                 this.storageKey = storageKey;
                 this.defaultOptions = defaultOptions;
-                this.onUpdate = onUpdate;
                 this.options = this.loadOptions();
 
                 this.init();
@@ -274,7 +232,6 @@
 
             saveOptions() {
                 localStorage.setItem(this.storageKey, JSON.stringify(this.options));
-                if (this.onUpdate) this.onUpdate(this.options);
             }
 
             sortOptions(arr) {
@@ -383,11 +340,7 @@
 
         let packTypeDropdown;
         let obtainedDropdown;
-
-        function syncStatsPackTypeOptions(types) {
-            const statsSelect = document.getElementById('stats-pack-type');
-            statsSelect.innerHTML = types.map(t => `<option value="${t}">${t}</option>`).join('');
-        }
+        let flavourDropdown;
 
         function populateCardCountOptions() {
             const select = document.getElementById('card-count-select');
@@ -428,40 +381,6 @@
                 container.classList.add('hidden');
                 subtypeInput.value = 'Regular';
                 subtypeInput.required = false;
-            }
-        }
-
-        function loadFlavours() {
-            const flavours = JSON.parse(localStorage.getItem('savedFlavours') || '[]');
-            const datalist = document.getElementById('flavour-list');
-            datalist.innerHTML = flavours.map(f => `<option value="${f}">`).join('');
-        }
-
-        function saveFlavour(flavour) {
-            if (!flavour) return;
-            let flavours = JSON.parse(localStorage.getItem('savedFlavours') || '[]');
-            if (!flavours.includes(flavour)) {
-                flavours.push(flavour);
-                localStorage.setItem('savedFlavours', JSON.stringify(flavours));
-            }
-        }
-
-        function switchTab(tabName) {
-            const tabs = ['logger', 'stats', 'finder'];
-            tabs.forEach(t => {
-                const content = document.getElementById(`tab-content-${t}`);
-                const btn = document.getElementById(`tab-btn-${t}`);
-                if (t === tabName) {
-                    content.classList.remove('hidden');
-                    btn.className = "px-4 py-2 text-sm font-medium rounded-t-lg bg-slate-800 text-emerald-400 border-b-2 border-emerald-500 cursor-pointer";
-                } else {
-                    content.classList.add('hidden');
-                    btn.className = "px-4 py-2 text-sm font-medium rounded-t-lg text-slate-400 hover:text-slate-200 cursor-pointer";
-                }
-            });
-
-            if (tabName === 'stats') {
-                loadDropRateStats();
             }
         }
 
@@ -582,7 +501,7 @@
                     alert('Please select or enter a collection flavour.');
                     return;
                 }
-                saveFlavour(packSubtype);
+                flavourDropdown.addOption(packSubtype);
             }
 
             const count = parseInt(document.getElementById('card-count-select').value) || 5;
@@ -788,149 +707,6 @@
             }).join('');
         }
 
-        async function loadDropRateStats() {
-            const packType = document.getElementById('stats-pack-type').value;
-            const statsContainer = document.getElementById('stats-display-container');
-
-            const { data: pulls, error } = await db
-                .from('pulls')
-                .select('car_rarity, slot_number, pack_group_id')
-                .eq('pack_type', packType);
-
-            if (error || !pulls || pulls.length === 0) {
-                statsContainer.innerHTML = `<div class="p-4 text-center text-slate-400 text-xs">No logged pulls found for ${packType}.</div>`;
-                return;
-            }
-
-            const packGroups = {};
-            pulls.forEach(p => {
-                const gid = p.pack_group_id || ('single_' + Math.random());
-                if (!packGroups[gid]) packGroups[gid] = [];
-                packGroups[gid].push(p);
-            });
-
-            let topSlotPulls = [];
-            Object.values(packGroups).forEach(group => {
-                const maxSlot = Math.max(...group.map(g => g.slot_number || 1));
-                const topCard = group.find(g => (g.slot_number || 1) === maxSlot);
-                if (topCard) topSlotPulls.push(topCard);
-            });
-
-            const totalPacks = topSlotPulls.length;
-            const totalCards = pulls.length;
-
-            const rarityCounts = {
-                'Legendary': 0,
-                'Epic': 0,
-                'Ultra Rare': 0,
-                'Super Rare': 0,
-                'Rare': 0,
-                'Uncommon': 0,
-                'Common': 0
-            };
-
-            topSlotPulls.forEach(p => {
-                if (rarityCounts[p.car_rarity] !== undefined) {
-                    rarityCounts[p.car_rarity]++;
-                }
-            });
-
-            const packOdds = OFFICIAL_ODDS[packType] || {};
-
-            let html = `
-                <div class="grid grid-cols-2 gap-4 mb-6">
-                    <div class="bg-slate-900 p-4 rounded border border-slate-700">
-                        <div class="text-xs text-slate-400">Total Packs Opened</div>
-                        <div class="text-2xl font-bold font-mono text-emerald-400">${totalPacks}</div>
-                    </div>
-                    <div class="bg-slate-900 p-4 rounded border border-slate-700">
-                        <div class="text-xs text-slate-400">Total Cards Logged</div>
-                        <div class="text-2xl font-bold font-mono text-slate-100">${totalCards}</div>
-                    </div>
-                </div>
-
-                <div class="space-y-3">
-                    <div class="text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Top Slot Drop Rates vs Official Odds</div>
-            `;
-
-            const rarities = ['Legendary', 'Epic', 'Ultra Rare', 'Super Rare', 'Rare', 'Uncommon', 'Common'];
-
-            rarities.forEach(rarity => {
-                const count = rarityCounts[rarity];
-                const actualPct = totalPacks > 0 ? ((count / totalPacks) * 100).toFixed(1) : '0.0';
-                const officialPct = packOdds[rarity] !== undefined ? `${packOdds[rarity]}%` : 'N/A';
-                const classes = getRarityClass(rarity);
-
-                html += `
-                    <div class="bg-slate-900 p-3 rounded border border-slate-700 space-y-1">
-                        <div class="flex justify-between items-center">
-                            <span class="font-medium text-xs ${classes.text}">${rarity}</span>
-                            <span class="font-mono text-xs text-slate-200">${count} pulled (${actualPct}%)</span>
-                        </div>
-                        <div class="flex justify-between items-center text-[11px] text-slate-400 font-mono">
-                            <span>Official Top Slot Odds:</span>
-                            <span class="text-slate-300">${officialPct}</span>
-                        </div>
-                    </div>
-                `;
-            });
-
-            html += `</div>`;
-            statsContainer.innerHTML = html;
-        }
-
-        async function searchFlavourPulls() {
-            const query = document.getElementById('flavour-search-input').value.trim();
-            const container = document.getElementById('flavour-results-container');
-
-            if (!query) {
-                container.innerHTML = 'Enter a flavour above to analyse pull counts across pack types.';
-                return;
-            }
-
-            const { data, error } = await db
-                .from('pulls')
-                .select('pack_type, car_rarity')
-                .ilike('pack_subtype', `%${query}%`);
-
-            if (error) {
-                container.innerHTML = `<span class="text-red-400">Error: ${error.message}</span>`;
-                return;
-            }
-
-            if (!data || data.length === 0) {
-                container.innerHTML = `<span class="text-slate-500">No logged pulls matching "${query}".</span>`;
-                return;
-            }
-
-            const packCounts = {};
-            data.forEach(pull => {
-                const pack = pull.pack_type || 'Unknown';
-                packCounts[pack] = (packCounts[pack] || 0) + 1;
-            });
-
-            let html = `
-                <div class="mt-2 p-3 bg-slate-900 rounded border border-slate-700 space-y-2">
-                    <div class="flex justify-between items-center text-xs font-semibold text-slate-300">
-                        <span>Matching Flavour Logs:</span>
-                        <span class="text-emerald-400 font-mono">${data.length} Total</span>
-                    </div>
-                    <div class="grid grid-cols-2 gap-2">
-            `;
-
-            for (const [pack, count] of Object.entries(packCounts)) {
-                html += `
-                    <div class="flex justify-between bg-slate-800 p-2 rounded border border-slate-700/50">
-                        <span class="text-slate-300">${pack}</span>
-                        <span class="font-mono text-emerald-400 font-bold">${count}</span>
-                    </div>
-                `;
-            }
-
-            html += `</div></div>`;
-            container.innerHTML = html;
-        }
-
         // Close slot search suggestions when clicking outside
         document.addEventListener('click', function(event) {
             if (
@@ -947,13 +723,12 @@
             }
         });
 
-        // Initialize Dropdowns
+        // Initialize Custom Dropdowns
         packTypeDropdown = new CustomDropdown({
             inputId: 'pack-type',
             dropdownId: 'pack-type-dropdown',
             storageKey: 'savedPackTypes_v2',
-            defaultOptions: DEFAULT_PACK_TYPES,
-            onUpdate: syncStatsPackTypeOptions
+            defaultOptions: DEFAULT_PACK_TYPES
         });
 
         obtainedDropdown = new CustomDropdown({
@@ -963,12 +738,16 @@
             defaultOptions: DEFAULT_OBTAINED_OPTIONS
         });
 
-        syncStatsPackTypeOptions(packTypeDropdown.options);
+        flavourDropdown = new CustomDropdown({
+            inputId: 'pack-subtype',
+            dropdownId: 'pack-subtype-dropdown',
+            storageKey: 'savedFlavours_v2',
+            defaultOptions: DEFAULT_FLAVOUR_OPTIONS
+        });
 
         populateCardCountOptions();
         generateCardSlots();
         loadPulls();
-        loadFlavours();
         toggleFlavourField();
     </script>
 </body>
