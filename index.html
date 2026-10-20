@@ -600,6 +600,7 @@
                 .from('pulls')
                 .select('*')
                 .order(currentSortColumn, { ascending: currentSortAscending })
+                .order('pack_group_id', { ascending: true, nullsFirst: false })
                 .order('slot_number', { ascending: true })
                 .limit(200);
 
@@ -620,10 +621,9 @@
             let lastPackGroupId = null;
             let packColorToggle = false;
 
-            // Alternating border accent classes per pack submission
             const ACCENT_COLOR_A = 'border-l-4 border-emerald-500';
             const ACCENT_COLOR_B = 'border-l-4 border-cyan-500';
-            const ACCENT_LEGACY = 'border-l-4 border-slate-600';
+            const ACCENT_LEGACY  = 'border-l-4 border-slate-600/60';
 
             return rows.map(pull => {
                 const classes = getRarityClass(pull.car_rarity);
@@ -632,25 +632,28 @@
                 const safeObtained = (pull.obtained || '').replace(/'/g, "\\'");
                 const safeSubtype = (pull.pack_subtype || '').replace(/'/g, "\\'");
 
-                // Determine border color based on Pack Group
-                let currentBorderClass = ACCENT_LEGACY;
+                let currentBorderClass = '';
 
-                if (pull.pack_group_id) {
-                    if (pull.pack_group_id !== lastPackGroupId) {
-                        packColorToggle = !packColorToggle;
-                        lastPackGroupId = pull.pack_group_id;
-                    }
-                    currentBorderClass = packColorToggle ? ACCENT_COLOR_A : ACCENT_COLOR_B;
+                // 1. ALL Legacy rows always receive constant Slate Grey highlight
+                if (pull.is_legacy) {
+                    currentBorderClass = ACCENT_LEGACY;
                 } else {
-                    lastPackGroupId = null;
+                    // 2. Live submitted packs alternate color ONLY when pack_group_id changes
+                    if (pull.pack_group_id) {
+                        if (pull.pack_group_id !== lastPackGroupId) {
+                            packColorToggle = !packColorToggle;
+                            lastPackGroupId = pull.pack_group_id;
+                        }
+                        currentBorderClass = packColorToggle ? ACCENT_COLOR_A : ACCENT_COLOR_B;
+                    } else {
+                        currentBorderClass = ACCENT_COLOR_A;
+                    }
                 }
 
-                // Minimal Legacy Pill Badge
                 const legacyBadge = pull.is_legacy 
                     ? `<span class="ml-1.5 px-1.5 py-0.5 text-[9px] font-mono tracking-wider text-slate-400 bg-slate-800 border border-slate-700/80 rounded uppercase select-none">Legacy</span>`
                     : '';
 
-                // Slot Number Indicator (#1, #2, etc.)
                 const slotText = pull.slot_number ? `<span class="text-[10px] text-slate-500 font-mono"> #${pull.slot_number}</span>` : '';
 
                 return `
