@@ -617,6 +617,14 @@
         }
 
         function renderTableRows(rows) {
+            let lastPackGroupId = null;
+            let packColorToggle = false;
+
+            // Alternating border accent classes per pack submission
+            const ACCENT_COLOR_A = 'border-l-4 border-emerald-500';
+            const ACCENT_COLOR_B = 'border-l-4 border-cyan-500';
+            const ACCENT_LEGACY = 'border-l-4 border-slate-600';
+
             return rows.map(pull => {
                 const classes = getRarityClass(pull.car_rarity);
                 const safeName = (pull.car_name || '').replace(/'/g, "\\'");
@@ -624,21 +632,30 @@
                 const safeObtained = (pull.obtained || '').replace(/'/g, "\\'");
                 const safeSubtype = (pull.pack_subtype || '').replace(/'/g, "\\'");
 
-                // Option 1 & 4 Combined: Minimal Badge + Left Border Accent
+                // Determine border color based on Pack Group
+                let currentBorderClass = ACCENT_LEGACY;
+
+                if (pull.pack_group_id) {
+                    if (pull.pack_group_id !== lastPackGroupId) {
+                        packColorToggle = !packColorToggle;
+                        lastPackGroupId = pull.pack_group_id;
+                    }
+                    currentBorderClass = packColorToggle ? ACCENT_COLOR_A : ACCENT_COLOR_B;
+                } else {
+                    lastPackGroupId = null;
+                }
+
+                // Minimal Legacy Pill Badge
                 const legacyBadge = pull.is_legacy 
                     ? `<span class="ml-1.5 px-1.5 py-0.5 text-[9px] font-mono tracking-wider text-slate-400 bg-slate-800 border border-slate-700/80 rounded uppercase select-none">Legacy</span>`
                     : '';
-                
-                const borderAccent = pull.is_legacy
-                    ? `border-l-2 border-slate-600/60`
-                    : `border-l-2 border-emerald-500/60`;
 
-                // Slot Number Indicator (Card X of Pack)
+                // Slot Number Indicator (#1, #2, etc.)
                 const slotText = pull.slot_number ? `<span class="text-[10px] text-slate-500 font-mono"> #${pull.slot_number}</span>` : '';
 
                 return `
-                    <tr class="hover:bg-slate-800/50 transition ${borderAccent}">
-                        <td class="py-2.5 px-3 whitespace-nowrap">${formatDisplayDate(pull.date)}</td>
+                    <tr class="hover:bg-slate-800/50 transition">
+                        <td class="py-2.5 px-3 whitespace-nowrap ${currentBorderClass}">${formatDisplayDate(pull.date)}</td>
                         <td class="py-2.5 px-3 whitespace-nowrap font-medium text-slate-200">
                             ${pull.pack_type || '-'}${slotText}
                         </td>
