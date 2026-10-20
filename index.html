@@ -579,7 +579,6 @@
         }
 
         async function loadPulls() {
-            // Main page logger always shows strictly the 30 most recent cards by submission / date
             const { data, error } = await db
                 .from('pulls')
                 .select('*')
@@ -625,13 +624,23 @@
                 const safeObtained = (pull.obtained || '').replace(/'/g, "\\'");
                 const safeSubtype = (pull.pack_subtype || '').replace(/'/g, "\\'");
                 
+                // Option 1: Minimal Legacy Pill Badge
+                const legacyBadge = pull.is_legacy 
+                    ? `<span class="ml-1.5 px-1.5 py-0.5 text-[9px] font-mono tracking-wider text-slate-400 bg-slate-800 border border-slate-700/80 rounded uppercase select-none">Legacy</span>`
+                    : '';
+
                 return `
                     <tr class="hover:bg-slate-800/50 transition">
                         <td class="py-2.5 px-3 whitespace-nowrap">${formatDisplayDate(pull.date)}</td>
                         <td class="py-2.5 px-3 whitespace-nowrap">${pull.pack_type || '-'}</td>
                         <td class="py-2.5 px-3 whitespace-nowrap text-slate-300">${pull.obtained || '-'}</td>
                         <td class="py-2.5 px-3 whitespace-nowrap">${pull.pack_subtype || '-'}</td>
-                        <td class="py-2.5 px-3 font-medium text-slate-100 min-w-[160px]">${pull.car_name || 'N/A'}</td>
+                        <td class="py-2.5 px-3 font-medium text-slate-100 min-w-[160px]">
+                            <div class="flex items-center">
+                                <span>${pull.car_name || 'N/A'}</span>
+                                ${legacyBadge}
+                            </div>
+                        </td>
                         <td class="py-2.5 px-3 font-mono text-right pr-4 ${classes.text}">${pull.car_rq || '-'}</td>
                         <td class="py-2.5 px-3">
                             <span class="px-2 py-0.5 rounded text-[10px] font-semibold whitespace-nowrap inline-block ${classes.badge}">
