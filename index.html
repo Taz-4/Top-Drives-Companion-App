@@ -44,8 +44,20 @@
             <span id="db-status" class="bg-emerald-900/50 text-emerald-400 text-xs px-3 py-1 rounded border border-emerald-700">Database Connected</span>
         </div>
 
-        <!-- MAIN LOGGER LAYOUT -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Navigation Bar -->
+        <div class="border-b border-slate-800">
+            <nav class="flex space-x-2">
+                <button id="tab-btn-logger" onclick="switchTab('logger')" class="px-4 py-2 text-sm font-medium rounded-t-lg bg-slate-800 text-emerald-400 border-b-2 border-emerald-500 cursor-pointer">
+                    Pack Logger
+                </button>
+                <button id="tab-btn-history" onclick="switchTab('history')" class="px-4 py-2 text-sm font-medium rounded-t-lg text-slate-400 hover:text-slate-200 cursor-pointer">
+                    All Logs & History
+                </button>
+            </nav>
+        </div>
+
+        <!-- TAB 1: PACK LOGGER -->
+        <div id="tab-content-logger" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <!-- Logger Form (33% Width) -->
             <div class="lg:col-span-4 bg-slate-800 p-6 rounded-lg border border-slate-700 space-y-4 h-fit">
                 <h2 class="text-lg font-bold text-slate-200">Log New Pack Opening</h2>
@@ -86,7 +98,7 @@
                         </select>
                     </div>
 
-                    <!-- Collection / Flavour Field (Custom Dropdown) -->
+                    <!-- Collection / Flavour Field -->
                     <div id="flavour-container" class="col-span-2 hidden relative custom-dropdown-container">
                         <label class="block text-xs text-slate-400 mb-1">Collection / Flavour <span class="text-red-400">*</span></label>
                         <input type="text" id="pack-subtype" placeholder="e.g. GTI Collection" autocomplete="off" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
@@ -108,9 +120,12 @@
                 </button>
             </div>
 
-            <!-- Recent Pulls Table (67% Width) -->
+            <!-- Recent Pulls Table (67% Width - Limited to 30) -->
             <div class="lg:col-span-8 bg-slate-800 p-6 rounded-lg border border-slate-700 space-y-3">
-                <h2 class="text-lg font-bold text-slate-200">Recent Logged Pulls</h2>
+                <div class="flex justify-between items-center">
+                    <h2 class="text-lg font-bold text-slate-200">Recent Logged Pulls <span class="text-xs text-slate-500 font-normal">(Last 30 Cards)</span></h2>
+                    <button onclick="switchTab('history')" class="text-xs text-emerald-400 hover:underline">View All History →</button>
+                </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left text-xs text-slate-300">
                         <thead class="bg-slate-900 text-slate-400 uppercase font-mono">
@@ -133,6 +148,42 @@
                         </tbody>
                     </table>
                 </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: ALL LOGS & HISTORY -->
+        <div id="tab-content-history" class="hidden bg-slate-800 p-6 rounded-lg border border-slate-700 space-y-4">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-200">Complete Pull History</h2>
+                    <p class="text-xs text-slate-400">Search and edit across all recorded database entries.</p>
+                </div>
+                <div class="w-full md:w-80">
+                    <input type="text" id="history-search-input" oninput="loadHistoryPulls()" placeholder="Search car, pack, or flavour..." class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-xs text-slate-100 focus:outline-none focus:border-emerald-500">
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs text-slate-300">
+                    <thead class="bg-slate-900 text-slate-400 uppercase font-mono">
+                        <tr>
+                            <th class="py-3 px-3 w-24">Date</th>
+                            <th class="py-3 px-3 w-28">Pack</th>
+                            <th class="py-3 px-3 w-28">Obtained</th>
+                            <th class="py-3 px-3 w-32">Collection / Flavour</th>
+                            <th class="py-3 px-3">Car</th>
+                            <th class="py-3 px-3 text-right w-16">RQ</th>
+                            <th class="py-3 px-3 w-28">Rarity</th>
+                            <th class="py-3 px-2 text-center w-12">Edit</th>
+                            <th class="py-3 px-2 text-center w-12">Delete</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-table-body" class="divide-y divide-slate-800">
+                        <tr>
+                            <td colspan="9" class="p-4 text-center text-slate-500">Loading full history...</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -177,42 +228,10 @@
         let currentEditPullId = null;
         let pendingEditSelection = null;
 
-        // Default Pack Types (Alphabetical)
-        const DEFAULT_PACK_TYPES = [
-            'Aluminium',
-            'Carbon Fiber',
-            'Ceramic',
-            'Plastic',
-            'Platinum',
-            'Racing Pack',
-            'Steel',
-            'Titanium'
-        ];
-
-        // Default Obtained Options (Alphabetical)
-        const DEFAULT_OBTAINED_OPTIONS = [
-            'Adverts',
-            'Air Miles',
-            'Builder Coins',
-            'Cash',
-            'Challenge',
-            'Daily',
-            'Event',
-            'Free',
-            'Gold',
-            'IRL Money',
-            'Nismo',
-            'Objectives',
-            'Oddities Coin',
-            'Racing Coin',
-            'Spotted',
-            'Tri-series'
-        ];
-
-        // Default Collection / Flavours
+        const DEFAULT_PACK_TYPES = ['Aluminium', 'Carbon Fiber', 'Ceramic', 'Plastic', 'Platinum', 'Racing Pack', 'Steel', 'Titanium'];
+        const DEFAULT_OBTAINED_OPTIONS = ['Adverts', 'Air Miles', 'Builder Coins', 'Cash', 'Challenge', 'Daily', 'Event', 'Free', 'Gold', 'IRL Money', 'Nismo', 'Objectives', 'Oddities Coin', 'Racing Coin', 'Spotted', 'Tri-series'];
         const DEFAULT_FLAVOUR_OPTIONS = [];
 
-        /* Custom Creatable & Deletable Dropdown Class */
         class CustomDropdown {
             constructor({ inputId, dropdownId, storageKey, defaultOptions }) {
                 this.input = document.getElementById(inputId);
@@ -341,6 +360,25 @@
         let packTypeDropdown;
         let obtainedDropdown;
         let flavourDropdown;
+
+        function switchTab(tabName) {
+            const tabs = ['logger', 'history'];
+            tabs.forEach(t => {
+                const content = document.getElementById(`tab-content-${t}`);
+                const btn = document.getElementById(`tab-btn-${t}`);
+                if (t === tabName) {
+                    content.classList.remove('hidden');
+                    btn.className = "px-4 py-2 text-sm font-medium rounded-t-lg bg-slate-800 text-emerald-400 border-b-2 border-emerald-500 cursor-pointer";
+                } else {
+                    content.classList.add('hidden');
+                    btn.className = "px-4 py-2 text-sm font-medium rounded-t-lg text-slate-400 hover:text-slate-200 cursor-pointer";
+                }
+            });
+
+            if (tabName === 'history') {
+                loadHistoryPulls();
+            }
+        }
 
         function populateCardCountOptions() {
             const select = document.getElementById('card-count-select');
@@ -629,10 +667,13 @@
             if (error) {
                 alert('Error updating pull: ' + error.message);
             } else if (count === 0) {
-                alert('Update failed: 0 records were updated in Supabase. Please ensure your Supabase RLS policy allows UPDATE.');
+                alert('Update failed: 0 records were updated in Supabase.');
             } else {
                 closeEditModal();
                 loadPulls();
+                if (!document.getElementById('tab-content-history').classList.contains('hidden')) {
+                    loadHistoryPulls();
+                }
             }
         }
 
@@ -647,9 +688,12 @@
             if (error) {
                 alert('Error deleting pull: ' + error.message);
             } else if (count === 0) {
-                alert('Delete failed: 0 records were deleted in Supabase. Please ensure your Supabase RLS policy allows DELETE.');
+                alert('Delete failed: 0 records were deleted in Supabase.');
             } else {
                 loadPulls();
+                if (!document.getElementById('tab-content-history').classList.contains('hidden')) {
+                    loadHistoryPulls();
+                }
             }
         }
 
@@ -666,7 +710,7 @@
                 .select('*')
                 .order('created_at', { ascending: false })
                 .order('slot_number', { ascending: false })
-                .limit(25);
+                .limit(30);
 
             const tbody = document.getElementById('pulls-table-body');
 
@@ -675,7 +719,30 @@
                 return;
             }
 
-            tbody.innerHTML = data.map(pull => {
+            tbody.innerHTML = renderTableRows(data);
+        }
+
+        async function loadHistoryPulls() {
+            const query = document.getElementById('history-search-input').value.trim();
+            let dbQuery = db.from('pulls').select('*').order('created_at', { ascending: false }).order('slot_number', { ascending: false }).limit(200);
+
+            if (query) {
+                dbQuery = dbQuery.or(`car_name.ilike.%${query}%,pack_type.ilike.%${query}%,pack_subtype.ilike.%${query}%`);
+            }
+
+            const { data, error } = await dbQuery;
+            const tbody = document.getElementById('history-table-body');
+
+            if (error || !data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" class="p-4 text-center text-slate-500">No matching pulls found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = renderTableRows(data);
+        }
+
+        function renderTableRows(rows) {
+            return rows.map(pull => {
                 const classes = getRarityClass(pull.car_rarity);
                 const rqDisplay = pull.car_rq ? pull.car_rq : '-';
 
