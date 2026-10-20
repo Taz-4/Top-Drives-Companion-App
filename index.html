@@ -110,7 +110,7 @@
                 </button>
             </div>
 
-            <!-- Logger Recent Table -->
+            <!-- Logger Recent Table (Fixed View - No Sorting Headers) -->
             <div class="lg:col-span-8 bg-slate-800 p-6 rounded-lg border border-slate-700 space-y-3">
                 <div class="flex justify-between items-center">
                     <h2 class="text-lg font-bold text-slate-200">Recent Logged Pulls <span class="text-xs text-slate-500 font-normal">(Last 30 Cards)</span></h2>
@@ -120,13 +120,13 @@
                     <table class="w-full text-left text-xs text-slate-300">
                         <thead class="bg-slate-900 text-slate-400 uppercase font-mono select-none">
                             <tr>
-                                <th onclick="toggleSort('date')" class="py-3 px-3 w-28 cursor-pointer hover:text-emerald-400 transition">Date ↕</th>
-                                <th onclick="toggleSort('pack_type')" class="py-3 px-3 w-28 cursor-pointer hover:text-emerald-400 transition">Pack ↕</th>
-                                <th onclick="toggleSort('obtained')" class="py-3 px-3 w-28 cursor-pointer hover:text-emerald-400 transition">Obtained ↕</th>
-                                <th onclick="toggleSort('pack_subtype')" class="py-3 px-3 w-32 cursor-pointer hover:text-emerald-400 transition">Flavour ↕</th>
-                                <th onclick="toggleSort('car_name')" class="py-3 px-3 cursor-pointer hover:text-emerald-400 transition">Car ↕</th>
-                                <th onclick="toggleSort('car_rq')" class="py-3 px-3 text-right w-16 cursor-pointer hover:text-emerald-400 transition">RQ ↕</th>
-                                <th onclick="toggleSort('car_rarity')" class="py-3 px-3 w-28 cursor-pointer hover:text-emerald-400 transition">Rarity ↕</th>
+                                <th class="py-3 px-3 w-28">Date</th>
+                                <th class="py-3 px-3 w-28">Pack</th>
+                                <th class="py-3 px-3 w-28">Obtained</th>
+                                <th class="py-3 px-3 w-32">Flavour</th>
+                                <th class="py-3 px-3">Car</th>
+                                <th class="py-3 px-3 text-right w-16">RQ</th>
+                                <th class="py-3 px-3 w-28">Rarity</th>
                                 <th class="py-3 px-2 text-center w-12">Edit</th>
                                 <th class="py-3 px-2 text-center w-12">Delete</th>
                             </tr>
@@ -174,30 +174,56 @@
         </div>
     </div>
 
-    <!-- EDIT MODAL -->
+    <!-- FULL EDIT ENTRY MODAL -->
     <div id="edit-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
-        <div class="bg-slate-800 border border-slate-700 rounded-lg p-6 max-w-md w-full space-y-4 shadow-2xl">
+        <div class="bg-slate-800 border border-slate-700 rounded-lg p-6 max-w-lg w-full space-y-4 shadow-2xl">
             <div class="flex justify-between items-center">
-                <h3 class="text-base font-bold text-slate-200">Edit Logged Car</h3>
+                <h3 class="text-base font-bold text-slate-200">Edit Logged Entry</h3>
                 <button onclick="closeEditModal()" class="text-slate-400 hover:text-slate-200 font-bold text-lg">&times;</button>
             </div>
-            <div>
-                <label class="block text-xs text-slate-400 mb-1">Search Replacement Car</label>
-                <input type="text" id="edit-car-search" oninput="searchCarsForEdit()" placeholder="Type car name..." class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
-            </div>
-            <div id="edit-car-results" class="max-h-48 overflow-y-auto space-y-1 bg-slate-900 border border-slate-700 rounded p-2 hidden"></div>
 
-            <div id="edit-selected-preview" class="hidden p-3 bg-slate-900/90 border border-emerald-500/50 rounded space-y-1">
-                <div class="text-[10px] text-emerald-400 font-semibold uppercase tracking-wider">Selected Replacement</div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">Date Pulled</label>
+                    <input type="date" id="edit-date" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-xs text-slate-100 focus:outline-none focus:border-emerald-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">Pack Type</label>
+                    <input type="text" id="edit-pack-type" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-xs text-slate-100 focus:outline-none focus:border-emerald-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">Obtained</label>
+                    <input type="text" id="edit-obtained" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-xs text-slate-100 focus:outline-none focus:border-emerald-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">Flavour / Subtype</label>
+                    <input type="text" id="edit-pack-subtype" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-xs text-slate-100 focus:outline-none focus:border-emerald-500">
+                </div>
+            </div>
+
+            <hr class="border-slate-700/60 my-1">
+
+            <div>
+                <label class="block text-xs text-slate-400 mb-1">Search & Replace Car</label>
+                <input type="text" id="edit-car-search" oninput="searchCarsForEdit()" placeholder="Search car name..." class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-xs text-slate-100 focus:outline-none focus:border-emerald-500">
+            </div>
+
+            <div id="edit-car-results" class="max-h-40 overflow-y-auto space-y-1 bg-slate-900 border border-slate-700 rounded p-2 hidden"></div>
+
+            <div id="edit-selected-preview" class="p-3 bg-slate-900/90 border border-slate-700 rounded space-y-1">
+                <div class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Current / Selected Car</div>
                 <div class="flex justify-between items-center">
-                    <span id="preview-car-name" class="text-sm font-medium text-slate-100"></span>
+                    <span id="preview-car-name" class="text-xs font-medium text-slate-100"></span>
                     <span id="preview-car-badge" class="px-2 py-0.5 rounded text-[10px] font-semibold"></span>
                 </div>
             </div>
 
             <div class="flex justify-end gap-2 pt-2">
                 <button onclick="closeEditModal()" class="px-3 py-1.5 text-xs font-medium text-slate-400 hover:text-slate-200 bg-slate-700 rounded">Cancel</button>
-                <button id="confirm-edit-btn" onclick="saveEditedCar()" disabled class="px-3 py-1.5 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed rounded">Confirm Replacement</button>
+                <button id="confirm-edit-btn" onclick="saveEditedEntry()" class="px-3 py-1.5 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-500 rounded">Save Changes</button>
             </div>
         </div>
     </div>
@@ -213,7 +239,6 @@
         let currentEditPullId = null;
         let pendingEditSelection = null;
 
-        // Sorting state
         let currentSortColumn = 'date';
         let currentSortAscending = false;
 
@@ -367,8 +392,6 @@
 
             if (!document.getElementById('tab-content-history').classList.contains('hidden')) {
                 loadHistoryPulls();
-            } else {
-                loadPulls();
             }
         }
 
@@ -556,10 +579,11 @@
         }
 
         async function loadPulls() {
+            // Main page logger always shows strictly the 30 most recent cards by submission / date
             const { data, error } = await db
                 .from('pulls')
                 .select('*')
-                .order(currentSortColumn, { ascending: currentSortAscending })
+                .order('created_at', { ascending: false })
                 .order('slot_number', { ascending: true })
                 .limit(30);
 
@@ -596,6 +620,11 @@
         function renderTableRows(rows) {
             return rows.map(pull => {
                 const classes = getRarityClass(pull.car_rarity);
+                const safeName = (pull.car_name || '').replace(/'/g, "\\'");
+                const safeType = (pull.pack_type || '').replace(/'/g, "\\'");
+                const safeObtained = (pull.obtained || '').replace(/'/g, "\\'");
+                const safeSubtype = (pull.pack_subtype || '').replace(/'/g, "\\'");
+                
                 return `
                     <tr class="hover:bg-slate-800/50 transition">
                         <td class="py-2.5 px-3 whitespace-nowrap">${formatDisplayDate(pull.date)}</td>
@@ -610,7 +639,7 @@
                             </span>
                         </td>
                         <td class="py-2.5 px-2 text-center">
-                            <button onclick="openEditModal('${pull.id}')" class="text-slate-400 hover:text-emerald-400 text-xs px-2 py-1 rounded bg-slate-900 border border-slate-700 transition">✎</button>
+                            <button onclick="openEditModal('${pull.id}', '${pull.date}', '${safeType}', '${safeObtained}', '${safeSubtype}', '${safeName}', '${pull.car_rarity || ''}', ${pull.car_rq || 0}, '${pull.car_id || ''}')" class="text-slate-400 hover:text-emerald-400 text-xs px-2 py-1 rounded bg-slate-900 border border-slate-700 transition">✎</button>
                         </td>
                         <td class="py-2.5 px-2 text-center">
                             <button onclick="deletePull('${pull.id}')" class="text-slate-500 hover:text-red-400 font-bold px-2 py-1 text-xs rounded bg-slate-900 border border-slate-700 transition">✕</button>
@@ -620,15 +649,26 @@
             }).join('');
         }
 
-        /* Edit & Delete Handlers */
-        function openEditModal(pullId) {
+        /* Full Edit Entry Modal Logic */
+        function openEditModal(pullId, date, packType, obtained, packSubtype, carName, carRarity, carRq, carId) {
             currentEditPullId = pullId;
-            pendingEditSelection = null;
+            pendingEditSelection = { id: carId, name: carName, rarity: carRarity, rq: carRq };
+
+            document.getElementById('edit-date').value = date || '';
+            document.getElementById('edit-pack-type').value = packType || '';
+            document.getElementById('edit-obtained').value = obtained || '';
+            document.getElementById('edit-pack-subtype').value = packSubtype || '';
+
             document.getElementById('edit-car-search').value = '';
             document.getElementById('edit-car-results').innerHTML = '';
             document.getElementById('edit-car-results').classList.add('hidden');
-            document.getElementById('edit-selected-preview').classList.add('hidden');
-            document.getElementById('confirm-edit-btn').disabled = true;
+
+            document.getElementById('preview-car-name').textContent = `${carName} (RQ ${carRq})`;
+            const badge = document.getElementById('preview-car-badge');
+            const classes = getRarityClass(carRarity);
+            badge.textContent = carRarity;
+            badge.className = `px-2 py-0.5 rounded text-[10px] font-semibold ${classes.badge}`;
+
             document.getElementById('edit-modal').classList.remove('hidden');
         }
 
@@ -679,20 +719,32 @@
             badge.textContent = rarity;
             badge.className = `px-2 py-0.5 rounded text-[10px] font-semibold ${classes.badge}`;
 
-            document.getElementById('edit-selected-preview').classList.remove('hidden');
-            document.getElementById('confirm-edit-btn').disabled = false;
             document.getElementById('edit-car-results').classList.add('hidden');
         }
 
-        async function saveEditedCar() {
-            if (!currentEditPullId || !pendingEditSelection) return;
+        async function saveEditedEntry() {
+            if (!currentEditPullId) return;
 
-            const { error } = await db.from('pulls').update({
-                car_id: pendingEditSelection.id,
-                car_name: pendingEditSelection.name,
-                car_rarity: pendingEditSelection.rarity,
-                car_rq: pendingEditSelection.rq
-            }).eq('id', currentEditPullId);
+            const updatedDate = document.getElementById('edit-date').value;
+            const updatedPackType = document.getElementById('edit-pack-type').value.trim();
+            const updatedObtained = document.getElementById('edit-obtained').value.trim();
+            const updatedSubtype = document.getElementById('edit-pack-subtype').value.trim();
+
+            const updatePayload = {
+                date: updatedDate,
+                pack_type: updatedPackType,
+                obtained: updatedObtained,
+                pack_subtype: updatedSubtype
+            };
+
+            if (pendingEditSelection) {
+                updatePayload.car_id = pendingEditSelection.id;
+                updatePayload.car_name = pendingEditSelection.name;
+                updatePayload.car_rarity = pendingEditSelection.rarity;
+                updatePayload.car_rq = pendingEditSelection.rq;
+            }
+
+            const { error } = await db.from('pulls').update(updatePayload).eq('id', currentEditPullId);
 
             if (error) {
                 alert('Error updating pull: ' + error.message);
