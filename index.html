@@ -72,13 +72,13 @@
                     <div class="relative custom-dropdown-container">
                         <label class="block text-xs text-slate-400 mb-1">Pack Type <span class="text-red-400">*</span></label>
                         <input type="text" id="pack-type" placeholder="Select or type..." required autocomplete="off" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
-                        <div id="pack-type-dropdown" class="custom-dropdown-list absolute left-0 right-0 top-full mt-1 bg-slate-900 border border-slate-700 rounded shadow-2xl max-h-48 overflow-y-auto hidden z-40"></div>
+                        <div id="pack-type-dropdown" class="custom-dropdown-list absolute left-0 right-0 top-full mt-1 bg-slate-900 border border-slate-700 rounded shadow-2xl max-h-72 overflow-y-auto hidden z-40"></div>
                     </div>
 
                     <div class="relative custom-dropdown-container">
                         <label class="block text-xs text-slate-400 mb-1">Obtained <span class="text-red-400">*</span></label>
                         <input type="text" id="obtained" placeholder="Select or type..." required autocomplete="off" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
-                        <div id="obtained-dropdown" class="custom-dropdown-list absolute left-0 right-0 top-full mt-1 bg-slate-900 border border-slate-700 rounded shadow-2xl max-h-48 overflow-y-auto hidden z-40"></div>
+                        <div id="obtained-dropdown" class="custom-dropdown-list absolute left-0 right-0 top-full mt-1 bg-slate-900 border border-slate-700 rounded shadow-2xl max-h-72 overflow-y-auto hidden z-40"></div>
                     </div>
 
                     <div class="col-span-2">
@@ -92,7 +92,7 @@
                     <div id="flavour-container" class="col-span-2 hidden relative custom-dropdown-container">
                         <label class="block text-xs text-slate-400 mb-1">Collection / Flavour <span class="text-red-400">*</span></label>
                         <input type="text" id="pack-subtype" placeholder="e.g. GTI Collection" autocomplete="off" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
-                        <div id="pack-subtype-dropdown" class="custom-dropdown-list absolute left-0 right-0 top-full mt-1 bg-slate-900 border border-slate-700 rounded shadow-2xl max-h-48 overflow-y-auto hidden z-40"></div>
+                        <div id="pack-subtype-dropdown" class="custom-dropdown-list absolute left-0 right-0 top-full mt-1 bg-slate-900 border border-slate-700 rounded shadow-2xl max-h-72 overflow-y-auto hidden z-40"></div>
                     </div>
                 </div>
 
@@ -469,7 +469,12 @@
                 return;
             }
 
-            const { data } = await db.from('cars').select('id, name, rarity, rq').ilike('name', `%${query}%`).limit(50);
+            // Order results by RQ descending so highest rarity appears at the top
+            const { data } = await db.from('cars')
+                .select('id, name, rarity, rq')
+                .ilike('name', `%${query}%`)
+                .order('rq', { ascending: false })
+                .limit(50);
 
             if (!data || data.length === 0) {
                 suggestions.innerHTML = '<div class="p-2 text-xs text-slate-500">No matching cars</div>';
@@ -621,8 +626,9 @@
             let lastPackGroupId = null;
             let packColorToggle = false;
 
-            const ACCENT_COLOR_A = 'border-l-4 border-emerald-500';
-            const ACCENT_COLOR_B = 'border-l-4 border-cyan-500';
+            // Distinct Orange Tones (avoiding gold/yellow collisions)
+            const ACCENT_COLOR_A = 'border-l-4 border-orange-500';
+            const ACCENT_COLOR_B = 'border-l-4 border-amber-600';
             const ACCENT_LEGACY  = 'border-l-4 border-slate-600/60';
 
             return rows.map(pull => {
@@ -634,11 +640,11 @@
 
                 let currentBorderClass = '';
 
-                // 1. ALL Legacy rows always receive constant Slate Grey highlight
+                // Legacy rows remain locked to slate grey
                 if (pull.is_legacy) {
                     currentBorderClass = ACCENT_LEGACY;
                 } else {
-                    // 2. Live submitted packs alternate color ONLY when pack_group_id changes
+                    // Live submitted packs alternate between two orange tones strictly per pack_group_id
                     if (pull.pack_group_id) {
                         if (pull.pack_group_id !== lastPackGroupId) {
                             packColorToggle = !packColorToggle;
@@ -725,7 +731,12 @@
                 return;
             }
 
-            const { data } = await db.from('cars').select('id, name, rarity, rq').ilike('name', `%${query}%`).limit(30);
+            // Order edit search results by RQ descending
+            const { data } = await db.from('cars')
+                .select('id, name, rarity, rq')
+                .ilike('name', `%${query}%`)
+                .order('rq', { ascending: false })
+                .limit(30);
 
             if (!data || data.length === 0) {
                 container.innerHTML = '<div class="p-2 text-xs text-slate-500">No matching cars found</div>';
