@@ -72,6 +72,9 @@
                 <button id="tab-btn-history" onclick="switchTab('history')" class="px-4 py-2 text-sm font-medium rounded-t-lg text-slate-400 hover:text-slate-200 cursor-pointer">
                     All Logs & History
                 </button>
+                <button id="tab-btn-analytics" onclick="switchTab('analytics')" class="px-4 py-2 text-sm font-medium rounded-t-lg text-slate-400 hover:text-slate-200 cursor-pointer">
+                    Analytics & Statistics
+                </button>
             </nav>
         </div>
 
@@ -196,6 +199,51 @@
                 </table>
             </div>
         </div>
+
+        <!-- TAB 3: ANALYTICS & STATISTICS -->
+        <div id="tab-content-analytics" class="hidden bg-slate-800 p-6 rounded-lg border border-slate-700 space-y-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-200">Probability & Luck Analytics</h2>
+                    <p class="text-xs text-slate-400">Comparing your logged card drops against official game drop-rate probabilities.</p>
+                </div>
+                <button onclick="loadAnalyticsData()" class="bg-slate-900 border border-slate-700 text-emerald-400 hover:bg-slate-700 text-xs font-medium px-3 py-1.5 rounded transition">Refresh Stats</button>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-slate-900 border border-slate-700 p-4 rounded-lg space-y-1">
+                    <div class="text-xs text-slate-400">Total Cards Logged</div>
+                    <div id="stat-total-cards" class="text-2xl font-bold font-mono text-slate-100">0</div>
+                </div>
+                <div class="bg-slate-900 border border-slate-700 p-4 rounded-lg space-y-1">
+                    <div class="text-xs text-slate-400">Total Packs Evaluated</div>
+                    <div id="stat-total-packs" class="text-2xl font-bold font-mono text-slate-100">0</div>
+                </div>
+                <div class="bg-slate-900 border border-slate-700 p-4 rounded-lg space-y-1">
+                    <div class="text-xs text-slate-400">Overall Luck Factor</div>
+                    <div id="stat-luck-factor" class="text-2xl font-bold font-mono text-emerald-400">100.0%</div>
+                </div>
+            </div>
+
+            <!-- Detailed Rarity Comparison Table -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs text-slate-300">
+                    <thead class="bg-slate-900 text-slate-400 uppercase font-mono select-none">
+                        <tr>
+                            <th class="py-3 px-3">Rarity Tier</th>
+                            <th class="py-3 px-3 text-right">Actual Pulled</th>
+                            <th class="py-3 px-3 text-right">Actual %</th>
+                            <th class="py-3 px-3 text-right">Expected % (Odds)</th>
+                            <th class="py-3 px-3 text-right">Variance</th>
+                        </tr>
+                    </thead>
+                    <tbody id="analytics-table-body" class="divide-y divide-slate-800">
+                        <tr><td colspan="5" class="p-4 text-center text-slate-500">Calculating analytics...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     <!-- FULL EDIT ENTRY MODAL -->
@@ -298,6 +346,115 @@
         const DEFAULT_PACK_TYPES = ['Aluminium', 'Carbon Fiber', 'Ceramic', 'Plastic', 'Platinum', 'Racing Pack', 'Steel', 'Titanium'];
         const DEFAULT_OBTAINED_OPTIONS = ['Adverts', 'Air Miles', 'Builder Coins', 'Cash', 'Challenge', 'Daily', 'Event', 'Free', 'Gold', 'IRL Money', 'Nismo', 'Objectives', 'Oddities Coin', 'Racing Coin', 'Spotted', 'Tri-series'];
         const DEFAULT_FLAVOUR_OPTIONS = [];
+
+        // OFFICIAL PACK ODDS REFERENCE TABLE (Extracted from Sheet)
+        const PACK_ODDS_DATA = {
+            "Plastic": {
+                "Regular": {
+                    1: { "Rare": 1.5, "Uncommon": 68.5, "Common": 30 },
+                    2: { "Rare": 0, "Uncommon": 15, "Common": 85 },
+                    3: { "Rare": 0, "Uncommon": 15, "Common": 85 },
+                    4: { "Rare": 0, "Uncommon": 15, "Common": 85 },
+                    5: { "Rare": 1.5, "Uncommon": 68.5, "Common": 30 }
+                },
+                "Not regular": {
+                    1: { "Rare": 0, "Uncommon": 0, "Common": 100 },
+                    2: { "Rare": 1.25, "Uncommon": 32, "Common": 66.75 },
+                    3: { "Rare": 1.25, "Uncommon": 32, "Common": 66.75 },
+                    4: { "Rare": 1.25, "Uncommon": 32, "Common": 66.75 },
+                    5: { "Rare": 1.25, "Uncommon": 32, "Common": 66.75 }
+                }
+            },
+            "Steel": {
+                "Regular": {
+                    1: { "Super Rare": 0, "Rare": 1.25, "Uncommon": 32, "Common": 66.75 },
+                    2: { "Super Rare": 0, "Rare": 1.25, "Uncommon": 32, "Common": 66.75 },
+                    3: { "Super Rare": 0, "Rare": 1.25, "Uncommon": 32, "Common": 66.75 },
+                    4: { "Super Rare": 0, "Rare": 1.25, "Uncommon": 32, "Common": 66.75 },
+                    5: { "Super Rare": 1, "Rare": 37.5, "Uncommon": 61.5, "Common": 0 }
+                },
+                "Not regular": {
+                    1: { "Super Rare": 0, "Rare": 0, "Uncommon": 100, "Common": 0 },
+                    2: { "Super Rare": 0, "Rare": 1.25, "Uncommon": 32, "Common": 66.75 },
+                    3: { "Super Rare": 0, "Rare": 1.25, "Uncommon": 32, "Common": 66.75 },
+                    4: { "Super Rare": 0, "Rare": 1.25, "Uncommon": 32, "Common": 66.75 },
+                    5: { "Super Rare": 0, "Rare": 1.25, "Uncommon": 32, "Common": 66.75 }
+                }
+            },
+            "Aluminium": {
+                "Regular": {
+                    1: { "Super Rare": 0, "Rare": 2, "Uncommon": 98, "Common": 0 },
+                    2: { "Super Rare": 0, "Rare": 2, "Uncommon": 98, "Common": 0 },
+                    3: { "Super Rare": 0, "Rare": 2, "Uncommon": 98, "Common": 0 },
+                    4: { "Super Rare": 3.5, "Rare": 20, "Uncommon": 76.5, "Common": 0 },
+                    5: { "Super Rare": 1.5, "Rare": 18.5, "Uncommon": 80, "Common": 0 }
+                },
+                "Not regular": {
+                    1: { "Super Rare": 0, "Rare": 1.5, "Uncommon": 98.5, "Common": 0 },
+                    2: { "Super Rare": 0, "Rare": 1.5, "Uncommon": 98.5, "Common": 0 },
+                    3: { "Super Rare": 0, "Rare": 1.5, "Uncommon": 98.5, "Common": 0 },
+                    4: { "Super Rare": 3, "Rare": 17.5, "Uncommon": 79.5, "Common": 0 },
+                    5: { "Super Rare": 1.25, "Rare": 17.5, "Uncommon": 81.25, "Common": 0 }
+                }
+            },
+            "Ceramic": {
+                "Regular": {
+                    1: { "Legendary": 0, "Epic": 5, "Ultra Rare": 95, "Super Rare": 0, "Rare": 0 },
+                    2: { "Legendary": 0, "Epic": 5, "Ultra Rare": 95, "Super Rare": 0, "Rare": 0 },
+                    3: { "Legendary": 0, "Epic": 2.5, "Ultra Rare": 18.5, "Super Rare": 79, "Rare": 0 },
+                    4: { "Legendary": 0.1, "Epic": 0.25, "Ultra Rare": 0.5, "Super Rare": 34.15, "Rare": 65 },
+                    5: { "Legendary": 0.65, "Epic": 2.5, "Ultra Rare": 14, "Super Rare": 82.85, "Rare": 0 }
+                },
+                "Not regular": {
+                    1: { "Legendary": 0, "Epic": 5, "Ultra Rare": 95, "Super Rare": 0, "Rare": 0 },
+                    2: { "Legendary": 0, "Epic": 5, "Ultra Rare": 95, "Super Rare": 0, "Rare": 0 },
+                    3: { "Legendary": 0, "Epic": 1.75, "Ultra Rare": 16, "Super Rare": 82.25, "Rare": 0 },
+                    4: { "Legendary": 0.06, "Epic": 0.09, "Ultra Rare": 0.33, "Super Rare": 24, "Rare": 75.52 },
+                    5: { "Legendary": 0.45, "Epic": 2, "Ultra Rare": 11, "Super Rare": 86.55, "Rare": 0 }
+                }
+            },
+            "Ceramic Lite": {
+                "Not regular": {
+                    1: { "Legendary": 0, "Epic": 5, "Ultra Rare": 95, "Super Rare": 0, "Rare": 0 },
+                    2: { "Legendary": 0, "Epic": 5, "Ultra Rare": 95, "Super Rare": 0, "Rare": 0 },
+                    3: { "Legendary": 0, "Epic": 0, "Ultra Rare": 20, "Super Rare": 80, "Rare": 0 },
+                    4: { "Legendary": 0, "Epic": 0, "Ultra Rare": 100, "Super Rare": 0, "Rare": 0 },
+                    5: { "Legendary": 0.5, "Epic": 27.5, "Ultra Rare": 72, "Super Rare": 0, "Rare": 0 }
+                }
+            },
+            "Carbon Fibre": {
+                "Regular": {
+                    1: { "Legendary": 0, "Epic": 2.5, "Ultra Rare": 97.5, "Super Rare": 0 },
+                    2: { "Legendary": 0, "Epic": 5, "Ultra Rare": 95, "Super Rare": 0 },
+                    3: { "Legendary": 0, "Epic": 10, "Ultra Rare": 90, "Super Rare": 0 },
+                    4: { "Legendary": 0.5, "Epic": 2.75, "Ultra Rare": 7.5, "Super Rare": 89.25 },
+                    5: { "Legendary": 2.5, "Epic": 17.75, "Ultra Rare": 79.75, "Super Rare": 0 }
+                },
+                "Not regular": {
+                    1: { "Legendary": 0, "Epic": 2.5, "Ultra Rare": 97.5, "Super Rare": 0 },
+                    2: { "Legendary": 0, "Epic": 5, "Ultra Rare": 95, "Super Rare": 0 },
+                    3: { "Legendary": 0, "Epic": 10, "Ultra Rare": 90, "Super Rare": 0 },
+                    4: { "Legendary": 0.5, "Epic": 2.75, "Ultra Rare": 7.5, "Super Rare": 89.25 },
+                    5: { "Legendary": 2.5, "Epic": 17.75, "Ultra Rare": 79.75, "Super Rare": 0 }
+                }
+            },
+            "Super Carbon": {
+                "Regular": {
+                    1: { "Legendary": 0, "Epic": 5, "Ultra Rare": 95, "Super Rare": 0 },
+                    2: { "Legendary": 0, "Epic": 5, "Ultra Rare": 95, "Super Rare": 0 },
+                    3: { "Legendary": 0, "Epic": 5, "Ultra Rare": 95, "Super Rare": 0 },
+                    4: { "Legendary": 0, "Epic": 0, "Ultra Rare": 10, "Super Rare": 90 },
+                    5: { "Legendary": 3, "Epic": 20, "Ultra Rare": 77, "Super Rare": 0 }
+                },
+                "Not regular": {
+                    1: { "Legendary": 0, "Epic": 5, "Ultra Rare": 95, "Super Rare": 0 },
+                    2: { "Legendary": 0, "Epic": 5, "Ultra Rare": 95, "Super Rare": 0 },
+                    3: { "Legendary": 0, "Epic": 5, "Ultra Rare": 95, "Super Rare": 0 },
+                    4: { "Legendary": 0, "Epic": 0, "Ultra Rare": 10, "Super Rare": 90 },
+                    5: { "Legendary": 3, "Epic": 20, "Ultra Rare": 77, "Super Rare": 0 }
+                }
+            }
+        };
 
         // PERMANENT EXCEL-STYLE UNDO STATE
         let lastAction = null;
@@ -470,7 +627,7 @@
         let packTypeDropdown, obtainedDropdown, flavourDropdown;
 
         function switchTab(tabName) {
-            ['logger', 'history'].forEach(t => {
+            ['logger', 'history', 'analytics'].forEach(t => {
                 const content = document.getElementById(`tab-content-${t}`);
                 const btn = document.getElementById(`tab-btn-${t}`);
                 if (t === tabName) {
@@ -484,6 +641,8 @@
 
             if (tabName === 'history') {
                 loadHistoryPulls();
+            } else if (tabName === 'analytics') {
+                loadAnalyticsData();
             } else {
                 loadPulls();
             }
@@ -727,6 +886,89 @@
                 return;
             }
             tbody.innerHTML = renderTableRows(data);
+        }
+
+        async function loadAnalyticsData() {
+            const { data, error } = await db.from('pulls').select('*');
+            const tbody = document.getElementById('analytics-table-body');
+
+            if (error || !data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-500">No data available for analytics yet</td></tr>';
+                document.getElementById('stat-total-cards').textContent = '0';
+                document.getElementById('stat-total-packs').textContent = '0';
+                document.getElementById('stat-luck-factor').textContent = '100.0%';
+                return;
+            }
+
+            const totalCards = data.length;
+            const uniquePacks = new Set(data.map(d => d.pack_group_id || d.id)).size;
+
+            document.getElementById('stat-total-cards').textContent = totalCards;
+            document.getElementById('stat-total-packs').textContent = uniquePacks;
+
+            // Tally actual pulls
+            const actualCounts = { "Legendary": 0, "Epic": 0, "Ultra Rare": 0, "Super Rare": 0, "Rare": 0, "Uncommon": 0, "Common": 0 };
+            data.forEach(pull => {
+                const r = pull.car_rarity;
+                if (actualCounts[r] !== undefined) actualCounts[r]++;
+            });
+
+            // Calculate expected probabilities based on reference table
+            const expectedCounts = { "Legendary": 0, "Epic": 0, "Ultra Rare": 0, "Super Rare": 0, "Rare": 0, "Uncommon": 0, "Common": 0 };
+            
+            data.forEach(pull => {
+                const packType = pull.pack_type;
+                const subtype = (pull.pack_subtype === 'Regular') ? 'Regular' : 'Not regular';
+                const slot = ((pull.slot_number - 1) % 5) + 1; // Handles multi-packs wrapping slots 1-5
+
+                if (PACK_ODDS_DATA[packType] && PACK_ODDS_DATA[packType][subtype] && PACK_ODDS_DATA[packType][subtype][slot]) {
+                    const slotOdds = PACK_ODDS_DATA[packType][subtype][slot];
+                    for (const [rarity, pct] of Object.entries(slotOdds)) {
+                        expectedCounts[rarity] = (expectedCounts[rarity] || 0) + (pct / 100);
+                    }
+                }
+            });
+
+            const rarities = ["Legendary", "Epic", "Ultra Rare", "Super Rare", "Rare", "Uncommon", "Common"];
+            let html = '';
+            let totalExpected = 0;
+            let totalActualHighRarity = 0;
+            let totalExpectedHighRarity = 0;
+
+            rarities.forEach(rarity => {
+                const actual = actualCounts[rarity];
+                const actualPct = ((actual / totalCards) * 100).toFixed(2);
+                const expected = expectedCounts[rarity] || 0;
+                const expectedPct = ((expected / totalCards) * 100).toFixed(2);
+                const variance = (parseFloat(actualPct) - parseFloat(expectedPct)).toFixed(2);
+                const varColor = variance >= 0 ? 'text-emerald-400' : 'text-red-400';
+
+                if (['Legendary', 'Epic', 'Ultra Rare'].includes(rarity)) {
+                    totalActualHighRarity += actual;
+                    totalExpectedHighRarity += expected;
+                }
+
+                html += `
+                    <tr class="hover:bg-slate-800/50 transition">
+                        <td class="py-3 px-3 font-medium text-slate-200">${rarity}</td>
+                        <td class="py-3 px-3 text-right font-mono">${actual}</td>
+                        <td class="py-3 px-3 text-right font-mono">${actualPct}%</td>
+                        <td class="py-3 px-3 text-right font-mono text-slate-400">${expectedPct}%</td>
+                        <td class="py-3 px-3 text-right font-mono ${varColor}">${variance > 0 ? '+' : ''}${variance}%</td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = html;
+
+            // Luck Factor Calculation based on high rarity pull performance
+            let luckFactor = 100;
+            if (totalExpectedHighRarity > 0) {
+                luckFactor = ((totalActualHighRarity / totalExpectedHighRarity) * 100).toFixed(1);
+            }
+            const luckEl = document.getElementById('stat-luck-factor');
+            luckEl.textContent = `${luckFactor}%`;
+            luckEl.className = `text-2xl font-bold font-mono ${luckFactor >= 100 ? 'text-emerald-400' : 'text-amber-400'}`;
         }
 
         function renderTableRows(rows) {
