@@ -348,11 +348,11 @@
         let currentSortColumn = 'date';
         let currentSortAscending = false;
 
-        const DEFAULT_PACK_TYPES = ['Aluminium', 'Carbon Fiber', 'Ceramic', 'Plastic', 'Platinum', 'Racing Pack', 'Steel', 'Titanium'];
+        const DEFAULT_PACK_TYPES = ['Aluminium', 'Carbon Fibre', 'Carbon Fiber', 'Ceramic', 'Plastic', 'Platinum', 'Racing Pack', 'Steel', 'Titanium'];
         const DEFAULT_OBTAINED_OPTIONS = ['Adverts', 'Air Miles', 'Builder Coins', 'Cash', 'Challenge', 'Daily', 'Event', 'Free', 'Gold', 'IRL Money', 'Nismo', 'Objectives', 'Oddities Coin', 'Racing Coin', 'Spotted', 'Tri-series'];
         const DEFAULT_FLAVOUR_OPTIONS = [];
 
-        // OFFICIAL PACK ODDS REFERENCE TABLE (Extracted from Sheet & Normalized)
+        // OFFICIAL PACK ODDS REFERENCE TABLE (Updated with Racing Pack & Normalized Keys)
         const PACK_ODDS_DATA = {
             "Plastic": {
                 "Regular": {
@@ -427,7 +427,7 @@
                     5: { "Legendary": 0.5, "Epic": 27.5, "Ultra Rare": 72, "Super Rare": 0, "Rare": 0 }
                 }
             },
-            "Carbon Fiber": {
+            "Carbon Fibre": {
                 "Regular": {
                     1: { "Legendary": 0, "Epic": 2.5, "Ultra Rare": 97.5, "Super Rare": 0 },
                     2: { "Legendary": 0, "Epic": 5, "Ultra Rare": 95, "Super Rare": 0 },
@@ -443,7 +443,7 @@
                     5: { "Legendary": 2.5, "Epic": 17.75, "Ultra Rare": 79.75, "Super Rare": 0 }
                 }
             },
-            "Carbon Fibre": {
+            "Carbon Fiber": {
                 "Regular": {
                     1: { "Legendary": 0, "Epic": 2.5, "Ultra Rare": 97.5, "Super Rare": 0 },
                     2: { "Legendary": 0, "Epic": 5, "Ultra Rare": 95, "Super Rare": 0 },
@@ -473,6 +473,14 @@
                     3: { "Legendary": 0, "Epic": 5, "Ultra Rare": 95, "Super Rare": 0 },
                     4: { "Legendary": 0, "Epic": 0, "Ultra Rare": 10, "Super Rare": 90 },
                     5: { "Legendary": 3, "Epic": 20, "Ultra Rare": 77, "Super Rare": 0 }
+                }
+            },
+            "Racing Pack": {
+                "Regular": {
+                    1: { "Legendary": 0.65, "Epic": 2.5, "Ultra Rare": 14, "Super Rare": 82.85 }
+                },
+                "Not regular": {
+                    1: { "Legendary": 0.65, "Epic": 2.5, "Ultra Rare": 14, "Super Rare": 82.85 }
                 }
             }
         };
@@ -966,7 +974,18 @@
             }
 
             const totalCards = dataToAnalyze.length;
-            const uniquePacks = new Set(dataToAnalyze.map(d => d.pack_group_id || d.id)).size;
+            
+            // Group cards by pack_group_id to accurately scale multi-pack sessions
+            const packGroups = {};
+            dataToAnalyze.forEach(pull => {
+                const groupId = pull.pack_group_id || pull.id;
+                if (!packGroups[groupId]) {
+                    packGroups[groupId] = [];
+                }
+                packGroups[groupId].push(pull);
+            });
+
+            const uniquePacks = Object.keys(packGroups).length;
 
             document.getElementById('stat-total-cards').textContent = totalCards;
             document.getElementById('stat-total-packs').textContent = uniquePacks;
@@ -978,20 +997,28 @@
             });
 
             const expectedCounts = { "Legendary": 0, "Epic": 0, "Ultra Rare": 0, "Super Rare": 0, "Rare": 0, "Uncommon": 0, "Common": 0 };
-            
-            dataToAnalyze.forEach(pull => {
-                const packType = pull.pack_type ? pull.pack_type.trim() : '';
-                const rawSubtype = pull.pack_subtype ? pull.pack_subtype.trim().toLowerCase() : '';
+
+            // Evaluate expected probabilities per pack group bundle
+            Object.values(packGroups).forEach(groupPulls => {
+                const sample = groupPulls[0];
+                const packType = sample.pack_type ? sample.pack_type.trim() : '';
+                const rawSubtype = sample.pack_subtype ? sample.pack_subtype.trim().toLowerCase() : '';
                 const isRegular = (rawSubtype === 'regular' || rawSubtype === '');
                 const subtypeKey = isRegular ? 'Regular' : 'Not regular';
-                const slot = ((pull.slot_number - 1) % 5) + 1;
 
                 if (PACK_ODDS_DATA[packType]) {
                     const packVariant = PACK_ODDS_DATA[packType][subtypeKey] || PACK_ODDS_DATA[packType]['Regular'] || PACK_ODDS_DATA[packType]['Not regular'];
-                    if (packVariant && packVariant[slot]) {
-                        const slotOdds = packVariant[slot];
-                        for (const [rarity, pct] of Object.entries(slotOdds)) {
-                            expectedCounts[rarity] = (expectedCounts[rarity] || 0) + (pct / 100);
+                    
+                    if (packVariant) {
+                        const totalSlotKeys = Object.keys(packVariant).length || 5;
+                        const packMultiplier = groupPulls.length / totalSlotKeys;
+
+                        for (let s = 1; s <= totalSlotKeys; s++) {
+                            if (packVariant[s]) {
+                                for (const [rarity, pct] of Object.entries(packVariant[s])) {
+                                    expectedCounts[rarity] = (expectedCounts[rarity] || 0) + ((pct / 100) * packMultiplier);
+                                }
+                            }
                         }
                     }
                 }
