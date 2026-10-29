@@ -210,6 +210,11 @@
                 <button onclick="loadAnalyticsData()" class="bg-slate-900 border border-slate-700 text-emerald-400 hover:bg-slate-700 text-xs font-medium px-3 py-1.5 rounded transition">Refresh Stats</button>
             </div>
 
+            <!-- Warning Banner for Storage Limits -->
+            <div id="analytics-warning" class="hidden bg-amber-900/40 border border-amber-600/60 p-3 rounded-lg text-xs text-amber-300 flex items-center justify-between">
+                <span>Storage notice: Your database has exceeded 15,000 rows. Consider reviewing data archiving if approaching your tier threshold.</span>
+            </div>
+
             <!-- Summary Cards -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div class="bg-slate-900 border border-slate-700 p-4 rounded-lg space-y-1">
@@ -889,10 +894,38 @@
         }
 
         async function loadAnalyticsData() {
-            const { data, error } = await db.from('pulls').select('*');
             const tbody = document.getElementById('analytics-table-body');
+            tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-500">Fetching all records from database...</td></tr>';
 
-            if (error || !data || data.length === 0) {
+            // Fully paginated fetch loop to bypass the 1,000 row API limit and scale infinitely
+            let allData = [];
+            let pageSize = 1000;
+            let page = 0;
+            let fetchMore = true;
+
+            while (fetchMore) {
+                const start = page * pageSize;
+                const end = start + pageSize - 1;
+                const { data, error } = await db.from('pulls').select('*').range(start, end);
+
+                if (error) {
+                    alert('Error loading analytics data: ' + error.message);
+                    break;
+                }
+
+                if (!data || data.length === 0) {
+                    fetchMore = false;
+                } else {
+                    allData = allData.concat(data);
+                    if (data.length < pageSize) {
+                        fetchMore = false;
+                    }
+                }
+                page++;
+                if (page > 100) break; // Safety cap at 100,000 rows
+            }
+
+            if (allData.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-500">No data available for analytics yet</td></tr>';
                 document.getElementById('stat-total-cards').textContent = '0';
                 document.getElementById('stat-total-packs').textContent = '0';
@@ -900,15 +933,34 @@
                 return;
             }
 
-            const totalCards = data.length;
-            const uniquePacks = new Set(data.map(d => d.pack_group_id || d.id)).size;
+            // Storage limit alert banner trigger (> 15,000 rows)
+            const warningBanner = document.getElementById('analytics-warning');
+            if (allData.length > 15000) {
+                if (warningBanner) warningBanner.classList.remove('hidden');
+            } else {
+                if (warningBanner) warningBanner.classList.add('hidden');
+            }
+
+            // Exclude legacy records from analytics calculations
+            const dataToAnalyze = allData.filter(d => !d.is_legacy);
+
+            if (dataToAnalyze.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-500">No new pack logs found (legacy records excluded)</td></tr>';
+                document.getElementById('stat-total-cards').textContent = '0';
+                document.getElementById('stat-total-packs').textContent = '0';
+                document.getElementById('stat-luck-factor').textContent = '100.0%';
+                return;
+            }
+
+            const totalCards = dataToAnalyze.length;
+            const uniquePacks = new Set(dataToAnalyze.map(d => d.pack_group_id || d.id)).size;
 
             document.getElementById('stat-total-cards').textContent = totalCards;
             document.getElementById('stat-total-packs').textContent = uniquePacks;
 
             // Tally actual pulls
             const actualCounts = { "Legendary": 0, "Epic": 0, "Ultra Rare": 0, "Super Rare": 0, "Rare": 0, "Uncommon": 0, "Common": 0 };
-            data.forEach(pull => {
+            dataToAnalyze.forEach(pull => {
                 const r = pull.car_rarity;
                 if (actualCounts[r] !== undefined) actualCounts[r]++;
             });
@@ -916,7 +968,7 @@
             // Calculate expected probabilities based on reference table
             const expectedCounts = { "Legendary": 0, "Epic": 0, "Ultra Rare": 0, "Super Rare": 0, "Rare": 0, "Uncommon": 0, "Common": 0 };
             
-            data.forEach(pull => {
+            dataToAnalyze.forEach(pull => {
                 const packType = pull.pack_type;
                 const subtype = (pull.pack_subtype === 'Regular') ? 'Regular' : 'Not regular';
                 const slot = ((pull.slot_number - 1) % 5) + 1; // Handles multi-packs wrapping slots 1-5
@@ -931,7 +983,6 @@
 
             const rarities = ["Legendary", "Epic", "Ultra Rare", "Super Rare", "Rare", "Uncommon", "Common"];
             let html = '';
-            let totalExpected = 0;
             let totalActualHighRarity = 0;
             let totalExpectedHighRarity = 0;
 
