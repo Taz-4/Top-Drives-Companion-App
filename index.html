@@ -352,7 +352,7 @@
         const DEFAULT_OBTAINED_OPTIONS = ['Adverts', 'Air Miles', 'Builder Coins', 'Cash', 'Challenge', 'Daily', 'Event', 'Free', 'Gold', 'IRL Money', 'Nismo', 'Objectives', 'Oddities Coin', 'Racing Coin', 'Spotted', 'Tri-series'];
         const DEFAULT_FLAVOUR_OPTIONS = [];
 
-        // OFFICIAL PACK ODDS REFERENCE TABLE (Extracted from Sheet)
+        // OFFICIAL PACK ODDS REFERENCE TABLE (Extracted from Sheet & Normalized)
         const PACK_ODDS_DATA = {
             "Plastic": {
                 "Regular": {
@@ -425,6 +425,22 @@
                     3: { "Legendary": 0, "Epic": 0, "Ultra Rare": 20, "Super Rare": 80, "Rare": 0 },
                     4: { "Legendary": 0, "Epic": 0, "Ultra Rare": 100, "Super Rare": 0, "Rare": 0 },
                     5: { "Legendary": 0.5, "Epic": 27.5, "Ultra Rare": 72, "Super Rare": 0, "Rare": 0 }
+                }
+            },
+            "Carbon Fiber": {
+                "Regular": {
+                    1: { "Legendary": 0, "Epic": 2.5, "Ultra Rare": 97.5, "Super Rare": 0 },
+                    2: { "Legendary": 0, "Epic": 5, "Ultra Rare": 95, "Super Rare": 0 },
+                    3: { "Legendary": 0, "Epic": 10, "Ultra Rare": 90, "Super Rare": 0 },
+                    4: { "Legendary": 0.5, "Epic": 2.75, "Ultra Rare": 7.5, "Super Rare": 89.25 },
+                    5: { "Legendary": 2.5, "Epic": 17.75, "Ultra Rare": 79.75, "Super Rare": 0 }
+                },
+                "Not regular": {
+                    1: { "Legendary": 0, "Epic": 2.5, "Ultra Rare": 97.5, "Super Rare": 0 },
+                    2: { "Legendary": 0, "Epic": 5, "Ultra Rare": 95, "Super Rare": 0 },
+                    3: { "Legendary": 0, "Epic": 10, "Ultra Rare": 90, "Super Rare": 0 },
+                    4: { "Legendary": 0.5, "Epic": 2.75, "Ultra Rare": 7.5, "Super Rare": 89.25 },
+                    5: { "Legendary": 2.5, "Epic": 17.75, "Ultra Rare": 79.75, "Super Rare": 0 }
                 }
             },
             "Carbon Fibre": {
@@ -897,7 +913,6 @@
             const tbody = document.getElementById('analytics-table-body');
             tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-500">Fetching all records from database...</td></tr>';
 
-            // Fully paginated fetch loop to bypass the 1,000 row API limit and scale infinitely
             let allData = [];
             let pageSize = 1000;
             let page = 0;
@@ -922,7 +937,7 @@
                     }
                 }
                 page++;
-                if (page > 100) break; // Safety cap at 100,000 rows
+                if (page > 100) break;
             }
 
             if (allData.length === 0) {
@@ -933,7 +948,6 @@
                 return;
             }
 
-            // Storage limit alert banner trigger (> 15,000 rows)
             const warningBanner = document.getElementById('analytics-warning');
             if (allData.length > 15000) {
                 if (warningBanner) warningBanner.classList.remove('hidden');
@@ -941,7 +955,6 @@
                 if (warningBanner) warningBanner.classList.add('hidden');
             }
 
-            // Exclude legacy records from analytics calculations
             const dataToAnalyze = allData.filter(d => !d.is_legacy);
 
             if (dataToAnalyze.length === 0) {
@@ -958,25 +971,28 @@
             document.getElementById('stat-total-cards').textContent = totalCards;
             document.getElementById('stat-total-packs').textContent = uniquePacks;
 
-            // Tally actual pulls
             const actualCounts = { "Legendary": 0, "Epic": 0, "Ultra Rare": 0, "Super Rare": 0, "Rare": 0, "Uncommon": 0, "Common": 0 };
             dataToAnalyze.forEach(pull => {
                 const r = pull.car_rarity;
                 if (actualCounts[r] !== undefined) actualCounts[r]++;
             });
 
-            // Calculate expected probabilities based on reference table
             const expectedCounts = { "Legendary": 0, "Epic": 0, "Ultra Rare": 0, "Super Rare": 0, "Rare": 0, "Uncommon": 0, "Common": 0 };
             
             dataToAnalyze.forEach(pull => {
-                const packType = pull.pack_type;
-                const subtype = (pull.pack_subtype === 'Regular') ? 'Regular' : 'Not regular';
-                const slot = ((pull.slot_number - 1) % 5) + 1; // Handles multi-packs wrapping slots 1-5
+                const packType = pull.pack_type ? pull.pack_type.trim() : '';
+                const rawSubtype = pull.pack_subtype ? pull.pack_subtype.trim().toLowerCase() : '';
+                const isRegular = (rawSubtype === 'regular' || rawSubtype === '');
+                const subtypeKey = isRegular ? 'Regular' : 'Not regular';
+                const slot = ((pull.slot_number - 1) % 5) + 1;
 
-                if (PACK_ODDS_DATA[packType] && PACK_ODDS_DATA[packType][subtype] && PACK_ODDS_DATA[packType][subtype][slot]) {
-                    const slotOdds = PACK_ODDS_DATA[packType][subtype][slot];
-                    for (const [rarity, pct] of Object.entries(slotOdds)) {
-                        expectedCounts[rarity] = (expectedCounts[rarity] || 0) + (pct / 100);
+                if (PACK_ODDS_DATA[packType]) {
+                    const packVariant = PACK_ODDS_DATA[packType][subtypeKey] || PACK_ODDS_DATA[packType]['Regular'] || PACK_ODDS_DATA[packType]['Not regular'];
+                    if (packVariant && packVariant[slot]) {
+                        const slotOdds = packVariant[slot];
+                        for (const [rarity, pct] of Object.entries(slotOdds)) {
+                            expectedCounts[rarity] = (expectedCounts[rarity] || 0) + (pct / 100);
+                        }
                     }
                 }
             });
@@ -1004,7 +1020,7 @@
                         <td class="py-3 px-3 font-medium text-slate-200">${rarity}</td>
                         <td class="py-3 px-3 text-right font-mono">${actual}</td>
                         <td class="py-3 px-3 text-right font-mono">${actualPct}%</td>
-                        <td class="py-3 px-3 text-right font-mono text-slate-400">${expectedPct}%</td>
+                        <td class="py-3 px-3 text-right font-mono text-slate-400">${expectedPct}% (${expected.toFixed(1)} cards)</td>
                         <td class="py-3 px-3 text-right font-mono ${varColor}">${variance > 0 ? '+' : ''}${variance}%</td>
                     </tr>
                 `;
@@ -1012,7 +1028,6 @@
 
             tbody.innerHTML = html;
 
-            // Luck Factor Calculation based on high rarity pull performance
             let luckFactor = 100;
             if (totalExpectedHighRarity > 0) {
                 luckFactor = ((totalActualHighRarity / totalExpectedHighRarity) * 100).toFixed(1);
