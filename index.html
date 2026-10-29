@@ -54,7 +54,6 @@
         <div class="flex justify-between items-center">
             <div class="flex items-center space-x-4">
                 <h1 class="text-2xl font-bold text-emerald-400">Top Drives Pack Logger</h1>
-                <!-- Permanent Excel-style Undo Button -->
                 <button id="global-undo-btn" onclick="triggerGlobalUndo()" disabled class="bg-slate-800 border border-slate-700 text-slate-500 font-medium text-xs px-3 py-1.5 rounded flex items-center space-x-1.5 cursor-not-allowed transition">
                     <span>↩</span>
                     <span id="undo-label">Undo (Ready)</span>
@@ -210,7 +209,6 @@
                 <button onclick="loadAnalyticsData()" class="bg-slate-900 border border-slate-700 text-emerald-400 hover:bg-slate-700 text-xs font-medium px-3 py-1.5 rounded transition">Refresh Stats</button>
             </div>
 
-            <!-- Warning Banner for Storage Limits -->
             <div id="analytics-warning" class="hidden bg-amber-900/40 border border-amber-600/60 p-3 rounded-lg text-xs text-amber-300 flex items-center justify-between">
                 <span>Storage notice: Your database has exceeded 15,000 rows. Consider reviewing data archiving if approaching your tier threshold.</span>
             </div>
@@ -251,7 +249,7 @@
         </div>
     </div>
 
-    <!-- FULL EDIT ENTRY MODAL -->
+    <!-- EDIT ENTRY MODAL -->
     <div id="edit-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
         <div class="bg-slate-800 border border-slate-700 rounded-lg p-6 max-w-lg w-full space-y-4 shadow-2xl">
             <div class="flex justify-between items-center">
@@ -348,141 +346,220 @@
         let currentSortColumn = 'date';
         let currentSortAscending = false;
 
-        const DEFAULT_PACK_TYPES = ['Aluminium', 'Carbon Fibre', 'Carbon Fiber', 'Ceramic', 'Plastic', 'Platinum', 'Racing Pack', 'Steel', 'Titanium'];
+        const DEFAULT_PACK_TYPES = ['Aluminium', 'Carbon Fibre', 'Carbon Fiber', 'Ceramic', 'Plastic', 'Platinum', 'Racing Pack', 'Steel', 'Titanium', 'Sapphire', 'Diamond', 'Black Diamond'];
         const DEFAULT_OBTAINED_OPTIONS = ['Adverts', 'Air Miles', 'Builder Coins', 'Cash', 'Challenge', 'Daily', 'Event', 'Free', 'Gold', 'IRL Money', 'Nismo', 'Objectives', 'Oddities Coin', 'Racing Coin', 'Spotted', 'Tri-series'];
         const DEFAULT_FLAVOUR_OPTIONS = [];
 
-        // OFFICIAL PACK ODDS MAPPING (Strictly mapped 1-to-1 with Sheet/Database Sequence: Slot 1 = First Revealed / Lowest RQ, Slot 5 = Final Revealed Prize Slot)
+        // STRICT CSV PACK ODDS PARSED FROM MANUAL PACK ODDS CSV
         const PACK_ODDS_DATA = {
             "Plastic": {
                 "Regular": {
-                    1: { "Common": 85, "Uncommon": 15 },
-                    2: { "Common": 85, "Uncommon": 15 },
-                    3: { "Common": 85, "Uncommon": 15 },
-                    4: { "Common": 85, "Uncommon": 15 },
-                    5: { "Common": 30, "Uncommon": 68.5, "Rare": 1.5 }
+                    "1": { "Uncommon": 15.0, "Common": 85.0 },
+                    "2": { "Uncommon": 15.0, "Common": 85.0 },
+                    "3": { "Uncommon": 15.0, "Common": 85.0 },
+                    "4": { "Uncommon": 15.0, "Common": 85.0 },
+                    "5": { "Rare": 1.5, "Uncommon": 68.5, "Common": 30.0 }
                 },
                 "Not regular": {
-                    1: { "Common": 100 },
-                    2: { "Common": 66.75, "Uncommon": 32, "Rare": 1.25 },
-                    3: { "Common": 66.75, "Uncommon": 32, "Rare": 1.25 },
-                    4: { "Common": 66.75, "Uncommon": 32, "Rare": 1.25 },
-                    5: { "Common": 66.75, "Uncommon": 32, "Rare": 1.25 }
+                    "1": { "Common": 100.0 },
+                    "2": { "Rare": 1.25, "Uncommon": 32.0, "Common": 66.75 },
+                    "3": { "Rare": 1.25, "Uncommon": 32.0, "Common": 66.75 },
+                    "4": { "Rare": 1.25, "Uncommon": 32.0, "Common": 66.75 },
+                    "5": { "Rare": 1.25, "Uncommon": 32.0, "Common": 66.75 }
                 }
             },
             "Steel": {
                 "Regular": {
-                    1: { "Common": 66.75, "Uncommon": 32, "Rare": 1.25 },
-                    2: { "Common": 66.75, "Uncommon": 32, "Rare": 1.25 },
-                    3: { "Common": 66.75, "Uncommon": 32, "Rare": 1.25 },
-                    4: { "Common": 66.75, "Uncommon": 32, "Rare": 1.25 },
-                    5: { "Uncommon": 61.5, "Rare": 37.5, "Super Rare": 1 }
+                    "1": { "Rare": 1.25, "Uncommon": 32.0, "Common": 66.75 },
+                    "2": { "Rare": 1.25, "Uncommon": 32.0, "Common": 66.75 },
+                    "3": { "Rare": 1.25, "Uncommon": 32.0, "Common": 66.75 },
+                    "4": { "Rare": 1.25, "Uncommon": 32.0, "Common": 66.75 },
+                    "5": { "Super Rare": 1.0, "Rare": 37.5, "Uncommon": 61.5 }
                 },
                 "Not regular": {
-                    1: { "Uncommon": 100 },
-                    2: { "Common": 66.75, "Uncommon": 32, "Rare": 1.25 },
-                    3: { "Common": 66.75, "Uncommon": 32, "Rare": 1.25 },
-                    4: { "Common": 66.75, "Uncommon": 32, "Rare": 1.25 },
-                    5: { "Common": 66.75, "Uncommon": 32, "Rare": 1.25 }
+                    "1": { "Uncommon": 100.0 },
+                    "2": { "Rare": 1.25, "Uncommon": 32.0, "Common": 66.75 },
+                    "3": { "Rare": 1.25, "Uncommon": 32.0, "Common": 66.75 },
+                    "4": { "Rare": 1.25, "Uncommon": 32.0, "Common": 66.75 },
+                    "5": { "Rare": 1.25, "Uncommon": 32.0, "Common": 66.75 }
                 }
             },
             "Aluminium": {
                 "Regular": {
-                    1: { "Uncommon": 98, "Rare": 2 },
-                    2: { "Uncommon": 98, "Rare": 2 },
-                    3: { "Uncommon": 98, "Rare": 2 },
-                    4: { "Uncommon": 76.5, "Rare": 20, "Super Rare": 3.5 },
-                    5: { "Uncommon": 80, "Rare": 18.5, "Super Rare": 1.5 }
+                    "1": { "Rare": 2.0, "Uncommon": 98.0 },
+                    "2": { "Rare": 2.0, "Uncommon": 98.0 },
+                    "3": { "Rare": 2.0, "Uncommon": 98.0 },
+                    "4": { "Super Rare": 3.5, "Rare": 20.0, "Uncommon": 76.5 },
+                    "5": { "Ultra Rare": 1.5, "Super Rare": 18.5, "Rare": 80.0 }
                 },
                 "Not regular": {
-                    1: { "Uncommon": 98.5, "Rare": 1.5 },
-                    2: { "Uncommon": 98.5, "Rare": 1.5 },
-                    3: { "Uncommon": 98.5, "Rare": 1.5 },
-                    4: { "Uncommon": 79.5, "Rare": 17.5, "Super Rare": 3 },
-                    5: { "Uncommon": 81.25, "Rare": 17.5, "Super Rare": 1.25 }
+                    "1": { "Rare": 1.5, "Uncommon": 98.5 },
+                    "2": { "Rare": 1.5, "Uncommon": 98.5 },
+                    "3": { "Rare": 1.5, "Uncommon": 98.5 },
+                    "4": { "Super Rare": 3.0, "Rare": 17.5, "Uncommon": 79.5 },
+                    "5": { "Ultra Rare": 1.25, "Super Rare": 17.5, "Rare": 81.25 }
                 }
             },
             "Ceramic": {
                 "Regular": {
-                    1: { "Rare": 95, "Super Rare": 5 },
-                    2: { "Rare": 95, "Super Rare": 5 },
-                    3: { "Rare": 79, "Super Rare": 18.5, "Ultra Rare": 2.5 },
-                    4: { "Rare": 65, "Super Rare": 34.15, "Ultra Rare": 0.5, "Epic": 0.25, "Legendary": 0.1 },
-                    5: { "Super Rare": 82.85, "Ultra Rare": 14, "Epic": 2.5, "Legendary": 0.65 }
+                    "1": { "Rare": 5.0, "Uncommon": 95.0 },
+                    "2": { "Rare": 5.0, "Uncommon": 95.0 },
+                    "3": { "Super Rare": 2.5, "Rare": 18.5, "Uncommon": 79.0 },
+                    "4": { "Legendary": 0.1, "Epic": 0.25, "Ultra Rare": 0.5, "Super Rare": 34.15, "Rare": 65.0 },
+                    "5": { "Legendary": 0.65, "Epic": 2.5, "Ultra Rare": 14.0, "Super Rare": 82.85 }
                 },
                 "Not regular": {
-                    1: { "Rare": 95, "Super Rare": 5 },
-                    2: { "Rare": 95, "Super Rare": 5 },
-                    3: { "Rare": 82.25, "Super Rare": 16, "Ultra Rare": 1.75 },
-                    4: { "Rare": 75.52, "Super Rare": 24, "Ultra Rare": 0.33, "Epic": 0.09, "Legendary": 0.06 },
-                    5: { "Super Rare": 86.55, "Ultra Rare": 11, "Epic": 2, "Legendary": 0.45 }
+                    "1": { "Rare": 5.0, "Uncommon": 95.0 },
+                    "2": { "Rare": 5.0, "Uncommon": 95.0 },
+                    "3": { "Super Rare": 1.75, "Rare": 16.0, "Uncommon": 82.25 },
+                    "4": { "Legendary": 0.06, "Epic": 0.09, "Ultra Rare": 0.33, "Super Rare": 24.0, "Rare": 75.52 },
+                    "5": { "Legendary": 0.45, "Epic": 2.0, "Ultra Rare": 11.0, "Super Rare": 86.55 }
                 }
             },
             "Ceramic Lite": {
                 "Not regular": {
-                    1: { "Rare": 95, "Super Rare": 5 },
-                    2: { "Rare": 95, "Super Rare": 5 },
-                    3: { "Rare": 80, "Super Rare": 20 },
-                    4: { "Super Rare": 100 },
-                    5: { "Ultra Rare": 72, "Epic": 27.5, "Legendary": 0.5 }
+                    "1": { "Rare": 5.0, "Uncommon": 95.0 },
+                    "2": { "Rare": 5.0, "Uncommon": 95.0 },
+                    "3": { "Rare": 20.0, "Uncommon": 80.0 },
+                    "4": { "Rare": 100.0 },
+                    "5": { "Legendary": 0.5, "Epic": 2.0, "Ultra Rare": 7.5, "Super Rare": 90.0 }
                 }
             },
             "Carbon Fibre": {
                 "Regular": {
-                    1: { "Rare": 97.5, "Super Rare": 2.5 },
-                    2: { "Rare": 95, "Super Rare": 5 },
-                    3: { "Rare": 90, "Super Rare": 10 },
-                    4: { "Super Rare": 89.25, "Ultra Rare": 7.5, "Epic": 2.75, "Legendary": 0.5 },
-                    5: { "Ultra Rare": 79.75, "Epic": 17.75, "Legendary": 2.5 }
+                    "1": { "Super Rare": 2.5, "Rare": 97.5 },
+                    "2": { "Super Rare": 5.0, "Rare": 95.0 },
+                    "3": { "Super Rare": 10.0, "Rare": 90.0 },
+                    "4": { "Legendary": 0.5, "Epic": 2.75, "Ultra Rare": 7.5, "Super Rare": 89.25 },
+                    "5": { "Legendary": 2.5, "Epic": 17.75, "Ultra Rare": 79.75 }
                 },
                 "Not regular": {
-                    1: { "Rare": 97.5, "Super Rare": 2.5 },
-                    2: { "Rare": 95, "Super Rare": 5 },
-                    3: { "Rare": 90, "Super Rare": 10 },
-                    4: { "Super Rare": 89.25, "Ultra Rare": 7.5, "Epic": 2.75, "Legendary": 0.5 },
-                    5: { "Ultra Rare": 79.75, "Epic": 17.75, "Legendary": 2.5 }
+                    "1": { "Super Rare": 2.5, "Rare": 97.5 },
+                    "2": { "Super Rare": 5.0, "Rare": 95.0 },
+                    "3": { "Super Rare": 10.0, "Rare": 90.0 },
+                    "4": { "Legendary": 0.5, "Epic": 2.75, "Ultra Rare": 7.5, "Super Rare": 89.25 },
+                    "5": { "Legendary": 2.5, "Epic": 17.75, "Ultra Rare": 79.75 }
                 }
             },
             "Carbon Fiber": {
                 "Regular": {
-                    1: { "Rare": 97.5, "Super Rare": 2.5 },
-                    2: { "Rare": 95, "Super Rare": 5 },
-                    3: { "Rare": 90, "Super Rare": 10 },
-                    4: { "Super Rare": 89.25, "Ultra Rare": 7.5, "Epic": 2.75, "Legendary": 0.5 },
-                    5: { "Ultra Rare": 79.75, "Epic": 17.75, "Legendary": 2.5 }
+                    "1": { "Super Rare": 2.5, "Rare": 97.5 },
+                    "2": { "Super Rare": 5.0, "Rare": 95.0 },
+                    "3": { "Super Rare": 10.0, "Rare": 90.0 },
+                    "4": { "Legendary": 0.5, "Epic": 2.75, "Ultra Rare": 7.5, "Super Rare": 89.25 },
+                    "5": { "Legendary": 2.5, "Epic": 17.75, "Ultra Rare": 79.75 }
                 },
                 "Not regular": {
-                    1: { "Rare": 97.5, "Super Rare": 2.5 },
-                    2: { "Rare": 95, "Super Rare": 5 },
-                    3: { "Rare": 90, "Super Rare": 10 },
-                    4: { "Super Rare": 89.25, "Ultra Rare": 7.5, "Epic": 2.75, "Legendary": 0.5 },
-                    5: { "Ultra Rare": 79.75, "Epic": 17.75, "Legendary": 2.5 }
+                    "1": { "Super Rare": 2.5, "Rare": 97.5 },
+                    "2": { "Super Rare": 5.0, "Rare": 95.0 },
+                    "3": { "Super Rare": 10.0, "Rare": 90.0 },
+                    "4": { "Legendary": 0.5, "Epic": 2.75, "Ultra Rare": 7.5, "Super Rare": 89.25 },
+                    "5": { "Legendary": 2.5, "Epic": 17.75, "Ultra Rare": 79.75 }
                 }
             },
             "Super Carbon": {
                 "Regular": {
-                    1: { "Ultra Rare": 95, "Epic": 5 },
-                    2: { "Ultra Rare": 95, "Epic": 5 },
-                    3: { "Ultra Rare": 95, "Epic": 5 },
-                    4: { "Super Rare": 90, "Ultra Rare": 10 },
-                    5: { "Ultra Rare": 77, "Epic": 20, "Legendary": 3 }
+                    "1": { "Ultra Rare": 5.0, "Rare": 95.0 },
+                    "2": { "Ultra Rare": 5.0, "Rare": 95.0 },
+                    "3": { "Ultra Rare": 5.0, "Rare": 95.0 },
+                    "4": { "Ultra Rare": 10.0, "Super Rare": 90.0 },
+                    "5": { "Legendary": 3.0, "Epic": 20.0, "Ultra Rare": 77.0 }
                 },
                 "Not regular": {
-                    1: { "Ultra Rare": 95, "Epic": 5 },
-                    2: { "Ultra Rare": 95, "Epic": 5 },
-                    3: { "Ultra Rare": 95, "Epic": 5 },
-                    4: { "Super Rare": 90, "Ultra Rare": 10 },
-                    5: { "Ultra Rare": 77, "Epic": 20, "Legendary": 3 }
+                    "1": { "Ultra Rare": 5.0, "Rare": 95.0 },
+                    "2": { "Ultra Rare": 5.0, "Rare": 95.0 },
+                    "3": { "Ultra Rare": 5.0, "Rare": 95.0 },
+                    "4": { "Ultra Rare": 10.0, "Super Rare": 90.0 },
+                    "5": { "Legendary": 3.0, "Epic": 20.0, "Ultra Rare": 77.0 }
+                }
+            },
+            "Platinum": {
+                "Regular": {
+                    "1": { "Ultra Rare": 5.0, "Rare": 95.0 },
+                    "2": { "Ultra Rare": 10.0, "Super Rare": 90.0 },
+                    "3": { "Ultra Rare": 10.0, "Super Rare": 90.0 },
+                    "4": { "Ultra Rare": 100.0 },
+                    "5": { "Legendary": 5.0, "Epic": 35.0, "Ultra Rare": 60.0 }
+                },
+                "Not regular": {
+                    "1": { "Ultra Rare": 5.0, "Rare": 95.0 },
+                    "2": { "Ultra Rare": 10.0, "Super Rare": 90.0 },
+                    "3": { "Ultra Rare": 10.0, "Super Rare": 90.0 },
+                    "4": { "Ultra Rare": 100.0 },
+                    "5": { "Legendary": 5.0, "Epic": 35.0, "Ultra Rare": 60.0 }
+                }
+            },
+            "Titanium": {
+                "Regular": {
+                    "1": { "Epic": 5.0, "Super Rare": 95.0 },
+                    "2": { "Epic": 5.0, "Super Rare": 95.0 },
+                    "3": { "Epic": 10.0, "Super Rare": 90.0 },
+                    "4": { "Epic": 10.0, "Ultra Rare": 90.0 },
+                    "5": { "Legendary": 20.0, "Epic": 80.0 }
+                },
+                "Not regular": {
+                    "1": { "Epic": 5.0, "Super Rare": 95.0 },
+                    "2": { "Epic": 5.0, "Super Rare": 95.0 },
+                    "3": { "Epic": 10.0, "Super Rare": 90.0 },
+                    "4": { "Epic": 10.0, "Ultra Rare": 90.0 },
+                    "5": { "Legendary": 20.0, "Epic": 80.0 }
+                }
+            },
+            "Sapphire": {
+                "Regular": {
+                    "1": { "Epic": 5.0, "Ultra Rare": 95.0 },
+                    "2": { "Epic": 10.0, "Ultra Rare": 90.0 },
+                    "3": { "Epic": 10.0, "Ultra Rare": 90.0 },
+                    "4": { "Epic": 100.0 },
+                    "5": { "Legendary": 35.0, "Epic": 65.0 }
+                },
+                "Not regular": {
+                    "1": { "Epic": 5.0, "Ultra Rare": 95.0 },
+                    "2": { "Epic": 10.0, "Ultra Rare": 90.0 },
+                    "3": { "Epic": 10.0, "Ultra Rare": 90.0 },
+                    "4": { "Epic": 100.0 },
+                    "5": { "Legendary": 35.0, "Epic": 65.0 }
+                }
+            },
+            "Diamond": {
+                "Regular": {
+                    "1": { "Legendary": 5.0, "Ultra Rare": 95.0 },
+                    "2": { "Legendary": 5.0, "Ultra Rare": 95.0 },
+                    "3": { "Legendary": 5.0, "Ultra Rare": 95.0 },
+                    "4": { "Legendary": 10.0, "Epic": 90.0 },
+                    "5": { "Legendary": 100.0 }
+                },
+                "Not regular": {
+                    "1": { "Legendary": 5.0, "Ultra Rare": 95.0 },
+                    "2": { "Legendary": 5.0, "Ultra Rare": 95.0 },
+                    "3": { "Legendary": 5.0, "Ultra Rare": 95.0 },
+                    "4": { "Legendary": 10.0, "Epic": 90.0 },
+                    "5": { "Legendary": 100.0 }
+                }
+            },
+            "Black Diamond": {
+                "Regular": {
+                    "1": { "Legendary": 5.0, "Ultra Rare": 95.0 },
+                    "2": { "Legendary": 5.0, "Ultra Rare": 95.0 },
+                    "3": { "Legendary": 10.0, "Epic": 90.0 },
+                    "4": { "Legendary": 50.0, "Epic": 50.0 },
+                    "5": { "Legendary": 100.0 }
+                },
+                "Not regular": {
+                    "1": { "Legendary": 5.0, "Ultra Rare": 95.0 },
+                    "2": { "Legendary": 5.0, "Ultra Rare": 95.0 },
+                    "3": { "Legendary": 10.0, "Epic": 90.0 },
+                    "4": { "Legendary": 50.0, "Epic": 50.0 },
+                    "5": { "Legendary": 100.0 }
                 }
             },
             "Racing Pack": {
                 "Regular": {
-                    1: { "Super Rare": 82.85, "Ultra Rare": 14, "Epic": 2.5, "Legendary": 0.65 }
+                    "1": { "Legendary": 0.5, "Epic": 1.5, "Ultra Rare": 8.0, "Super Rare": 30.0, "Rare": 60.0 }
                 }
             }
         };
 
-        // PERMANENT EXCEL-STYLE UNDO STATE
         let lastAction = null;
 
         function setLastAction(actionType, dataPayload, description) {
@@ -972,7 +1049,7 @@
 
             const totalCards = dataToAnalyze.length;
             
-            // Group cards by pack_group_id to accurately scale total pack sessions
+            // Group cards by pack_group_id to accurately scale multi-pack sessions
             const packGroups = {};
             dataToAnalyze.forEach(pull => {
                 const groupId = pull.pack_group_id || pull.id;
@@ -995,10 +1072,12 @@
 
             const expectedCounts = { "Legendary": 0, "Epic": 0, "Ultra Rare": 0, "Super Rare": 0, "Rare": 0, "Uncommon": 0, "Common": 0 };
 
-            // Evaluate expected probabilities card-by-card using exact database slot positions
-            dataToAnalyze.forEach(pull => {
-                const packType = pull.pack_type ? pull.pack_type.trim() : '';
-                const rawSubtype = pull.pack_subtype ? pull.pack_subtype.trim().toLowerCase() : '';
+            // Evaluate expected probabilities using multi-pack slot mapping
+            Object.values(packGroups).forEach(groupPulls => {
+                const totalInBundle = groupPulls.length;
+                const sample = groupPulls[0];
+                const packType = sample.pack_type ? sample.pack_type.trim() : '';
+                const rawSubtype = sample.pack_subtype ? sample.pack_subtype.trim().toLowerCase() : '';
                 const isRegular = (rawSubtype === 'regular' || rawSubtype === '');
                 const subtypeKey = isRegular ? 'Regular' : 'Not regular';
 
@@ -1006,19 +1085,28 @@
                     const packVariant = PACK_ODDS_DATA[packType][subtypeKey] || PACK_ODDS_DATA[packType]['Regular'];
                     
                     if (packVariant) {
-                        // Map the database slot_number directly (1 through 5)
-                        let slot = pull.slot_number ? ((pull.slot_number - 1) % 5) + 1 : 5;
-                        
-                        // Fallback for single-card packs like Racing Pack
-                        if (!packVariant[slot] && packVariant[1]) {
-                            slot = 1;
-                        }
+                        const totalVariantSlots = Object.keys(packVariant).length || 5;
 
-                        if (packVariant[slot]) {
-                            for (const [rarity, pct] of Object.entries(packVariant[slot])) {
-                                expectedCounts[rarity] = (expectedCounts[rarity] || 0) + (pct / 100);
+                        groupPulls.forEach(pull => {
+                            let slotNum = pull.slot_number || 1;
+                            
+                            // Map bundle sequence index to pack slot position
+                            let mappedSlot;
+                            if (totalVariantSlots === 1) {
+                                mappedSlot = 1;
+                            } else {
+                                mappedSlot = Math.floor(((slotNum - 1) * 5) / totalInBundle) + 1;
+                                if (mappedSlot > 5) mappedSlot = 5;
+                                if (mappedSlot < 1) mappedSlot = 1;
                             }
-                        }
+
+                            const slotData = packVariant[mappedSlot] || packVariant[String(mappedSlot)] || packVariant[1];
+                            if (slotData) {
+                                for (const [rarity, pct] of Object.entries(slotData)) {
+                                    expectedCounts[rarity] = (expectedCounts[rarity] || 0) + (pct / 100);
+                                }
+                            }
+                        });
                     }
                 }
             });
