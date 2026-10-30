@@ -29,6 +29,12 @@
         .badge-rare { background-color: rgba(96, 165, 250, 0.15); color: #60a5fa; border: 1px solid rgba(96, 165, 250, 0.4); }
         .badge-uncommon { background-color: rgba(74, 222, 128, 0.15); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.4); }
         .badge-common { background-color: rgba(156, 163, 175, 0.15); color: #9ca3af; border: 1px solid rgba(156, 163, 175, 0.4); }
+
+        .brand-title {
+            background: linear-gradient(135deg, #fbbf24 0%, #f87171 35%, #c084fc 70%, #60a5fa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
     </style>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen p-6 font-sans relative">
@@ -53,7 +59,7 @@
         <!-- Header -->
         <div class="flex justify-between items-center">
             <div class="flex items-center space-x-4">
-                <h1 class="text-2xl font-bold text-emerald-400">Top Drives Pack Logger</h1>
+                <h1 class="text-2xl font-black tracking-tight brand-title">Top Drives Pack Logger</h1>
                 <button id="global-undo-btn" onclick="triggerGlobalUndo()" disabled class="bg-slate-800 border border-slate-700 text-slate-500 font-medium text-xs px-3 py-1.5 rounded flex items-center space-x-1.5 cursor-not-allowed transition">
                     <span>↩</span>
                     <span id="undo-label">Undo (Ready)</span>
@@ -213,38 +219,60 @@
                 <span>Storage notice: Your database has exceeded 15,000 rows. Consider reviewing data archiving if approaching your tier threshold.</span>
             </div>
 
-            <!-- Summary Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- Summary Cards (RacingCrest Style 5-Column Grid) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                 <div class="bg-slate-900 border border-slate-700 p-4 rounded-lg space-y-1">
-                    <div class="text-xs text-slate-400">Total Cards Logged</div>
+                    <div id="stat-packs-opened" class="text-2xl font-bold font-mono text-slate-100">0</div>
+                    <div id="stat-packs-subtitle" class="text-xs text-slate-400">Packs opened</div>
+                </div>
+                <div class="bg-slate-900 border border-slate-700 p-4 rounded-lg space-y-1">
                     <div id="stat-total-cards" class="text-2xl font-bold font-mono text-slate-100">0</div>
+                    <div id="stat-cards-subtitle" class="text-xs text-slate-400">Cards revealed</div>
                 </div>
                 <div class="bg-slate-900 border border-slate-700 p-4 rounded-lg space-y-1">
-                    <div class="text-xs text-slate-400">Total Packs Evaluated</div>
-                    <div id="stat-total-packs" class="text-2xl font-bold font-mono text-slate-100">0</div>
+                    <div id="stat-this-week" class="text-2xl font-bold font-mono text-slate-100">0</div>
+                    <div class="text-xs text-slate-400">This week (last 7 days)</div>
                 </div>
                 <div class="bg-slate-900 border border-slate-700 p-4 rounded-lg space-y-1">
-                    <div class="text-xs text-slate-400">Overall Luck Factor</div>
+                    <div id="stat-best-pull" class="text-base font-bold text-amber-400 truncate">None</div>
+                    <div class="text-xs text-slate-400">Best pull</div>
+                </div>
+                <div class="bg-slate-900 border border-slate-700 p-4 rounded-lg space-y-1">
                     <div id="stat-luck-factor" class="text-2xl font-bold font-mono text-emerald-400">100.0%</div>
+                    <div class="text-xs text-slate-400">Overall Luck Factor</div>
                 </div>
             </div>
 
-            <!-- Detailed Rarity Comparison Table -->
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs text-slate-300">
-                    <thead class="bg-slate-900 text-slate-400 uppercase font-mono select-none">
-                        <tr>
-                            <th class="py-3 px-3">Rarity Tier</th>
-                            <th class="py-3 px-3 text-right">Actual Pulled</th>
-                            <th class="py-3 px-3 text-right">Actual %</th>
-                            <th class="py-3 px-3 text-right">Expected % (Odds)</th>
-                            <th class="py-3 px-3 text-right">Variance</th>
-                        </tr>
-                    </thead>
-                    <tbody id="analytics-table-body" class="divide-y divide-slate-800">
-                        <tr><td colspan="5" class="p-4 text-center text-slate-500">Calculating analytics...</td></tr>
-                    </tbody>
-                </table>
+            <!-- Rarity Breakdown Bars & Comparison Table -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Left: Rarity Visual Distribution Bars -->
+                <div class="lg:col-span-5 bg-slate-900 border border-slate-700 p-5 rounded-lg space-y-4">
+                    <h3 class="text-sm font-bold text-slate-200 uppercase font-mono tracking-wider">Rarity of cards pulled</h3>
+                    <div id="rarity-bars-container" class="space-y-3 pt-2">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- Right: Detailed Variance & Odds Table -->
+                <div class="lg:col-span-7 bg-slate-900 border border-slate-700 p-5 rounded-lg space-y-3">
+                    <h3 class="text-sm font-bold text-slate-200 uppercase font-mono tracking-wider">Drop Rate Variance vs Game Odds</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs text-slate-300">
+                            <thead class="bg-slate-800 text-slate-400 uppercase font-mono select-none">
+                                <tr>
+                                    <th class="py-2.5 px-3">Rarity Tier</th>
+                                    <th class="py-2.5 px-3 text-right">Actual</th>
+                                    <th class="py-2.5 px-3 text-right">Actual %</th>
+                                    <th class="py-2.5 px-3 text-right">Expected (Odds)</th>
+                                    <th class="py-2.5 px-3 text-right">Variance</th>
+                                </tr>
+                            </thead>
+                            <tbody id="analytics-table-body" class="divide-y divide-slate-800">
+                                <tr><td colspan="5" class="p-4 text-center text-slate-500">Calculating analytics...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -778,14 +806,14 @@
 
         function getRarityClass(rarity) {
             const r = (rarity || '').toLowerCase();
-            if (r.includes('legendary')) return { text: 'rarity-legendary', badge: 'badge-legendary' };
-            if (r.includes('epic')) return { text: 'rarity-epic', badge: 'badge-epic' };
-            if (r.includes('ultra rare')) return { text: 'rarity-ultra-rare', badge: 'badge-ultra-rare' };
-            if (r.includes('super rare')) return { text: 'rarity-super-rare', badge: 'badge-super-rare' };
-            if (r.includes('rare')) return { text: 'rarity-rare', badge: 'badge-rare' };
-            if (r.includes('uncommon')) return { text: 'rarity-uncommon', badge: 'badge-uncommon' };
-            if (r.includes('common')) return { text: 'rarity-common', badge: 'badge-common' };
-            return { text: 'text-slate-400', badge: 'bg-slate-800 text-slate-400' };
+            if (r.includes('legendary')) return { text: 'rarity-legendary', badge: 'badge-legendary', hex: '#fbbf24' };
+            if (r.includes('epic')) return { text: 'rarity-epic', badge: 'badge-epic', hex: '#c084fc' };
+            if (r.includes('ultra rare')) return { text: 'rarity-ultra-rare', badge: 'badge-ultra-rare', hex: '#f87171' };
+            if (r.includes('super rare')) return { text: 'rarity-super-rare', badge: 'badge-super-rare', hex: '#fde047' };
+            if (r.includes('rare')) return { text: 'rarity-rare', badge: 'badge-rare', hex: '#60a5fa' };
+            if (r.includes('uncommon')) return { text: 'rarity-uncommon', badge: 'badge-uncommon', hex: '#4ade80' };
+            if (r.includes('common')) return { text: 'rarity-common', badge: 'badge-common', hex: '#9ca3af' };
+            return { text: 'text-slate-400', badge: 'bg-slate-800 text-slate-400', hex: '#94a3b8' };
         }
 
         function toggleFlavourField() {
@@ -1025,8 +1053,12 @@
             if (allData.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-500">No data available for analytics yet</td></tr>';
                 document.getElementById('stat-total-cards').textContent = '0';
-                document.getElementById('stat-total-packs').textContent = '0';
+                document.getElementById('stat-packs-opened').textContent = '0';
+                document.getElementById('stat-packs-subtitle').textContent = 'Packs opened';
+                document.getElementById('stat-this-week').textContent = '0';
+                document.getElementById('stat-best-pull').textContent = 'None';
                 document.getElementById('stat-luck-factor').textContent = '100.0%';
+                document.getElementById('rarity-bars-container').innerHTML = '<div class="text-xs text-slate-500 text-center py-4">No data</div>';
                 return;
             }
 
@@ -1042,7 +1074,9 @@
             if (dataToAnalyze.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-500">No new pack logs found (legacy records excluded)</td></tr>';
                 document.getElementById('stat-total-cards').textContent = '0';
-                document.getElementById('stat-total-packs').textContent = '0';
+                document.getElementById('stat-packs-opened').textContent = '0';
+                document.getElementById('stat-this-week').textContent = '0';
+                document.getElementById('stat-best-pull').textContent = 'None';
                 document.getElementById('stat-luck-factor').textContent = '100.0%';
                 return;
             }
@@ -1061,8 +1095,45 @@
 
             const uniquePacks = Object.keys(packGroups).length;
 
+            // Find earliest date logged
+            let earliestDate = null;
+            dataToAnalyze.forEach(p => {
+                if (p.date && (!earliestDate || p.date < earliestDate)) {
+                    earliestDate = p.date;
+                }
+            });
+
+            // Calculate packs opened in the last 7 days
+            const now = new Date();
+            const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            let packsThisWeek = 0;
+            Object.values(packGroups).forEach(groupPulls => {
+                const sampleDate = groupPulls[0].date ? new Date(groupPulls[0].date) : null;
+                if (sampleDate && sampleDate >= sevenDaysAgo) {
+                    packsThisWeek++;
+                }
+            });
+
+            // Find best pull (highest RQ, tie-break rarity rank)
+            const rarityRank = { "Legendary": 4, "Epic": 3, "Ultra Rare": 2, "Super Rare": 1, "Rare": 0, "Uncommon": 0, "Common": 0 };
+            let bestPullCar = null;
+            let maxScore = -1;
+            dataToAnalyze.forEach(p => {
+                const rq = p.car_rq || 0;
+                const rRank = rarityRank[p.car_rarity] || 0;
+                const score = (rq * 10) + rRank;
+                if (score > maxScore) {
+                    maxScore = score;
+                    bestPullCar = p;
+                }
+            });
+
+            // Update top stats
             document.getElementById('stat-total-cards').textContent = totalCards;
-            document.getElementById('stat-total-packs').textContent = uniquePacks;
+            document.getElementById('stat-packs-opened').textContent = uniquePacks;
+            document.getElementById('stat-packs-subtitle').textContent = earliestDate ? `since ${formatDisplayDate(earliestDate)}` : 'Packs opened';
+            document.getElementById('stat-this-week').textContent = packsThisWeek;
+            document.getElementById('stat-best-pull').textContent = bestPullCar ? bestPullCar.car_name : 'None';
 
             const actualCounts = { "Legendary": 0, "Epic": 0, "Ultra Rare": 0, "Super Rare": 0, "Rare": 0, "Uncommon": 0, "Common": 0 };
             dataToAnalyze.forEach(pull => {
@@ -1112,6 +1183,33 @@
             });
 
             const rarities = ["Legendary", "Epic", "Ultra Rare", "Super Rare", "Rare", "Uncommon", "Common"];
+            
+            // Find max count for proportional bar widths
+            let maxCount = 1;
+            rarities.forEach(r => {
+                if (actualCounts[r] > maxCount) maxCount = actualCounts[r];
+            });
+
+            let barsHtml = '';
+            rarities.forEach(rarity => {
+                const count = actualCounts[rarity];
+                const pctWidth = Math.max(4, Math.round((count / maxCount) * 100));
+                const cfg = getRarityClass(rarity);
+
+                barsHtml += `
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-xs">
+                            <span class="font-medium text-slate-300">${rarity}</span>
+                            <span class="font-mono font-bold text-slate-100">${count}</span>
+                        </div>
+                        <div class="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden">
+                            <div class="h-2.5 rounded-full transition-all duration-500" style="width: ${pctWidth}%; background-color: ${cfg.hex};"></div>
+                        </div>
+                    </div>
+                `;
+            });
+            document.getElementById('rarity-bars-container').innerHTML = barsHtml;
+
             let html = '';
             let totalActualHighRarity = 0;
             let totalExpectedHighRarity = 0;
@@ -1134,7 +1232,7 @@
                         <td class="py-3 px-3 font-medium text-slate-200">${rarity}</td>
                         <td class="py-3 px-3 text-right font-mono">${actual}</td>
                         <td class="py-3 px-3 text-right font-mono">${actualPct}%</td>
-                        <td class="py-3 px-3 text-right font-mono text-slate-400">${expectedPct}% (${expected.toFixed(1)} cards)</td>
+                        <td class="py-3 px-3 text-right font-mono text-slate-400">${expectedPct}% (${expected.toFixed(1)})</td>
                         <td class="py-3 px-3 text-right font-mono ${varColor}">${variance > 0 ? '+' : ''}${variance}%</td>
                     </tr>
                 `;
