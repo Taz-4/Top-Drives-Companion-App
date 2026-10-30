@@ -80,6 +80,9 @@
                 <button id="tab-btn-analytics" onclick="switchTab('analytics')" class="px-4 py-2 text-sm font-medium rounded-t-lg text-slate-400 hover:text-slate-200 cursor-pointer">
                     Analytics & Statistics
                 </button>
+                <button id="tab-btn-filtered" onclick="switchTab('filtered')" class="px-4 py-2 text-sm font-medium rounded-t-lg text-slate-400 hover:text-slate-200 cursor-pointer">
+                    Pack Statistics
+                </button>
             </nav>
         </div>
 
@@ -234,8 +237,8 @@
                     <div class="text-xs text-slate-400">This week (last 7 days)</div>
                 </div>
                 <div class="bg-slate-900 border border-slate-700 p-4 rounded-lg space-y-1">
-                    <div id="stat-best-pull" class="text-base font-bold text-amber-400 truncate">None</div>
-                    <div class="text-xs text-slate-400">Best pull</div>
+                    <div id="stat-best-pull" class="text-xs font-bold leading-snug line-clamp-2 text-slate-100">None</div>
+                    <div class="text-xs text-slate-400 mt-1">Best pull</div>
                 </div>
                 <div class="bg-slate-900 border border-slate-700 p-4 rounded-lg space-y-1">
                     <div id="stat-luck-factor" class="text-2xl font-bold font-mono text-emerald-400">100.0%</div>
@@ -269,6 +272,80 @@
                             </thead>
                             <tbody id="analytics-table-body" class="divide-y divide-slate-800">
                                 <tr><td colspan="5" class="p-4 text-center text-slate-500">Calculating analytics...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 4: PACK STATISTICS (FILTERED) -->
+        <div id="tab-content-filtered" class="hidden bg-slate-800 p-6 rounded-lg border border-slate-700 space-y-6">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-200">Pack Statistics & Parameter Breakdown</h2>
+                    <p class="text-xs text-slate-400">Filter drop rates and pack analytics by specific Pack Type and Flavour / Collection.</p>
+                </div>
+                <div class="flex flex-wrap gap-3">
+                    <div>
+                        <label class="block text-[10px] text-slate-400 mb-1 font-mono uppercase">Pack Type</label>
+                        <select id="filter-pack-type" onchange="loadFilteredStats()" class="bg-slate-900 border border-slate-700 rounded p-2 text-xs text-slate-100 focus:outline-none focus:border-emerald-500">
+                            <option value="ALL">All Pack Types</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-slate-400 mb-1 font-mono uppercase">Flavour / Collection</label>
+                        <select id="filter-flavour" onchange="loadFilteredStats()" class="bg-slate-900 border border-slate-700 rounded p-2 text-xs text-slate-100 focus:outline-none focus:border-emerald-500">
+                            <option value="ALL">All Flavours</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RacingCrest Style Filtered Header Banner -->
+            <div id="filtered-header-banner" class="bg-slate-900 border border-slate-700 p-4 rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                <div>
+                    <div id="filtered-banner-title" class="text-sm font-bold tracking-wide uppercase font-mono text-slate-200">ALL PACKS — ALL FLAVOURS</div>
+                    <div class="text-[11px] text-slate-400 flex items-center gap-3 mt-1 font-mono">
+                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-amber-400 inline-block"></span> your actual</span>
+                        <span>|</span>
+                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-white inline-block"></span> published (expected)</span>
+                        <span>|</span>
+                        <span>cards total (actual / published)</span>
+                    </div>
+                </div>
+                <div class="text-right font-mono">
+                    <div id="filtered-banner-packs" class="text-lg font-bold text-emerald-400">0 packs</div>
+                    <div id="filtered-banner-cards" class="text-xs text-slate-400">0 cards analyzed</div>
+                </div>
+            </div>
+
+            <!-- Filtered Breakdown Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Left: Filtered Rarity Bars with Expected Marker -->
+                <div class="lg:col-span-5 bg-slate-900 border border-slate-700 p-5 rounded-lg space-y-4">
+                    <h3 class="text-sm font-bold text-slate-200 uppercase font-mono tracking-wider">Rarity Distribution</h3>
+                    <div id="filtered-bars-container" class="space-y-3 pt-2">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- Right: Filtered Variance & Odds Table -->
+                <div class="lg:col-span-7 bg-slate-900 border border-slate-700 p-5 rounded-lg space-y-3">
+                    <h3 class="text-sm font-bold text-slate-200 uppercase font-mono tracking-wider">Drop Rate Variance vs Game Odds</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs text-slate-300">
+                            <thead class="bg-slate-800 text-slate-400 uppercase font-mono select-none">
+                                <tr>
+                                    <th class="py-2.5 px-3">Rarity Tier</th>
+                                    <th class="py-2.5 px-3 text-right">Actual</th>
+                                    <th class="py-2.5 px-3 text-right">Actual %</th>
+                                    <th class="py-2.5 px-3 text-right">Expected (Odds)</th>
+                                    <th class="py-2.5 px-3 text-right">Variance</th>
+                                </tr>
+                            </thead>
+                            <tbody id="filtered-table-body" class="divide-y divide-slate-800">
+                                <tr><td colspan="5" class="p-4 text-center text-slate-500">Select parameters...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -370,11 +447,12 @@
         let activeSlotsData = [];
         let currentEditPullId = null;
         let pendingEditSelection = null;
+        let cachedAllPulls = [];
 
         let currentSortColumn = 'date';
         let currentSortAscending = false;
 
-        const DEFAULT_PACK_TYPES = ['Aluminium', 'Carbon Fibre', 'Carbon Fiber', 'Ceramic', 'Plastic', 'Platinum', 'Racing Pack', 'Steel', 'Titanium', 'Sapphire', 'Diamond', 'Black Diamond'];
+        const DEFAULT_PACK_TYPES = ['Aluminium', 'Carbon Fibre', 'Carbon Fiber', 'Ceramic', 'Ceramic Lite', 'Plastic', 'Platinum', 'Racing Pack', 'Steel', 'Titanium', 'Sapphire', 'Diamond', 'Black Diamond'];
         const DEFAULT_OBTAINED_OPTIONS = ['Adverts', 'Air Miles', 'Builder Coins', 'Cash', 'Challenge', 'Daily', 'Event', 'Free', 'Gold', 'IRL Money', 'Nismo', 'Objectives', 'Oddities Coin', 'Racing Coin', 'Spotted', 'Tri-series'];
         const DEFAULT_FLAVOUR_OPTIONS = [];
 
@@ -758,7 +836,7 @@
         let packTypeDropdown, obtainedDropdown, flavourDropdown;
 
         function switchTab(tabName) {
-            ['logger', 'history', 'analytics'].forEach(t => {
+            ['logger', 'history', 'analytics', 'filtered'].forEach(t => {
                 const content = document.getElementById(`tab-content-${t}`);
                 const btn = document.getElementById(`tab-btn-${t}`);
                 if (t === tabName) {
@@ -774,6 +852,8 @@
                 loadHistoryPulls();
             } else if (tabName === 'analytics') {
                 loadAnalyticsData();
+            } else if (tabName === 'filtered') {
+                loadFilteredStatsSetup();
             } else {
                 loadPulls();
             }
@@ -1019,10 +1099,7 @@
             tbody.innerHTML = renderTableRows(data);
         }
 
-        async function loadAnalyticsData() {
-            const tbody = document.getElementById('analytics-table-body');
-            tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-500">Fetching all records from database...</td></tr>';
-
+        async function fetchAllDatabasePulls() {
             let allData = [];
             let pageSize = 1000;
             let page = 0;
@@ -1034,7 +1111,7 @@
                 const { data, error } = await db.from('pulls').select('*').range(start, end);
 
                 if (error) {
-                    alert('Error loading analytics data: ' + error.message);
+                    alert('Error loading data: ' + error.message);
                     break;
                 }
 
@@ -1049,6 +1126,15 @@
                 page++;
                 if (page > 100) break;
             }
+            cachedAllPulls = allData;
+            return allData;
+        }
+
+        async function loadAnalyticsData() {
+            const tbody = document.getElementById('analytics-table-body');
+            tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-500">Fetching all records from database...</td></tr>';
+
+            const allData = await fetchAllDatabasePulls();
 
             if (allData.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-500">No data available for analytics yet</td></tr>';
@@ -1056,7 +1142,9 @@
                 document.getElementById('stat-packs-opened').textContent = '0';
                 document.getElementById('stat-packs-subtitle').textContent = 'Packs opened';
                 document.getElementById('stat-this-week').textContent = '0';
-                document.getElementById('stat-best-pull').textContent = 'None';
+                const bestEl = document.getElementById('stat-best-pull');
+                bestEl.textContent = 'None';
+                bestEl.className = 'text-xs font-bold leading-snug line-clamp-2 text-slate-400';
                 document.getElementById('stat-luck-factor').textContent = '100.0%';
                 document.getElementById('rarity-bars-container').innerHTML = '<div class="text-xs text-slate-500 text-center py-4">No data</div>';
                 return;
@@ -1076,14 +1164,15 @@
                 document.getElementById('stat-total-cards').textContent = '0';
                 document.getElementById('stat-packs-opened').textContent = '0';
                 document.getElementById('stat-this-week').textContent = '0';
-                document.getElementById('stat-best-pull').textContent = 'None';
+                const bestEl = document.getElementById('stat-best-pull');
+                bestEl.textContent = 'None';
+                bestEl.className = 'text-xs font-bold leading-snug line-clamp-2 text-slate-400';
                 document.getElementById('stat-luck-factor').textContent = '100.0%';
                 return;
             }
 
             const totalCards = dataToAnalyze.length;
             
-            // Group cards by pack_group_id to accurately scale multi-pack sessions
             const packGroups = {};
             dataToAnalyze.forEach(pull => {
                 const groupId = pull.pack_group_id || pull.id;
@@ -1095,7 +1184,6 @@
 
             const uniquePacks = Object.keys(packGroups).length;
 
-            // Find earliest date logged
             let earliestDate = null;
             dataToAnalyze.forEach(p => {
                 if (p.date && (!earliestDate || p.date < earliestDate)) {
@@ -1103,7 +1191,6 @@
                 }
             });
 
-            // Calculate packs opened in the last 7 days
             const now = new Date();
             const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
             let packsThisWeek = 0;
@@ -1114,7 +1201,6 @@
                 }
             });
 
-            // Find best pull (highest RQ, tie-break rarity rank)
             const rarityRank = { "Legendary": 4, "Epic": 3, "Ultra Rare": 2, "Super Rare": 1, "Rare": 0, "Uncommon": 0, "Common": 0 };
             let bestPullCar = null;
             let maxScore = -1;
@@ -1128,12 +1214,20 @@
                 }
             });
 
-            // Update top stats
             document.getElementById('stat-total-cards').textContent = totalCards;
             document.getElementById('stat-packs-opened').textContent = uniquePacks;
             document.getElementById('stat-packs-subtitle').textContent = earliestDate ? `since ${formatDisplayDate(earliestDate)}` : 'Packs opened';
             document.getElementById('stat-this-week').textContent = packsThisWeek;
-            document.getElementById('stat-best-pull').textContent = bestPullCar ? bestPullCar.car_name : 'None';
+
+            const bestEl = document.getElementById('stat-best-pull');
+            if (bestPullCar) {
+                bestEl.textContent = bestPullCar.car_name;
+                const rClass = getRarityClass(bestPullCar.car_rarity);
+                bestEl.className = `text-xs font-bold leading-snug line-clamp-2 ${rClass.text}`;
+            } else {
+                bestEl.textContent = 'None';
+                bestEl.className = 'text-xs font-bold leading-snug line-clamp-2 text-slate-400';
+            }
 
             const actualCounts = { "Legendary": 0, "Epic": 0, "Ultra Rare": 0, "Super Rare": 0, "Rare": 0, "Uncommon": 0, "Common": 0 };
             dataToAnalyze.forEach(pull => {
@@ -1143,7 +1237,6 @@
 
             const expectedCounts = { "Legendary": 0, "Epic": 0, "Ultra Rare": 0, "Super Rare": 0, "Rare": 0, "Uncommon": 0, "Common": 0 };
 
-            // Evaluate expected probabilities using multi-pack slot mapping
             Object.values(packGroups).forEach(groupPulls => {
                 const totalInBundle = groupPulls.length;
                 const sample = groupPulls[0];
@@ -1161,7 +1254,6 @@
                         groupPulls.forEach(pull => {
                             let slotNum = pull.slot_number || 1;
                             
-                            // Map bundle sequence index to pack slot position
                             let mappedSlot;
                             if (totalVariantSlots === 1) {
                                 mappedSlot = 1;
@@ -1184,26 +1276,25 @@
 
             const rarities = ["Legendary", "Epic", "Ultra Rare", "Super Rare", "Rare", "Uncommon", "Common"];
             
-            // Find max count for proportional bar widths
-            let maxCount = 1;
-            rarities.forEach(r => {
-                if (actualCounts[r] > maxCount) maxCount = actualCounts[r];
-            });
+            const maxVal = Math.max(...rarities.map(r => Math.max(actualCounts[r], expectedCounts[r]))) || 1;
 
             let barsHtml = '';
             rarities.forEach(rarity => {
                 const count = actualCounts[rarity];
-                const pctWidth = Math.max(4, Math.round((count / maxCount) * 100));
+                const expected = expectedCounts[rarity] || 0;
+                const actPctWidth = Math.max(4, Math.round((count / maxVal) * 100));
+                const expPosPct = Math.min(100, Math.max(0, (expected / maxVal) * 100));
                 const cfg = getRarityClass(rarity);
 
                 barsHtml += `
                     <div class="space-y-1">
                         <div class="flex justify-between text-xs">
-                            <span class="font-medium text-slate-300">${rarity}</span>
-                            <span class="font-mono font-bold text-slate-100">${count}</span>
+                            <span class="font-medium ${cfg.text}">${rarity}</span>
+                            <span class="font-mono font-bold text-slate-100">${count} / ${expected.toFixed(1)}</span>
                         </div>
-                        <div class="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden">
-                            <div class="h-2.5 rounded-full transition-all duration-500" style="width: ${pctWidth}%; background-color: ${cfg.hex};"></div>
+                        <div class="w-full bg-slate-800 rounded-full h-2.5 relative overflow-hidden">
+                            <div class="h-2.5 rounded-full transition-all duration-500 absolute left-0 top-0" style="width: ${actPctWidth}%; background-color: ${cfg.hex};"></div>
+                            <div class="absolute top-0 bottom-0 w-0.5 bg-white shadow-[0_0_3px_rgba(0,0,0,0.9)] z-10" style="left: ${expPosPct}%;" title="Expected: ${expected.toFixed(1)}"></div>
                         </div>
                     </div>
                 `;
@@ -1221,6 +1312,7 @@
                 const expectedPct = ((expected / totalCards) * 100).toFixed(2);
                 const variance = (parseFloat(actualPct) - parseFloat(expectedPct)).toFixed(2);
                 const varColor = variance >= 0 ? 'text-emerald-400' : 'text-red-400';
+                const cfg = getRarityClass(rarity);
 
                 if (['Legendary', 'Epic', 'Ultra Rare'].includes(rarity)) {
                     totalActualHighRarity += actual;
@@ -1229,7 +1321,7 @@
 
                 html += `
                     <tr class="hover:bg-slate-800/50 transition">
-                        <td class="py-3 px-3 font-medium text-slate-200">${rarity}</td>
+                        <td class="py-3 px-3 font-medium ${cfg.text}">${rarity}</td>
                         <td class="py-3 px-3 text-right font-mono">${actual}</td>
                         <td class="py-3 px-3 text-right font-mono">${actualPct}%</td>
                         <td class="py-3 px-3 text-right font-mono text-slate-400">${expectedPct}% (${expected.toFixed(1)})</td>
@@ -1247,6 +1339,170 @@
             const luckEl = document.getElementById('stat-luck-factor');
             luckEl.textContent = `${luckFactor}%`;
             luckEl.className = `text-2xl font-bold font-mono ${luckFactor >= 100 ? 'text-emerald-400' : 'text-amber-400'}`;
+        }
+
+        async function loadFilteredStatsSetup() {
+            const allData = cachedAllPulls.length > 0 ? cachedAllPulls : await fetchAllDatabasePulls();
+            
+            const packTypesSet = new Set();
+            const flavoursSet = new Set();
+
+            allData.forEach(p => {
+                if (p.pack_type) packTypesSet.add(p.pack_type.trim());
+                if (p.pack_subtype) flavoursSet.add(p.pack_subtype.trim());
+            });
+
+            const packSelect = document.getElementById('filter-pack-type');
+            const currentPackVal = packSelect.value;
+            packSelect.innerHTML = '<option value="ALL">All Pack Types</option>';
+            Array.from(packTypesSet).sort().forEach(pt => {
+                const opt = document.createElement('option');
+                opt.value = pt;
+                opt.textContent = pt;
+                if (pt === currentPackVal) opt.selected = true;
+                packSelect.appendChild(opt);
+            });
+
+            const flavourSelect = document.getElementById('filter-flavour');
+            const currentFlavourVal = flavourSelect.value;
+            flavourSelect.innerHTML = '<option value="ALL">All Flavours</option>';
+            Array.from(flavoursSet).sort().forEach(fl => {
+                const opt = document.createElement('option');
+                opt.value = fl;
+                opt.textContent = fl;
+                if (fl === currentFlavourVal) opt.selected = true;
+                flavourSelect.appendChild(opt);
+            });
+
+            loadFilteredStats();
+        }
+
+        async function loadFilteredStats() {
+            const allData = cachedAllPulls.length > 0 ? cachedAllPulls : await fetchAllDatabasePulls();
+            const dataToAnalyze = allData.filter(d => !d.is_legacy);
+
+            const selectedPackType = document.getElementById('filter-pack-type').value;
+            const selectedFlavour = document.getElementById('filter-flavour').value;
+
+            const filteredPulls = dataToAnalyze.filter(p => {
+                const matchPack = (selectedPackType === 'ALL' || (p.pack_type && p.pack_type.trim() === selectedPackType));
+                const matchFlavour = (selectedFlavour === 'ALL' || (p.pack_subtype && p.pack_subtype.trim() === selectedFlavour));
+                return matchPack && matchFlavour;
+            });
+
+            const bannerTitle = `${selectedPackType === 'ALL' ? 'ALL PACKS' : selectedPackType.toUpperCase()} — ${selectedFlavour === 'ALL' ? 'ALL FLAVOURS' : selectedFlavour.toUpperCase()}`;
+            document.getElementById('filtered-banner-title').textContent = bannerTitle;
+
+            const packGroups = {};
+            filteredPulls.forEach(pull => {
+                const groupId = pull.pack_group_id || pull.id;
+                if (!packGroups[groupId]) packGroups[groupId] = [];
+                packGroups[groupId].push(pull);
+            });
+
+            const uniquePacks = Object.keys(packGroups).length;
+            const totalCards = filteredPulls.length;
+
+            document.getElementById('filtered-banner-packs').textContent = `${uniquePacks} ${uniquePacks === 1 ? 'pack' : 'packs'}`;
+            document.getElementById('filtered-banner-cards').textContent = `${totalCards} cards analyzed`;
+
+            const actualCounts = { "Legendary": 0, "Epic": 0, "Ultra Rare": 0, "Super Rare": 0, "Rare": 0, "Uncommon": 0, "Common": 0 };
+            filteredPulls.forEach(pull => {
+                const r = pull.car_rarity;
+                if (actualCounts[r] !== undefined) actualCounts[r]++;
+            });
+
+            const expectedCounts = { "Legendary": 0, "Epic": 0, "Ultra Rare": 0, "Super Rare": 0, "Rare": 0, "Uncommon": 0, "Common": 0 };
+
+            Object.values(packGroups).forEach(groupPulls => {
+                const totalInBundle = groupPulls.length;
+                const sample = groupPulls[0];
+                const packType = sample.pack_type ? sample.pack_type.trim() : '';
+                const rawSubtype = sample.pack_subtype ? sample.pack_subtype.trim().toLowerCase() : '';
+                const isRegular = (rawSubtype === 'regular' || rawSubtype === '');
+                const subtypeKey = isRegular ? 'Regular' : 'Not regular';
+
+                if (PACK_ODDS_DATA[packType]) {
+                    const packVariant = PACK_ODDS_DATA[packType][subtypeKey] || PACK_ODDS_DATA[packType]['Regular'];
+                    
+                    if (packVariant) {
+                        const totalVariantSlots = Object.keys(packVariant).length || 5;
+
+                        groupPulls.forEach(pull => {
+                            let slotNum = pull.slot_number || 1;
+                            let mappedSlot;
+                            if (totalVariantSlots === 1) {
+                                mappedSlot = 1;
+                            } else {
+                                mappedSlot = Math.floor(((slotNum - 1) * 5) / totalInBundle) + 1;
+                                if (mappedSlot > 5) mappedSlot = 5;
+                                if (mappedSlot < 1) mappedSlot = 1;
+                            }
+
+                            const slotData = packVariant[mappedSlot] || packVariant[String(mappedSlot)] || packVariant[1];
+                            if (slotData) {
+                                for (const [rarity, pct] of Object.entries(slotData)) {
+                                    expectedCounts[rarity] = (expectedCounts[rarity] || 0) + (pct / 100);
+                                }
+                            }
+                        });
+                    }
+                }
+            });
+
+            const rarities = ["Legendary", "Epic", "Ultra Rare", "Super Rare", "Rare", "Uncommon", "Common"];
+            const maxVal = Math.max(...rarities.map(r => Math.max(actualCounts[r], expectedCounts[r]))) || 1;
+
+            let barsHtml = '';
+            rarities.forEach(rarity => {
+                const count = actualCounts[rarity];
+                const expected = expectedCounts[rarity] || 0;
+                const actPctWidth = Math.max(4, Math.round((count / maxVal) * 100));
+                const expPosPct = Math.min(100, Math.max(0, (expected / maxVal) * 100));
+                const cfg = getRarityClass(rarity);
+
+                barsHtml += `
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-xs">
+                            <span class="font-medium ${cfg.text}">${rarity}</span>
+                            <span class="font-mono font-bold text-slate-100">${count} / ${expected.toFixed(1)}</span>
+                        </div>
+                        <div class="w-full bg-slate-800 rounded-full h-2.5 relative overflow-hidden">
+                            <div class="h-2.5 rounded-full transition-all duration-500 absolute left-0 top-0" style="width: ${actPctWidth}%; background-color: ${cfg.hex};"></div>
+                            <div class="absolute top-0 bottom-0 w-0.5 bg-white shadow-[0_0_3px_rgba(0,0,0,0.9)] z-10" style="left: ${expPosPct}%;" title="Expected: ${expected.toFixed(1)}"></div>
+                        </div>
+                    </div>
+                `;
+            });
+            document.getElementById('filtered-bars-container').innerHTML = barsHtml;
+
+            const tbody = document.getElementById('filtered-table-body');
+            if (filteredPulls.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-500">No pulls found matching selected filters</td></tr>';
+                return;
+            }
+
+            let html = '';
+            rarities.forEach(rarity => {
+                const actual = actualCounts[rarity];
+                const actualPct = totalCards > 0 ? ((actual / totalCards) * 100).toFixed(2) : '0.00';
+                const expected = expectedCounts[rarity] || 0;
+                const expectedPct = totalCards > 0 ? ((expected / totalCards) * 100).toFixed(2) : '0.00';
+                const variance = (parseFloat(actualPct) - parseFloat(expectedPct)).toFixed(2);
+                const varColor = variance >= 0 ? 'text-emerald-400' : 'text-red-400';
+                const cfg = getRarityClass(rarity);
+
+                html += `
+                    <tr class="hover:bg-slate-800/50 transition">
+                        <td class="py-3 px-3 font-medium ${cfg.text}">${rarity}</td>
+                        <td class="py-3 px-3 text-right font-mono">${actual}</td>
+                        <td class="py-3 px-3 text-right font-mono">${actualPct}%</td>
+                        <td class="py-3 px-3 text-right font-mono text-slate-400">${expectedPct}% (${expected.toFixed(1)})</td>
+                        <td class="py-3 px-3 text-right font-mono ${varColor}">${variance > 0 ? '+' : ''}${variance}%</td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
         }
 
         function renderTableRows(rows) {
