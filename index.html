@@ -81,7 +81,7 @@
                     Analytics & Statistics
                 </button>
                 <button id="tab-btn-filtered" onclick="switchTab('filtered')" class="px-4 py-2 text-sm font-medium rounded-t-lg text-slate-400 hover:text-slate-200 cursor-pointer">
-                    Pack Statistics
+                    Pack Search
                 </button>
             </nav>
         </div>
@@ -279,11 +279,11 @@
             </div>
         </div>
 
-        <!-- TAB 4: PACK STATISTICS (FILTERED) -->
+        <!-- TAB 4: PACK SEARCH -->
         <div id="tab-content-filtered" class="hidden bg-slate-800 p-6 rounded-lg border border-slate-700 space-y-6">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h2 class="text-lg font-bold text-slate-200">Pack Statistics & Parameter Breakdown</h2>
+                    <h2 class="text-lg font-bold text-slate-200">Pack Search & Parameter Breakdown</h2>
                     <p class="text-xs text-slate-400">Filter drop rates and pack analytics by specific Pack Type and Flavour / Collection.</p>
                 </div>
                 <div class="flex flex-wrap gap-3">
@@ -1282,7 +1282,7 @@
             rarities.forEach(rarity => {
                 const count = actualCounts[rarity];
                 const expected = expectedCounts[rarity] || 0;
-                const actPctWidth = Math.max(4, Math.round((count / maxVal) * 100));
+                const actPctWidth = count === 0 ? 0 : Math.max(4, Math.round((count / maxVal) * 100));
                 const expPosPct = Math.min(100, Math.max(0, (expected / maxVal) * 100));
                 const cfg = getRarityClass(rarity);
 
@@ -1343,11 +1343,12 @@
 
         async function loadFilteredStatsSetup() {
             const allData = cachedAllPulls.length > 0 ? cachedAllPulls : await fetchAllDatabasePulls();
+            const dataToAnalyze = allData.filter(d => !d.is_legacy);
             
             const packTypesSet = new Set();
             const flavoursSet = new Set();
 
-            allData.forEach(p => {
+            dataToAnalyze.forEach(p => {
                 if (p.pack_type) packTypesSet.add(p.pack_type.trim());
                 if (p.pack_subtype) flavoursSet.add(p.pack_subtype.trim());
             });
@@ -1457,7 +1458,7 @@
             rarities.forEach(rarity => {
                 const count = actualCounts[rarity];
                 const expected = expectedCounts[rarity] || 0;
-                const actPctWidth = Math.max(4, Math.round((count / maxVal) * 100));
+                const actPctWidth = count === 0 ? 0 : Math.max(4, Math.round((count / maxVal) * 100));
                 const expPosPct = Math.min(100, Math.max(0, (expected / maxVal) * 100));
                 const cfg = getRarityClass(rarity);
 
