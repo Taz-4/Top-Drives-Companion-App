@@ -35,6 +35,20 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
+
+        /* Custom Hover Tooltip Styling */
+        .tooltip-box {
+            display: none;
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 50;
+            margin-bottom: 6px;
+        }
+        .has-tooltip:hover .tooltip-box {
+            display: block;
+        }
     </style>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen p-6 font-sans relative">
@@ -226,7 +240,7 @@
                 <span>Storage notice: Your database has exceeded 15,000 rows. Consider reviewing data archiving if approaching your tier threshold.</span>
             </div>
 
-            <!-- Summary Cards (5-Column Grid) -->
+            <!-- Summary Cards Grid (Fixed Top 3 Pull Text Wrapping) -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                 <div class="bg-slate-900 border border-slate-700 p-4 rounded-lg space-y-1">
                     <div id="stat-packs-opened" class="text-2xl font-bold font-mono text-slate-100">0</div>
@@ -240,13 +254,15 @@
                     <div id="stat-this-week" class="text-2xl font-bold font-mono text-slate-100">0</div>
                     <div class="text-xs text-slate-400">This week (last 7 days)</div>
                 </div>
-                <!-- Tiered Best Pulls Card -->
-                <div class="bg-slate-900 border border-slate-700 p-3 rounded-lg space-y-1.5 flex flex-col justify-between">
+                
+                <!-- Fixed Tiered Best Pulls Card (No Clipping) -->
+                <div class="bg-slate-900 border border-slate-700 p-3 rounded-lg flex flex-col justify-between space-y-1">
                     <div class="text-[10px] uppercase font-mono text-slate-400 font-bold">Top 3 Best Pulls</div>
                     <div id="stat-best-pull" class="space-y-1 text-xs">
                         <div class="text-slate-500">None</div>
                     </div>
                 </div>
+
                 <div class="bg-slate-900 border border-slate-700 p-4 rounded-lg space-y-1">
                     <div id="stat-luck-factor" class="text-2xl font-bold font-mono text-emerald-400">100.0%</div>
                     <div class="text-xs text-slate-400">Overall Luck Factor</div>
@@ -285,39 +301,58 @@
                 </div>
             </div>
 
-            <!-- Top 10 Most Packed Cards Section -->
-            <div class="bg-slate-900 border border-slate-700 p-5 rounded-lg space-y-3">
-                <h3 class="text-sm font-bold text-slate-200 uppercase font-mono tracking-wider">Top 10 Most Packed Cards (Grouped by Car)</h3>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-xs text-slate-300">
-                        <thead class="bg-slate-800 text-slate-400 uppercase font-mono select-none">
-                            <tr>
-                                <th class="py-2.5 px-3 w-12 text-center">Rank</th>
-                                <th class="py-2.5 px-3">Car Name</th>
-                                <th class="py-2.5 px-3 text-right w-20">Max RQ</th>
-                                <th class="py-2.5 px-3 w-28">Rarity</th>
-                                <th class="py-2.5 px-3 text-right w-24">Times Packed</th>
-                            </tr>
-                        </thead>
-                        <tbody id="top-cards-table-body" class="divide-y divide-slate-800">
-                            <tr><td colspan="5" class="p-4 text-center text-slate-500">Analyzing top packed cards...</td></tr>
-                        </tbody>
-                    </table>
+            <!-- Compact Top 10 Packed Cards Grid + Open Slot for Future Chart -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Left half: Compact Top 10 Table -->
+                <div class="lg:col-span-6 bg-slate-900 border border-slate-700 p-5 rounded-lg space-y-3">
+                    <h3 class="text-sm font-bold text-slate-200 uppercase font-mono tracking-wider">Top 10 Most Packed Cards</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs text-slate-300">
+                            <thead class="bg-slate-800 text-slate-400 uppercase font-mono select-none">
+                                <tr>
+                                    <th class="py-2 px-2.5 w-10 text-center">Rank</th>
+                                    <th class="py-2 px-2.5">Car Name</th>
+                                    <th class="py-2 px-2.5 text-right w-16">RQ</th>
+                                    <th class="py-2 px-2.5 w-24">Rarity</th>
+                                    <th class="py-2 px-2.5 text-right w-16">Pulls</th>
+                                </tr>
+                            </thead>
+                            <tbody id="top-cards-table-body" class="divide-y divide-slate-800">
+                                <tr><td colspan="5" class="p-4 text-center text-slate-500">Analyzing top packed cards...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Right half: Ready for Future Chart / Extra Stat Block -->
+                <div class="lg:col-span-6 bg-slate-900/60 border border-dashed border-slate-700 p-6 rounded-lg flex flex-col items-center justify-center text-center space-y-2">
+                    <span class="text-2xl">📊</span>
+                    <h4 class="text-xs font-bold font-mono uppercase text-slate-400">Future Chart / Visual Widget Slot</h4>
+                    <p class="text-[11px] text-slate-500 max-w-xs">Space allocated for future metrics (e.g. Luck Trends over time, Pack Breakdown by Source, or RQ Scatter Plots).</p>
                 </div>
             </div>
         </div>
 
-        <!-- TAB 4: CALENDAR HEATMAP -->
+        <!-- TAB 4: CALENDAR HEATMAP (With Month / Year View & Rarity Popover Tooltips) -->
         <div id="tab-content-calendar" class="hidden bg-slate-800 p-6 rounded-lg border border-slate-700 space-y-6">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                     <h2 class="text-lg font-bold text-slate-200">Calendar Pull Heatmap</h2>
-                    <p class="text-xs text-slate-400">Daily pull distribution colored by highest rarity card. Hover over any date for details.</p>
+                    <p class="text-xs text-slate-400">Daily pull distribution. Hover over dates to see breakdown pills for all rarities.</p>
                 </div>
+
                 <div class="flex items-center gap-3">
-                    <button onclick="changeCalendarMonth(-1)" class="bg-slate-900 border border-slate-700 hover:bg-slate-700 text-slate-200 text-xs px-3 py-1.5 rounded transition">← Prev Month</button>
-                    <span id="calendar-month-label" class="font-mono text-sm font-bold text-emerald-400 min-w-[140px] text-center"></span>
-                    <button onclick="changeCalendarMonth(1)" class="bg-slate-900 border border-slate-700 hover:bg-slate-700 text-slate-200 text-xs px-3 py-1.5 rounded transition">Next Month →</button>
+                    <!-- View Mode Selector -->
+                    <div class="bg-slate-900 border border-slate-700 p-1 rounded flex text-xs font-mono">
+                        <button id="cal-mode-month" onclick="setCalendarViewMode('month')" class="px-3 py-1 rounded bg-emerald-600 text-white font-bold transition">Month View</button>
+                        <button id="cal-mode-year" onclick="setCalendarViewMode('year')" class="px-3 py-1 rounded text-slate-400 hover:text-slate-200 transition">Year View</button>
+                    </div>
+
+                    <div id="cal-month-nav" class="flex items-center gap-2">
+                        <button onclick="changeCalendarMonth(-1)" class="bg-slate-900 border border-slate-700 hover:bg-slate-700 text-slate-200 text-xs px-3 py-1.5 rounded transition">← Prev</button>
+                        <span id="calendar-month-label" class="font-mono text-sm font-bold text-emerald-400 min-w-[130px] text-center"></span>
+                        <button onclick="changeCalendarMonth(1)" class="bg-slate-900 border border-slate-700 hover:bg-slate-700 text-slate-200 text-xs px-3 py-1.5 rounded transition">Next →</button>
+                    </div>
                 </div>
             </div>
 
@@ -333,14 +368,9 @@
                 <label class="flex items-center gap-1.5 cursor-pointer text-gray-400"><input type="checkbox" id="cal-filter-Common" checked onchange="renderCalendarHeatmap()" class="accent-gray-400"> Common</label>
             </div>
 
-            <!-- Calendar Grid -->
-            <div class="bg-slate-900 border border-slate-700 p-5 rounded-lg space-y-4">
-                <div class="grid grid-cols-7 text-center font-mono text-xs text-slate-400 pb-2 border-b border-slate-800">
-                    <div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
-                </div>
-                <div id="calendar-grid-days" class="grid grid-cols-7 gap-2">
-                    <!-- Populated dynamically -->
-                </div>
+            <!-- Calendar Display Container -->
+            <div id="calendar-display-container">
+                <!-- Rendered dynamically -->
             </div>
         </div>
 
@@ -519,6 +549,7 @@
 
         let currentCalendarYear = new Date().getFullYear();
         let currentCalendarMonth = new Date().getMonth();
+        let calendarViewMode = 'month'; // 'month' or 'year'
 
         const DEFAULT_PACK_TYPES = ['Aluminium', 'Carbon Fibre', 'Carbon Fiber', 'Ceramic', 'Ceramic Lite', 'Plastic', 'Platinum', 'Racing Pack', 'Steel', 'Titanium', 'Sapphire', 'Diamond', 'Black Diamond'];
         const DEFAULT_OBTAINED_OPTIONS = ['Adverts', 'Air Miles', 'Builder Coins', 'Cash', 'Challenge', 'Daily', 'Event', 'Free', 'Gold', 'IRL Money', 'Nismo', 'Objectives', 'Oddities Coin', 'Racing Coin', 'Spotted', 'Tri-series'];
@@ -1276,7 +1307,7 @@
                 }
             });
 
-            // Tiered Top 3 Best Pulls with Medals & RQ
+            // FIXED Top 3 Best Pulls Card Layout (No Overlaps)
             const rarityRank = { "Legendary": 4, "Epic": 3, "Ultra Rare": 2, "Super Rare": 1, "Rare": 0, "Uncommon": 0, "Common": 0 };
             const sortedByBest = [...dataToAnalyze].sort((a, b) => {
                 const scoreA = ((a.car_rq || 0) * 10) + (rarityRank[a.car_rarity] || 0);
@@ -1291,9 +1322,12 @@
                 bestEl.innerHTML = top3.map((pull, idx) => {
                     const cfg = getRarityClass(pull.car_rarity);
                     return `
-                        <div class="flex items-center justify-between text-[11px] bg-slate-950/40 p-1 rounded">
-                            <span class="truncate font-medium text-slate-200"><span class="mr-1">${medals[idx]}</span>${pull.car_name}</span>
-                            <span class="font-mono font-bold ${cfg.text} ml-1">RQ ${pull.car_rq || 0}</span>
+                        <div class="flex items-center justify-between text-[11px] bg-slate-950/40 px-1.5 py-1 rounded gap-1 overflow-hidden">
+                            <div class="flex items-center gap-1 min-w-0 truncate">
+                                <span>${medals[idx]}</span>
+                                <span class="truncate font-medium text-slate-200" title="${pull.car_name}">${pull.car_name}</span>
+                            </div>
+                            <span class="font-mono font-bold whitespace-nowrap text-[10px] ${cfg.text}">RQ ${pull.car_rq || 0}</span>
                         </div>
                     `;
                 }).join('');
@@ -1306,7 +1340,7 @@
             document.getElementById('stat-packs-subtitle').textContent = earliestDate ? `since ${formatDisplayDate(earliestDate)}` : 'Packs opened';
             document.getElementById('stat-this-week').textContent = packsThisWeek;
 
-            // Top 10 Most Packed Cards (Normalized to ignore different versions/styles)
+            // Compact Top 10 Most Packed Cards
             const carCountsMap = {};
             dataToAnalyze.forEach(p => {
                 const rawName = (p.car_name || 'Unknown').trim();
@@ -1340,11 +1374,11 @@
                     const rankDisplay = idx < 3 ? rankMedals[idx] : `#${idx + 1}`;
                     return `
                         <tr class="hover:bg-slate-800/50 transition">
-                            <td class="py-2.5 px-3 text-center font-mono font-bold text-slate-300">${rankDisplay}</td>
-                            <td class="py-2.5 px-3 font-medium text-slate-100">${car.name}</td>
-                            <td class="py-2.5 px-3 text-right font-mono ${cfg.text}">${car.maxRq}</td>
-                            <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded text-[10px] font-semibold ${cfg.badge}">${car.rarity}</span></td>
-                            <td class="py-2.5 px-3 text-right font-mono font-bold text-emerald-400">${car.count}</td>
+                            <td class="py-2 px-2.5 text-center font-mono font-bold text-slate-300">${rankDisplay}</td>
+                            <td class="py-2 px-2.5 font-medium text-slate-100 truncate max-w-[140px]" title="${car.name}">${car.name}</td>
+                            <td class="py-2 px-2.5 text-right font-mono ${cfg.text}">${car.maxRq}</td>
+                            <td class="py-2 px-2.5"><span class="px-1.5 py-0.5 rounded text-[9px] font-semibold ${cfg.badge}">${car.rarity}</span></td>
+                            <td class="py-2 px-2.5 text-right font-mono font-bold text-emerald-400">${car.count}</td>
                         </tr>
                     `;
                 }).join('');
@@ -1468,6 +1502,24 @@
             renderCalendarHeatmap();
         }
 
+        function setCalendarViewMode(mode) {
+            calendarViewMode = mode;
+            const btnMonth = document.getElementById('cal-mode-month');
+            const btnYear = document.getElementById('cal-mode-year');
+            const navMonth = document.getElementById('cal-month-nav');
+
+            if (mode === 'month') {
+                btnMonth.className = "px-3 py-1 rounded bg-emerald-600 text-white font-bold transition";
+                btnYear.className = "px-3 py-1 rounded text-slate-400 hover:text-slate-200 transition";
+                navMonth.classList.remove('hidden');
+            } else {
+                btnYear.className = "px-3 py-1 rounded bg-emerald-600 text-white font-bold transition";
+                btnMonth.className = "px-3 py-1 rounded text-slate-400 hover:text-slate-200 transition";
+                navMonth.classList.add('hidden');
+            }
+            renderCalendarHeatmap();
+        }
+
         function changeCalendarMonth(direction) {
             currentCalendarMonth += direction;
             if (currentCalendarMonth > 11) {
@@ -1481,8 +1533,8 @@
         }
 
         function renderCalendarHeatmap() {
-            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-            document.getElementById('calendar-month-label').textContent = `${monthNames[currentCalendarMonth]} ${currentCalendarYear}`;
+            const container = document.getElementById('calendar-display-container');
+            container.innerHTML = '';
 
             const dataToAnalyze = cachedAllPulls.filter(d => !d.is_legacy);
 
@@ -1498,33 +1550,11 @@
             const dayPullsMap = {};
             dataToAnalyze.forEach(p => {
                 if (!p.date) return;
-                // filter by active rarity
                 if (activeFilters[p.car_rarity] === false) return;
 
-                if (!dayPullsMap[p.date]) {
-                    dayPullsMap[p.date] = [];
-                }
+                if (!dayPullsMap[p.date]) dayPullsMap[p.date] = [];
                 dayPullsMap[p.date].push(p);
             });
-
-            const gridContainer = document.getElementById('calendar-grid-days');
-            gridContainer.innerHTML = '';
-
-            const firstDayOfMonth = new Date(currentCalendarYear, currentCalendarMonth, 1);
-            const lastDayOfMonth = new Date(currentCalendarYear, currentCalendarMonth + 1, 0);
-
-            // Adjust start day for Monday start (0 = Mon, 6 = Sun)
-            let startDayOfWeek = firstDayOfMonth.getDay() - 1;
-            if (startDayOfWeek === -1) startDayOfWeek = 6;
-
-            const totalDaysInMonth = lastDayOfMonth.getDate();
-
-            // Blank padding for previous month offset
-            for (let i = 0; i < startDayOfWeek; i++) {
-                const blank = document.createElement('div');
-                blank.className = "h-14 bg-slate-900/30 rounded border border-slate-800/30 opacity-20";
-                gridContainer.appendChild(blank);
-            }
 
             const rarityScore = { "Legendary": 6, "Epic": 5, "Ultra Rare": 4, "Super Rare": 3, "Rare": 2, "Uncommon": 1, "Common": 0 };
             const rarityBgColors = {
@@ -1537,49 +1567,183 @@
                 "Common": "bg-slate-700/30 border-slate-700 text-slate-400"
             };
 
-            for (let day = 1; day <= totalDaysInMonth; day++) {
-                const mm = String(currentCalendarMonth + 1).padStart(2, '0');
-                const dd = String(day).padStart(2, '0');
-                const dateStr = `${currentCalendarYear}-${mm}-${dd}`;
+            const rarityBadges = {
+                "Legendary": "bg-amber-500/20 text-amber-300 border-amber-500/40",
+                "Epic": "bg-purple-500/20 text-purple-300 border-purple-500/40",
+                "Ultra Rare": "bg-red-500/20 text-red-300 border-red-500/40",
+                "Super Rare": "bg-yellow-400/20 text-yellow-300 border-yellow-400/40",
+                "Rare": "bg-blue-500/20 text-blue-300 border-blue-500/40",
+                "Uncommon": "bg-green-500/20 text-green-300 border-green-500/40",
+                "Common": "bg-slate-700/40 text-slate-400 border-slate-600"
+            };
 
-                const dayPulls = dayPullsMap[dateStr] || [];
-                const dayCell = document.createElement('div');
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
-                if (dayPulls.length === 0) {
-                    dayCell.className = "h-14 bg-slate-900 border border-slate-800/80 rounded p-1 flex flex-col justify-between text-[10px] text-slate-600 font-mono";
-                    dayCell.innerHTML = `<span>${day}</span><span class="text-center">-</span>`;
-                } else {
-                    // Find highest rarity pull of the day
-                    let bestPull = dayPulls[0];
-                    let maxRarityVal = rarityScore[bestPull.car_rarity] || 0;
-                    dayPulls.forEach(p => {
-                        const val = rarityScore[p.car_rarity] || 0;
-                        if (val > maxRarityVal) {
-                            maxRarityVal = val;
-                            bestPull = p;
-                        }
-                    });
+            if (calendarViewMode === 'month') {
+                document.getElementById('calendar-month-label').textContent = `${monthNames[currentCalendarMonth]} ${currentCalendarYear}`;
 
-                    const colorClass = rarityBgColors[bestPull.car_rarity] || rarityBgColors["Common"];
-                    dayCell.className = `h-14 rounded border p-1 flex flex-col justify-between text-[10px] font-mono cursor-pointer transition hover:scale-105 shadow-sm ${colorClass}`;
-                    
-                    // Tooltip breakdown by rarity
-                    const counts = {};
-                    dayPulls.forEach(p => {
-                        counts[p.car_rarity] = (counts[p.car_rarity] || 0) + 1;
-                    });
-                    const breakdownText = Object.entries(counts).map(([r, c]) => `${c}x ${r}`).join(', ');
+                const monthWrapper = document.createElement('div');
+                monthWrapper.className = "bg-slate-900 border border-slate-700 p-5 rounded-lg space-y-4";
 
-                    dayCell.title = `${dateStr}\nTotal Cards: ${dayPulls.length}\n${breakdownText}\nBest: ${bestPull.car_name} (${bestPull.car_rarity}, RQ ${bestPull.car_rq})`;
-                    dayCell.innerHTML = `
-                        <div class="flex justify-between font-bold">
-                            <span>${day}</span>
-                            <span class="text-[9px] px-1 rounded bg-black/40">${dayPulls.length}</span>
-                        </div>
-                        <div class="truncate text-[9px] font-semibold">${bestPull.car_name}</div>
-                    `;
+                const headers = document.createElement('div');
+                headers.className = "grid grid-cols-7 text-center font-mono text-xs text-slate-400 pb-2 border-b border-slate-800";
+                headers.innerHTML = '<div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>';
+                monthWrapper.appendChild(headers);
+
+                const grid = document.createElement('div');
+                grid.className = "grid grid-cols-7 gap-2";
+
+                const firstDay = new Date(currentCalendarYear, currentCalendarMonth, 1);
+                const lastDay = new Date(currentCalendarYear, currentCalendarMonth + 1, 0);
+
+                let startOffset = firstDay.getDay() - 1;
+                if (startOffset === -1) startOffset = 6;
+
+                for (let i = 0; i < startOffset; i++) {
+                    const blank = document.createElement('div');
+                    blank.className = "h-14 bg-slate-900/30 rounded border border-slate-800/30 opacity-20";
+                    grid.appendChild(blank);
                 }
-                gridContainer.appendChild(dayCell);
+
+                for (let day = 1; day <= lastDay.getDate(); day++) {
+                    const mm = String(currentCalendarMonth + 1).padStart(2, '0');
+                    const dd = String(day).padStart(2, '0');
+                    const dateStr = `${currentCalendarYear}-${mm}-${dd}`;
+
+                    const dayPulls = dayPullsMap[dateStr] || [];
+                    const cell = document.createElement('div');
+
+                    if (dayPulls.length === 0) {
+                        cell.className = "h-14 bg-slate-900 border border-slate-800/80 rounded p-1 flex flex-col justify-between text-[10px] text-slate-600 font-mono";
+                        cell.innerHTML = `<span>${day}</span><span class="text-center">-</span>`;
+                    } else {
+                        let bestPull = dayPulls[0];
+                        let maxVal = rarityScore[bestPull.car_rarity] || 0;
+                        dayPulls.forEach(p => {
+                            const val = rarityScore[p.car_rarity] || 0;
+                            if (val > maxVal) { maxVal = val; bestPull = p; }
+                        });
+
+                        const colorClass = rarityBgColors[bestPull.car_rarity] || rarityBgColors["Common"];
+                        cell.className = `has-tooltip relative h-14 rounded border p-1 flex flex-col justify-between text-[10px] font-mono cursor-pointer transition hover:scale-105 shadow-sm ${colorClass}`;
+
+                        // Count breakdown for Popover Pill Tooltip
+                        const counts = {};
+                        dayPulls.forEach(p => { counts[p.car_rarity] = (counts[p.car_rarity] || 0) + 1; });
+                        
+                        let pillsHtml = rarityOrder.filter(r => counts[r]).map(r => `
+                            <span class="px-1.5 py-0.5 rounded border text-[9px] font-mono font-bold ${rarityBadges[r]}">${counts[r]}x ${r}</span>
+                        `).join('');
+
+                        cell.innerHTML = `
+                            <div class="tooltip-box bg-slate-950 border border-slate-700 p-2.5 rounded-lg shadow-2xl space-y-1.5 w-48 text-left pointer-events-none">
+                                <div class="flex justify-between items-center text-[10px] font-bold text-slate-300 border-b border-slate-800 pb-1">
+                                    <span>${dateStr}</span>
+                                    <span class="text-emerald-400 font-mono">${dayPulls.length} Pulls</span>
+                                </div>
+                                <div class="flex flex-wrap gap-1">
+                                    ${pillsHtml}
+                                </div>
+                                <div class="text-[9px] text-slate-400 pt-1 border-t border-slate-800/60 truncate">
+                                    Top: <span class="text-slate-200 font-semibold">${bestPull.car_name}</span> (RQ ${bestPull.car_rq})
+                                </div>
+                            </div>
+
+                            <div class="flex justify-between font-bold">
+                                <span>${day}</span>
+                                <span class="text-[9px] px-1 rounded bg-black/50">${dayPulls.length}</span>
+                            </div>
+                            <div class="truncate text-[9px] font-semibold" title="${bestPull.car_name} (RQ ${bestPull.car_rq})">
+                                ${bestPull.car_name} <span class="opacity-75 font-mono">(RQ ${bestPull.car_rq})</span>
+                            </div>
+                        `;
+                    }
+                    grid.appendChild(cell);
+                }
+
+                monthWrapper.appendChild(grid);
+                container.appendChild(monthWrapper);
+            } else {
+                // YEAR VIEW (12 Condensed Mini Month Grids)
+                const yearGrid = document.createElement('div');
+                yearGrid.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4";
+
+                for (let m = 0; m < 12; m++) {
+                    const mBox = document.createElement('div');
+                    mBox.className = "bg-slate-900 border border-slate-700 p-3 rounded-lg space-y-2";
+                    mBox.innerHTML = `<div class="text-xs font-bold font-mono text-emerald-400 text-center">${monthNames[m]} ${currentCalendarYear}</div>`;
+
+                    const mHeaders = document.createElement('div');
+                    mHeaders.className = "grid grid-cols-7 text-center font-mono text-[9px] text-slate-500 border-b border-slate-800 pb-1";
+                    mHeaders.innerHTML = '<div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div><div>S</div>';
+                    mBox.appendChild(mHeaders);
+
+                    const mDaysGrid = document.createElement('div');
+                    mDaysGrid.className = "grid grid-cols-7 gap-1";
+
+                    const firstDay = new Date(currentCalendarYear, m, 1);
+                    const lastDay = new Date(currentCalendarYear, m + 1, 0);
+
+                    let startOffset = firstDay.getDay() - 1;
+                    if (startOffset === -1) startOffset = 6;
+
+                    for (let i = 0; i < startOffset; i++) {
+                        const blank = document.createElement('div');
+                        blank.className = "h-5 bg-slate-900/20 opacity-10";
+                        mDaysGrid.appendChild(blank);
+                    }
+
+                    for (let day = 1; day <= lastDay.getDate(); day++) {
+                        const mm = String(m + 1).padStart(2, '0');
+                        const dd = String(day).padStart(2, '0');
+                        const dateStr = `${currentCalendarYear}-${mm}-${dd}`;
+
+                        const dayPulls = dayPullsMap[dateStr] || [];
+                        const dCell = document.createElement('div');
+
+                        if (dayPulls.length === 0) {
+                            dCell.className = "h-5 bg-slate-950/40 rounded text-[8px] text-slate-700 font-mono flex items-center justify-center";
+                            dCell.textContent = day;
+                        } else {
+                            let bestPull = dayPulls[0];
+                            let maxVal = rarityScore[bestPull.car_rarity] || 0;
+                            dayPulls.forEach(p => {
+                                const val = rarityScore[p.car_rarity] || 0;
+                                if (val > maxVal) { maxVal = val; bestPull = p; }
+                            });
+
+                            const colorClass = rarityBgColors[bestPull.car_rarity] || rarityBgColors["Common"];
+                            dCell.className = `has-tooltip relative h-5 rounded text-[8px] font-mono font-bold flex items-center justify-center cursor-pointer transition hover:scale-110 ${colorClass}`;
+
+                            const counts = {};
+                            dayPulls.forEach(p => { counts[p.car_rarity] = (counts[p.car_rarity] || 0) + 1; });
+                            
+                            let pillsHtml = rarityOrder.filter(r => counts[r]).map(r => `
+                                <span class="px-1.5 py-0.5 rounded border text-[9px] font-mono font-bold ${rarityBadges[r]}">${counts[r]}x ${r}</span>
+                            `).join('');
+
+                            dCell.innerHTML = `
+                                <div class="tooltip-box bg-slate-950 border border-slate-700 p-2 rounded-lg shadow-2xl space-y-1.5 w-44 text-left pointer-events-none">
+                                    <div class="flex justify-between items-center text-[10px] font-bold text-slate-300 border-b border-slate-800 pb-1">
+                                        <span>${dateStr}</span>
+                                        <span class="text-emerald-400 font-mono">${dayPulls.length} Pulls</span>
+                                    </div>
+                                    <div class="flex flex-wrap gap-1">
+                                        ${pillsHtml}
+                                    </div>
+                                    <div class="text-[9px] text-slate-400 pt-1 border-t border-slate-800/60 truncate">
+                                        Top: <span class="text-slate-200 font-semibold">${bestPull.car_name}</span> (RQ ${bestPull.car_rq})
+                                    </div>
+                                </div>
+                                ${day}
+                            `;
+                        }
+                        mDaysGrid.appendChild(dCell);
+                    }
+                    mBox.appendChild(mDaysGrid);
+                    yearGrid.appendChild(mBox);
+                }
+                container.appendChild(yearGrid);
             }
         }
 
