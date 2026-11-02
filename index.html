@@ -1460,9 +1460,9 @@
             rarities.forEach(rarity => {
                 const count = actualCounts[rarity];
                 const expected = expectedCounts[rarity] || 0;
-                const localMax = Math.max(count, expected, 0.1);
-                const actPctWidth = count === 0 ? 0 : Math.min(100, Math.max(4, Math.round((count / localMax) * 100)));
-                const expPosPct = Math.min(100, Math.max(0, Math.round((expected / localMax) * 100)));
+                const tierMax = Math.max(expected * 1.4, count * 1.1, 1);
+                const actPctWidth = count === 0 ? 0 : Math.min(100, Math.max(2, (count / tierMax) * 100));
+                const expPosPct = Math.min(100, Math.max(0, (expected / tierMax) * 100));
                 const cfg = getRarityClass(rarity);
 
                 barsHtml += `
@@ -2127,9 +2127,9 @@
             rarities.forEach(rarity => {
                 const count = actualCounts[rarity];
                 const expected = expectedCounts[rarity] || 0;
-                const localMax = Math.max(count, expected, 0.1);
-                const actPctWidth = count === 0 ? 0 : Math.min(100, Math.max(4, Math.round((count / localMax) * 100)));
-                const expPosPct = Math.min(100, Math.max(0, Math.round((expected / localMax) * 100)));
+                const tierMax = Math.max(expected * 1.4, count * 1.1, 1);
+                const actPctWidth = count === 0 ? 0 : Math.min(100, Math.max(2, (count / tierMax) * 100));
+                const expPosPct = Math.min(100, Math.max(0, (expected / tierMax) * 100));
                 const cfg = getRarityClass(rarity);
 
                 barsHtml += `
