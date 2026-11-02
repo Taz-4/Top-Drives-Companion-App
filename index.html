@@ -1456,13 +1456,19 @@
 
             const rarities = ["Legendary", "Epic", "Ultra Rare", "Super Rare", "Rare", "Uncommon", "Common"];
 
+            // Calculate unified global maximum across all actual counts and expected counts so scaling is strictly relative and true to proportions
+            let globalMax = 1;
+            rarities.forEach(r => {
+                if (actualCounts[r] > globalMax) globalMax = actualCounts[r];
+                if ((expectedCounts[r] || 0) > globalMax) globalMax = expectedCounts[r];
+            });
+
             let barsHtml = '';
             rarities.forEach(rarity => {
                 const count = actualCounts[rarity];
                 const expected = expectedCounts[rarity] || 0;
-                const tierMax = Math.max(expected * 1.4, count * 1.1, 1);
-                const actPctWidth = count === 0 ? 0 : Math.min(100, Math.max(2, (count / tierMax) * 100));
-                const expPosPct = Math.min(100, Math.max(0, (expected / tierMax) * 100));
+                const actPctWidth = count === 0 ? 0 : Math.min(100, Math.max(2, (count / globalMax) * 100));
+                const expPosPct = Math.min(100, Math.max(0, (expected / globalMax) * 100));
                 const cfg = getRarityClass(rarity);
 
                 barsHtml += `
@@ -2123,13 +2129,19 @@
 
             const rarities = ["Legendary", "Epic", "Ultra Rare", "Super Rare", "Rare", "Uncommon", "Common"];
 
+            // Calculate unified global maximum across all actual counts and expected counts so scaling is strictly relative and true to proportions
+            let globalMax = 1;
+            rarities.forEach(r => {
+                if (actualCounts[r] > globalMax) globalMax = actualCounts[r];
+                if ((expectedCounts[r] || 0) > globalMax) globalMax = expectedCounts[r];
+            });
+
             let barsHtml = '';
             rarities.forEach(rarity => {
                 const count = actualCounts[rarity];
                 const expected = expectedCounts[rarity] || 0;
-                const tierMax = Math.max(expected * 1.4, count * 1.1, 1);
-                const actPctWidth = count === 0 ? 0 : Math.min(100, Math.max(2, (count / tierMax) * 100));
-                const expPosPct = Math.min(100, Math.max(0, (expected / tierMax) * 100));
+                const actPctWidth = count === 0 ? 0 : Math.min(100, Math.max(2, (count / globalMax) * 100));
+                const expPosPct = Math.min(100, Math.max(0, (expected / globalMax) * 100));
                 const cfg = getRarityClass(rarity);
 
                 barsHtml += `
