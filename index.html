@@ -888,22 +888,74 @@
         }
 
         async function loadAnalyticsData() {
-            const allData = await fetchAllDatabasePulls();
-            const dataToAnalyze = allData.filter(d => !d.is_legacy);
-            if (dataToAnalyze.length === 0) return;
+            const tbody = document.getElementById('analytics-table-body');
+            tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-500">Fetching all records from database...</td></tr>';
 
+            const allData = await fetchAllDatabasePulls();
+            if (allData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-500">No data available for analytics yet</td></tr>';
+                document.getElementById('stat-total-cards').textContent = '0';
+                document.getElementById('stat-packs-opened').textContent = '0';
+                document.getElementById('stat-packs-subtitle').textContent = 'Packs opened';
+                document.getElementById('stat-this-week').textContent = '0';
+                document.getElementById('stat-best-pull').innerHTML = '<div class="text-slate-500 text-xs">None</div>';
+                document.getElementById('stat-luck-factor').textContent = '100.0%';
+                document.getElementById('rarity-bars-container').innerHTML = '<div class="text-xs text-slate-500 text-center py-4">No data</div>';
+                document.getElementById('top-cards-table-body').innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-500">No data</td></tr>';
+                return;
+            }
+
+            const warningBanner = document.getElementById('analytics-warning');
+            if (allData.length > 15000) {
+                if (warningBanner) warningBanner.classList.remove('hidden');
+            } else {
+                if (warningBanner) warningBanner.classList.add('hidden');
+            }
+
+            const dataToAnalyze = allData.filter(d => !d.is_legacy);
+            if (dataToAnalyze.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-500">No new pack logs found (legacy records excluded)</td></tr>';
+                document.getElementById('stat-total-cards').textContent = '0';
+                document.getElementById('stat-packs-opened').textContent = '0';
+                document.getElementById('stat-this-week').textContent = '0';
+                document.getElementById('stat-best-pull').innerHTML = '<div class="text-slate-500 text-xs">None</div>';
+                document.getElementById('stat-luck-factor').textContent = '100.0%';
+                return;
+            }
+
+            const totalCards = dataToAnalyze.length;
             const packGroups = {};
-            dataToAnalyze.forEach(p => {
-                const gid = p.pack_group_id || p.id;
-                if (!packGroups[gid]) packGroups[gid] = [];
-                packGroups[gid].push(p);
+            dataToAnalyze.forEach(pull => {
+                const groupId = pull.pack_group_id || pull.id;
+                if (!packGroups[groupId]) packGroups[groupId] = [];
+                packGroups[groupId].push(pull);
             });
 
-            document.getElementById('stat-total-cards').textContent = dataToAnalyze.length;
-            document.getElementById('stat-packs-opened').textContent = Object.keys(packGroups).length;
+            const uniquePacks = Object.keys(packGroups).length;
+            let earliestDate = null;
+            dataToAnalyze.forEach(p => {
+                if (p.date && (!earliestDate || p.date < earliestDate)) {
+                    earliestDate = p.date;
+                }
+            });
+
+            const now = new Date();
+            const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            let packsThisWeek = 0;
+            Object.values(packGroups).forEach(groupPulls => {
+                const sampleDate = groupPulls[0].date ? new Date(groupPulls[0].date) : null;
+                if (sampleDate && sampleDate >= sevenDaysAgo) {
+                    packsThisWeek++;
+                }
+            });
 
             const rarityRank = { "Legendary": 4, "Epic": 3, "Ultra Rare": 2, "Super Rare": 1, "Rare": 0, "Uncommon": 0, "Common": 0 };
-            const sortedByBest = [...dataToAnalyze].sort((a, b) => ((b.car_rq || 0) * 10 + rarityRank[b.car_rarity]) - ((a.car_rq || 0) * 10 + rarityRank[a.car_rarity]));
+            const sortedByBest = [...dataToAnalyze].sort((a, b) => {
+                const scoreA = ((a.car_rq || 0) * 10) + (rarityRank[a.car_rarity] || 0);
+                const scoreB = ((b.car_rq || 0) * 10) + (rarityRank[b.car_rarity] || 0);
+                return scoreB - scoreA;
+            });
+
             const top3 = sortedByBest.slice(0, 3);
             const bestEl = document.getElementById('stat-best-pull');
             if (top3.length > 0) {
@@ -920,12 +972,170 @@
                         </div>
                     `;
                 }).join('');
+            } else {
+                bestEl.innerHTML = '<div class="text-slate-500 text-xs">None</div>';
             }
 
+            document.getElementById('stat-total-cards').textContent = totalCards;
+            document.getElementById('stat-packs-opened').textContent = uniquePacks;
+            document.getElementById('stat-packs-subtitle').textContent = earliestDate ? `since ${formatDisplayDate(earliestDate)}` : 'Packs opened';
+            document.getElementById('stat-this-week').textContent = packsThisWeek;
+
+            // Compact Top 10 Most Packed Cards
+            const carCountsMap = {};
+            dataToAnalyze.forEach(p => {
+                const rawName = (p.car_name || 'Unknown').trim();
+                const normalizedName = rawName.replace(/\s*\([^)]*\)/g, '').trim().toLowerCase();
+                const displayName = rawName.replace(/\s*\([^)]*\)/g, '').trim();
+
+                if (!carCountsMap[normalizedName]) {
+                    carCountsMap[normalizedName] = {
+                        name: displayName,
+                        count: 0,
+                        maxRq: p.car_rq || 0,
+                        rarity: p.car_rarity || 'Common'
+                    };
+                }
+                carCountsMap[normalizedName].count++;
+                if ((p.car_rq || 0) > carCountsMap[normalizedName].maxRq) {
+                    carCountsMap[normalizedName].maxRq = p.car_rq || 0;
+                    carCountsMap[normalizedName].rarity = p.car_rarity || 'Common';
+                }
+            });
+
+            const sortedTopCars = Object.values(carCountsMap).sort((a, b) => b.count - a.count).slice(0, 10);
+            const topCardsTbody = document.getElementById('top-cards-table-body');
+            
+            if (sortedTopCars.length === 0) {
+                topCardsTbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-500">No data</td></tr>';
+            } else {
+                topCardsTbody.innerHTML = sortedTopCars.map((car, idx) => {
+                    const cfg = getRarityClass(car.rarity);
+                    const rankMedals = ['🥇', '🥈', '🥉'];
+                    const rankDisplay = idx < 3 ? rankMedals[idx] : `#${idx + 1}`;
+                    return `
+                        <tr class="hover:bg-slate-800/50 transition">
+                            <td class="py-2 px-2.5 text-center font-mono font-bold text-slate-300">${rankDisplay}</td>
+                            <td class="py-2 px-2.5 font-medium text-slate-100 truncate max-w-[140px]" title="${car.name}">${car.name}</td>
+                            <td class="py-2 px-2.5 text-right font-mono ${cfg.text}">${car.maxRq}</td>
+                            <td class="py-2 px-2.5"><span class="px-1.5 py-0.5 rounded text-[9px] font-semibold ${cfg.badge}">${car.rarity}</span></td>
+                            <td class="py-2 px-2.5 text-right font-mono font-bold text-emerald-400">${car.count}</td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            // Render Pack RQ Comparison Chart
             renderPackComparisonChart(packGroups);
+
+            const actualCounts = { "Legendary": 0, "Epic": 0, "Ultra Rare": 0, "Super Rare": 0, "Rare": 0, "Uncommon": 0, "Common": 0 };
+            dataToAnalyze.forEach(pull => {
+                const r = pull.car_rarity;
+                if (actualCounts[r] !== undefined) actualCounts[r]++;
+            });
+
+            const expectedCounts = { "Legendary": 0, "Epic": 0, "Ultra Rare": 0, "Super Rare": 0, "Rare": 0, "Uncommon": 0, "Common": 0 };
+
+            Object.values(packGroups).forEach(groupPulls => {
+                const totalInBundle = groupPulls.length;
+                const sample = groupPulls[0];
+                const packType = sample.pack_type ? sample.pack_type.trim() : '';
+                const rawSubtype = sample.pack_subtype ? sample.pack_subtype.trim().toLowerCase() : '';
+                const isRegular = (rawSubtype === 'regular' || rawSubtype === '');
+                const subtypeKey = isRegular ? 'Regular' : 'Not regular';
+
+                if (PACK_ODDS_DATA[packType]) {
+                    const packVariant = PACK_ODDS_DATA[packType][subtypeKey] || PACK_ODDS_DATA[packType]['Regular'];
+                    if (packVariant) {
+                        const totalVariantSlots = Object.keys(packVariant).length || 5;
+                        groupPulls.forEach(pull => {
+                            let slotNum = pull.slot_number || 1;
+                            let mappedSlot;
+                            if (totalVariantSlots === 1) {
+                                mappedSlot = 1;
+                            } else {
+                                mappedSlot = Math.floor(((slotNum - 1) * 5) / totalInBundle) + 1;
+                                if (mappedSlot > 5) mappedSlot = 5;
+                                if (mappedSlot < 1) mappedSlot = 1;
+                            }
+                            const slotData = packVariant[mappedSlot] || packVariant[String(mappedSlot)] || packVariant[1];
+                            if (slotData) {
+                                for (const [rarity, pct] of Object.entries(slotData)) {
+                                    expectedCounts[rarity] = (expectedCounts[rarity] || 0) + (pct / 100);
+                                }
+                            }
+                        });
+                    }
+                }
+            });
+
+            const rarities = ["Legendary", "Epic", "Ultra Rare", "Super Rare", "Rare", "Uncommon", "Common"];
+            const maxVal = Math.max(...rarities.map(r => Math.max(actualCounts[r], expectedCounts[r]))) || 1;
+
+            let barsHtml = '';
+            rarities.forEach(rarity => {
+                const count = actualCounts[rarity];
+                const expected = expectedCounts[rarity] || 0;
+                const actPctWidth = count === 0 ? 0 : Math.max(4, Math.round((count / maxVal) * 100));
+                const expPosPct = Math.min(100, Math.max(0, (expected / maxVal) * 100));
+                const cfg = getRarityClass(rarity);
+
+                barsHtml += `
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-xs">
+                            <span class="font-medium ${cfg.text}">${rarity}</span>
+                            <span class="font-mono font-bold text-slate-100">${count} / ${expected.toFixed(1)}</span>
+                        </div>
+                        <div class="w-full bg-slate-800 rounded-full h-2.5 relative overflow-hidden">
+                            <div class="h-2.5 rounded-full transition-all duration-500 absolute left-0 top-0" style="width: ${actPctWidth}%; background-color: ${cfg.hex};"></div>
+                            <div class="absolute top-0 bottom-0 w-0.5 bg-white shadow-[0_0_3px_rgba(0,0,0,0.9)] z-10" style="left: ${expPosPct}%;" title="Expected: ${expected.toFixed(1)}"></div>
+                        </div>
+                    </div>
+                `;
+            });
+            document.getElementById('rarity-bars-container').innerHTML = barsHtml;
+
+            let html = '';
+            let totalActualHighRarity = 0;
+            let totalExpectedHighRarity = 0;
+
+            rarities.forEach(rarity => {
+                const actual = actualCounts[rarity];
+                const actualPct = ((actual / totalCards) * 100).toFixed(2);
+                const expected = expectedCounts[rarity] || 0;
+                const expectedPct = ((expected / totalCards) * 100).toFixed(2);
+                const variance = (parseFloat(actualPct) - parseFloat(expectedPct)).toFixed(2);
+                const varColor = variance >= 0 ? 'text-emerald-400' : 'text-red-400';
+                const cfg = getRarityClass(rarity);
+
+                if (['Legendary', 'Epic', 'Ultra Rare'].includes(rarity)) {
+                    totalActualHighRarity += actual;
+                    totalExpectedHighRarity += expected;
+                }
+
+                html += `
+                    <tr class="hover:bg-slate-800/50 transition">
+                        <td class="py-3 px-3 font-medium ${cfg.text}">${rarity}</td>
+                        <td class="py-3 px-3 text-right font-mono">${actual}</td>
+                        <td class="py-3 px-3 text-right font-mono">${actualPct}%</td>
+                        <td class="py-3 px-3 text-right font-mono text-slate-400">${expectedPct}% (${expected.toFixed(1)})</td>
+                        <td class="py-3 px-3 text-right font-mono ${varColor}">${variance > 0 ? '+' : ''}${variance}%</td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = html;
+
+            let luckFactor = 100;
+            if (totalExpectedHighRarity > 0) {
+                luckFactor = ((totalActualHighRarity / totalExpectedHighRarity) * 100).toFixed(1);
+            }
+            const luckEl = document.getElementById('stat-luck-factor');
+            luckEl.textContent = `${luckFactor}%`;
+            luckEl.className = `text-2xl font-bold font-mono ${luckFactor >= 100 ? 'text-emerald-400' : 'text-amber-400'}`;
         }
 
-        // Tri-Metric Pack Comparison Chart Implementation
+        // Tri-Metric Pack Comparison Chart Implementation with Rarity Ordering
         function renderPackComparisonChart(packGroups) {
             const canvas = document.getElementById('packComparisonCanvas');
             const tooltip = document.getElementById('pack-chart-tooltip');
@@ -950,7 +1160,22 @@
                 packStats[pType].maxPackRqList.push(packMaxRq);
             });
 
-            const packNames = Object.keys(packStats).sort();
+            // Requested Rarity Tier Ordering for Packs
+            const PACK_TIER_ORDER = [
+                'Plastic', 'Steel', 'Aluminium', 'Racing Pack', 'Ceramic Lite', 
+                'Ceramic', 'Carbon Fibre', 'Carbon Fiber', 'Super Carbon', 
+                'Platinum', 'Titanium', 'Sapphire', 'Diamond', 'Black Diamond'
+            ];
+
+            const packNames = Object.keys(packStats).sort((a, b) => {
+                let idxA = PACK_TIER_ORDER.findIndex(p => p.toLowerCase() === a.trim().toLowerCase());
+                let idxB = PACK_TIER_ORDER.findIndex(p => p.toLowerCase() === b.trim().toLowerCase());
+                if (idxA === -1) idxA = 999;
+                if (idxB === -1) idxB = 999;
+                if (idxA !== idxB) return idxA - idxB;
+                return a.localeCompare(b);
+            });
+
             countLabel.textContent = `${packNames.length} pack types`;
 
             const ctx = canvas.getContext('2d');
@@ -1107,6 +1332,10 @@
             subEl.textContent = dateStr;
 
             const dayPulls = cachedAllPulls.filter(d => !d.is_legacy && d.date === dateStr);
+            
+            // Sort cards by RQ highest to lowest as requested
+            dayPulls.sort((a, b) => (b.car_rq || 0) - (a.car_rq || 0));
+
             countBadge.textContent = `${dayPulls.length} ${dayPulls.length === 1 ? 'car' : 'cars'}`;
 
             if (dayPulls.length === 0) {
