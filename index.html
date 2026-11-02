@@ -71,14 +71,18 @@
         <!-- Tabs -->
         <div class="border-b border-slate-800">
             <nav class="flex space-x-2">
-                <button id="tab-btn-logger" onclick="switchTab('logger')" class="px-4 py-2 text-sm font-medium rounded-t-lg bg-slate-800 text-emerald-400 border-b-2 border-emerald-500 cursor-pointer">
-                    Pack Logger
+                <!-- Highlighted Main Pack Logger Tab Button -->
+                <button id="tab-btn-logger" onclick="switchTab('logger')" class="px-5 py-2.5 text-sm font-bold rounded-t-lg bg-emerald-600 text-white border-b-2 border-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.4)] cursor-pointer flex items-center gap-2">
+                    <span class="animate-pulse">⭐</span> Pack Logger
                 </button>
                 <button id="tab-btn-history" onclick="switchTab('history')" class="px-4 py-2 text-sm font-medium rounded-t-lg text-slate-400 hover:text-slate-200 cursor-pointer">
                     All Logs & History
                 </button>
                 <button id="tab-btn-analytics" onclick="switchTab('analytics')" class="px-4 py-2 text-sm font-medium rounded-t-lg text-slate-400 hover:text-slate-200 cursor-pointer">
                     Analytics & Statistics
+                </button>
+                <button id="tab-btn-calendar" onclick="switchTab('calendar')" class="px-4 py-2 text-sm font-medium rounded-t-lg text-slate-400 hover:text-slate-200 cursor-pointer">
+                    Calendar Heatmap
                 </button>
                 <button id="tab-btn-filtered" onclick="switchTab('filtered')" class="px-4 py-2 text-sm font-medium rounded-t-lg text-slate-400 hover:text-slate-200 cursor-pointer">
                     Pack Search
@@ -222,7 +226,7 @@
                 <span>Storage notice: Your database has exceeded 15,000 rows. Consider reviewing data archiving if approaching your tier threshold.</span>
             </div>
 
-            <!-- Summary Cards (RacingCrest Style 5-Column Grid) -->
+            <!-- Summary Cards (5-Column Grid) -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                 <div class="bg-slate-900 border border-slate-700 p-4 rounded-lg space-y-1">
                     <div id="stat-packs-opened" class="text-2xl font-bold font-mono text-slate-100">0</div>
@@ -236,9 +240,12 @@
                     <div id="stat-this-week" class="text-2xl font-bold font-mono text-slate-100">0</div>
                     <div class="text-xs text-slate-400">This week (last 7 days)</div>
                 </div>
-                <div class="bg-slate-900 border border-slate-700 p-4 rounded-lg space-y-1">
-                    <div id="stat-best-pull" class="text-xs font-bold leading-snug line-clamp-2 text-slate-100">None</div>
-                    <div class="text-xs text-slate-400 mt-1">Best pull</div>
+                <!-- Tiered Best Pulls Card -->
+                <div class="bg-slate-900 border border-slate-700 p-3 rounded-lg space-y-1.5 flex flex-col justify-between">
+                    <div class="text-[10px] uppercase font-mono text-slate-400 font-bold">Top 3 Best Pulls</div>
+                    <div id="stat-best-pull" class="space-y-1 text-xs">
+                        <div class="text-slate-500">None</div>
+                    </div>
                 </div>
                 <div class="bg-slate-900 border border-slate-700 p-4 rounded-lg space-y-1">
                     <div id="stat-luck-factor" class="text-2xl font-bold font-mono text-emerald-400">100.0%</div>
@@ -277,9 +284,67 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Top 10 Most Packed Cards Section -->
+            <div class="bg-slate-900 border border-slate-700 p-5 rounded-lg space-y-3">
+                <h3 class="text-sm font-bold text-slate-200 uppercase font-mono tracking-wider">Top 10 Most Packed Cards (Grouped by Car)</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs text-slate-300">
+                        <thead class="bg-slate-800 text-slate-400 uppercase font-mono select-none">
+                            <tr>
+                                <th class="py-2.5 px-3 w-12 text-center">Rank</th>
+                                <th class="py-2.5 px-3">Car Name</th>
+                                <th class="py-2.5 px-3 text-right w-20">Max RQ</th>
+                                <th class="py-2.5 px-3 w-28">Rarity</th>
+                                <th class="py-2.5 px-3 text-right w-24">Times Packed</th>
+                            </tr>
+                        </thead>
+                        <tbody id="top-cards-table-body" class="divide-y divide-slate-800">
+                            <tr><td colspan="5" class="p-4 text-center text-slate-500">Analyzing top packed cards...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
 
-        <!-- TAB 4: PACK SEARCH -->
+        <!-- TAB 4: CALENDAR HEATMAP -->
+        <div id="tab-content-calendar" class="hidden bg-slate-800 p-6 rounded-lg border border-slate-700 space-y-6">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-200">Calendar Pull Heatmap</h2>
+                    <p class="text-xs text-slate-400">Daily pull distribution colored by highest rarity card. Hover over any date for details.</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="changeCalendarMonth(-1)" class="bg-slate-900 border border-slate-700 hover:bg-slate-700 text-slate-200 text-xs px-3 py-1.5 rounded transition">← Prev Month</button>
+                    <span id="calendar-month-label" class="font-mono text-sm font-bold text-emerald-400 min-w-[140px] text-center"></span>
+                    <button onclick="changeCalendarMonth(1)" class="bg-slate-900 border border-slate-700 hover:bg-slate-700 text-slate-200 text-xs px-3 py-1.5 rounded transition">Next Month →</button>
+                </div>
+            </div>
+
+            <!-- Rarity Filter Checkboxes -->
+            <div class="bg-slate-900 border border-slate-700 p-4 rounded-lg flex flex-wrap items-center gap-4 text-xs font-mono">
+                <span class="text-slate-400 font-bold uppercase">Filter Rarities:</span>
+                <label class="flex items-center gap-1.5 cursor-pointer text-amber-400"><input type="checkbox" id="cal-filter-Legendary" checked onchange="renderCalendarHeatmap()" class="accent-amber-400"> Legendary</label>
+                <label class="flex items-center gap-1.5 cursor-pointer text-purple-400"><input type="checkbox" id="cal-filter-Epic" checked onchange="renderCalendarHeatmap()" class="accent-purple-400"> Epic</label>
+                <label class="flex items-center gap-1.5 cursor-pointer text-red-400"><input type="checkbox" id="cal-filter-Ultra-Rare" checked onchange="renderCalendarHeatmap()" class="accent-red-400"> Ultra Rare</label>
+                <label class="flex items-center gap-1.5 cursor-pointer text-yellow-300"><input type="checkbox" id="cal-filter-Super-Rare" checked onchange="renderCalendarHeatmap()" class="accent-yellow-300"> Super Rare</label>
+                <label class="flex items-center gap-1.5 cursor-pointer text-blue-400"><input type="checkbox" id="cal-filter-Rare" checked onchange="renderCalendarHeatmap()" class="accent-blue-400"> Rare</label>
+                <label class="flex items-center gap-1.5 cursor-pointer text-green-400"><input type="checkbox" id="cal-filter-Uncommon" checked onchange="renderCalendarHeatmap()" class="accent-green-400"> Uncommon</label>
+                <label class="flex items-center gap-1.5 cursor-pointer text-gray-400"><input type="checkbox" id="cal-filter-Common" checked onchange="renderCalendarHeatmap()" class="accent-gray-400"> Common</label>
+            </div>
+
+            <!-- Calendar Grid -->
+            <div class="bg-slate-900 border border-slate-700 p-5 rounded-lg space-y-4">
+                <div class="grid grid-cols-7 text-center font-mono text-xs text-slate-400 pb-2 border-b border-slate-800">
+                    <div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
+                </div>
+                <div id="calendar-grid-days" class="grid grid-cols-7 gap-2">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 5: PACK SEARCH -->
         <div id="tab-content-filtered" class="hidden bg-slate-800 p-6 rounded-lg border border-slate-700 space-y-6">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
@@ -302,7 +367,7 @@
                 </div>
             </div>
 
-            <!-- RacingCrest Style Filtered Header Banner -->
+            <!-- Filtered Header Banner -->
             <div id="filtered-header-banner" class="bg-slate-900 border border-slate-700 p-4 rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                 <div>
                     <div id="filtered-banner-title" class="text-sm font-bold tracking-wide uppercase font-mono text-slate-200">ALL PACKS — ALL FLAVOURS</div>
@@ -451,6 +516,9 @@
 
         let currentSortColumn = 'date';
         let currentSortAscending = false;
+
+        let currentCalendarYear = new Date().getFullYear();
+        let currentCalendarMonth = new Date().getMonth();
 
         const DEFAULT_PACK_TYPES = ['Aluminium', 'Carbon Fibre', 'Carbon Fiber', 'Ceramic', 'Ceramic Lite', 'Plastic', 'Platinum', 'Racing Pack', 'Steel', 'Titanium', 'Sapphire', 'Diamond', 'Black Diamond'];
         const DEFAULT_OBTAINED_OPTIONS = ['Adverts', 'Air Miles', 'Builder Coins', 'Cash', 'Challenge', 'Daily', 'Event', 'Free', 'Gold', 'IRL Money', 'Nismo', 'Objectives', 'Oddities Coin', 'Racing Coin', 'Spotted', 'Tri-series'];
@@ -836,15 +904,23 @@
         let packTypeDropdown, obtainedDropdown, flavourDropdown;
 
         function switchTab(tabName) {
-            ['logger', 'history', 'analytics', 'filtered'].forEach(t => {
+            ['logger', 'history', 'analytics', 'calendar', 'filtered'].forEach(t => {
                 const content = document.getElementById(`tab-content-${t}`);
                 const btn = document.getElementById(`tab-btn-${t}`);
                 if (t === tabName) {
                     content.classList.remove('hidden');
-                    btn.className = "px-4 py-2 text-sm font-medium rounded-t-lg bg-slate-800 text-emerald-400 border-b-2 border-emerald-500 cursor-pointer";
+                    if (t === 'logger') {
+                        btn.className = "px-5 py-2.5 text-sm font-bold rounded-t-lg bg-emerald-600 text-white border-b-2 border-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.4)] cursor-pointer flex items-center gap-2";
+                    } else {
+                        btn.className = "px-4 py-2 text-sm font-medium rounded-t-lg bg-slate-800 text-emerald-400 border-b-2 border-emerald-500 cursor-pointer";
+                    }
                 } else {
                     content.classList.add('hidden');
-                    btn.className = "px-4 py-2 text-sm font-medium rounded-t-lg text-slate-400 hover:text-slate-200 cursor-pointer";
+                    if (t === 'logger') {
+                        btn.className = "px-4 py-2 text-sm font-medium rounded-t-lg text-emerald-400/80 hover:text-emerald-300 cursor-pointer flex items-center gap-1.5 border border-emerald-600/30 bg-emerald-950/20";
+                    } else {
+                        btn.className = "px-4 py-2 text-sm font-medium rounded-t-lg text-slate-400 hover:text-slate-200 cursor-pointer";
+                    }
                 }
             });
 
@@ -852,6 +928,8 @@
                 loadHistoryPulls();
             } else if (tabName === 'analytics') {
                 loadAnalyticsData();
+            } else if (tabName === 'calendar') {
+                loadCalendarData();
             } else if (tabName === 'filtered') {
                 loadFilteredStatsSetup();
             } else {
@@ -1142,11 +1220,10 @@
                 document.getElementById('stat-packs-opened').textContent = '0';
                 document.getElementById('stat-packs-subtitle').textContent = 'Packs opened';
                 document.getElementById('stat-this-week').textContent = '0';
-                const bestEl = document.getElementById('stat-best-pull');
-                bestEl.textContent = 'None';
-                bestEl.className = 'text-xs font-bold leading-snug line-clamp-2 text-slate-400';
+                document.getElementById('stat-best-pull').innerHTML = '<div class="text-slate-500">None</div>';
                 document.getElementById('stat-luck-factor').textContent = '100.0%';
                 document.getElementById('rarity-bars-container').innerHTML = '<div class="text-xs text-slate-500 text-center py-4">No data</div>';
+                document.getElementById('top-cards-table-body').innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-500">No data</td></tr>';
                 return;
             }
 
@@ -1164,9 +1241,7 @@
                 document.getElementById('stat-total-cards').textContent = '0';
                 document.getElementById('stat-packs-opened').textContent = '0';
                 document.getElementById('stat-this-week').textContent = '0';
-                const bestEl = document.getElementById('stat-best-pull');
-                bestEl.textContent = 'None';
-                bestEl.className = 'text-xs font-bold leading-snug line-clamp-2 text-slate-400';
+                document.getElementById('stat-best-pull').innerHTML = '<div class="text-slate-500">None</div>';
                 document.getElementById('stat-luck-factor').textContent = '100.0%';
                 return;
             }
@@ -1201,32 +1276,78 @@
                 }
             });
 
+            // Tiered Top 3 Best Pulls with Medals & RQ
             const rarityRank = { "Legendary": 4, "Epic": 3, "Ultra Rare": 2, "Super Rare": 1, "Rare": 0, "Uncommon": 0, "Common": 0 };
-            let bestPullCar = null;
-            let maxScore = -1;
-            dataToAnalyze.forEach(p => {
-                const rq = p.car_rq || 0;
-                const rRank = rarityRank[p.car_rarity] || 0;
-                const score = (rq * 10) + rRank;
-                if (score > maxScore) {
-                    maxScore = score;
-                    bestPullCar = p;
-                }
+            const sortedByBest = [...dataToAnalyze].sort((a, b) => {
+                const scoreA = ((a.car_rq || 0) * 10) + (rarityRank[a.car_rarity] || 0);
+                const scoreB = ((b.car_rq || 0) * 10) + (rarityRank[b.car_rarity] || 0);
+                return scoreB - scoreA;
             });
+
+            const top3 = sortedByBest.slice(0, 3);
+            const bestEl = document.getElementById('stat-best-pull');
+            if (top3.length > 0) {
+                const medals = ['🥇', '🥈', '🥉'];
+                bestEl.innerHTML = top3.map((pull, idx) => {
+                    const cfg = getRarityClass(pull.car_rarity);
+                    return `
+                        <div class="flex items-center justify-between text-[11px] bg-slate-950/40 p-1 rounded">
+                            <span class="truncate font-medium text-slate-200"><span class="mr-1">${medals[idx]}</span>${pull.car_name}</span>
+                            <span class="font-mono font-bold ${cfg.text} ml-1">RQ ${pull.car_rq || 0}</span>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                bestEl.innerHTML = '<div class="text-slate-500">None</div>';
+            }
 
             document.getElementById('stat-total-cards').textContent = totalCards;
             document.getElementById('stat-packs-opened').textContent = uniquePacks;
             document.getElementById('stat-packs-subtitle').textContent = earliestDate ? `since ${formatDisplayDate(earliestDate)}` : 'Packs opened';
             document.getElementById('stat-this-week').textContent = packsThisWeek;
 
-            const bestEl = document.getElementById('stat-best-pull');
-            if (bestPullCar) {
-                bestEl.textContent = bestPullCar.car_name;
-                const rClass = getRarityClass(bestPullCar.car_rarity);
-                bestEl.className = `text-xs font-bold leading-snug line-clamp-2 ${rClass.text}`;
+            // Top 10 Most Packed Cards (Normalized to ignore different versions/styles)
+            const carCountsMap = {};
+            dataToAnalyze.forEach(p => {
+                const rawName = (p.car_name || 'Unknown').trim();
+                const normalizedName = rawName.replace(/\s*\([^)]*\)/g, '').trim().toLowerCase();
+                const displayName = rawName.replace(/\s*\([^)]*\)/g, '').trim();
+
+                if (!carCountsMap[normalizedName]) {
+                    carCountsMap[normalizedName] = {
+                        name: displayName,
+                        count: 0,
+                        maxRq: p.car_rq || 0,
+                        rarity: p.car_rarity || 'Common'
+                    };
+                }
+                carCountsMap[normalizedName].count++;
+                if ((p.car_rq || 0) > carCountsMap[normalizedName].maxRq) {
+                    carCountsMap[normalizedName].maxRq = p.car_rq || 0;
+                    carCountsMap[normalizedName].rarity = p.car_rarity || 'Common';
+                }
+            });
+
+            const sortedTopCars = Object.values(carCountsMap).sort((a, b) => b.count - a.count).slice(0, 10);
+            const topCardsTbody = document.getElementById('top-cards-table-body');
+            
+            if (sortedTopCars.length === 0) {
+                topCardsTbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-500">No data</td></tr>';
             } else {
-                bestEl.textContent = 'None';
-                bestEl.className = 'text-xs font-bold leading-snug line-clamp-2 text-slate-400';
+                topCardsTbody.innerHTML = sortedTopCars.map((car, idx) => {
+                    const cfg = getRarityClass(car.rarity);
+                    const rankMedals = ['🥇', '🥈', '🥉'];
+                    const rankDisplay = idx < 3 ? rankMedals[idx] : `#${idx + 1}`;
+                    return `
+                        <tr class="hover:bg-slate-800/50 transition">
+                            <td class="py-2.5 px-3 text-center font-mono font-bold text-slate-300">${rankDisplay}</td>
+                            <td class="py-2.5 px-3 font-medium text-slate-100">${car.name}</td>
+                            <td class="py-2.5 px-3 text-right font-mono ${cfg.text}">${car.maxRq}</td>
+                            <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded text-[10px] font-semibold ${cfg.badge}">${car.rarity}</span></td>
+                            <td class="py-2.5 px-3 text-right font-mono font-bold text-emerald-400">${car.count}</td>
+                        </tr>
+                    `;
+                }).join('');
             }
 
             const actualCounts = { "Legendary": 0, "Epic": 0, "Ultra Rare": 0, "Super Rare": 0, "Rare": 0, "Uncommon": 0, "Common": 0 };
@@ -1275,7 +1396,6 @@
             });
 
             const rarities = ["Legendary", "Epic", "Ultra Rare", "Super Rare", "Rare", "Uncommon", "Common"];
-            
             const maxVal = Math.max(...rarities.map(r => Math.max(actualCounts[r], expectedCounts[r]))) || 1;
 
             let barsHtml = '';
@@ -1339,6 +1459,128 @@
             const luckEl = document.getElementById('stat-luck-factor');
             luckEl.textContent = `${luckFactor}%`;
             luckEl.className = `text-2xl font-bold font-mono ${luckFactor >= 100 ? 'text-emerald-400' : 'text-amber-400'}`;
+        }
+
+        async function loadCalendarData() {
+            if (cachedAllPulls.length === 0) {
+                await fetchAllDatabasePulls();
+            }
+            renderCalendarHeatmap();
+        }
+
+        function changeCalendarMonth(direction) {
+            currentCalendarMonth += direction;
+            if (currentCalendarMonth > 11) {
+                currentCalendarMonth = 0;
+                currentCalendarYear++;
+            } else if (currentCalendarMonth < 0) {
+                currentCalendarMonth = 11;
+                currentCalendarYear--;
+            }
+            renderCalendarHeatmap();
+        }
+
+        function renderCalendarHeatmap() {
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            document.getElementById('calendar-month-label').textContent = `${monthNames[currentCalendarMonth]} ${currentCalendarYear}`;
+
+            const dataToAnalyze = cachedAllPulls.filter(d => !d.is_legacy);
+
+            // Active rarity filters
+            const rarityOrder = ["Legendary", "Epic", "Ultra Rare", "Super Rare", "Rare", "Uncommon", "Common"];
+            const activeFilters = {};
+            rarityOrder.forEach(r => {
+                const chk = document.getElementById(`cal-filter-${r.replace(/\s+/g, '-')}`);
+                activeFilters[r] = chk ? chk.checked : true;
+            });
+
+            // Group pulls by YYYY-MM-DD
+            const dayPullsMap = {};
+            dataToAnalyze.forEach(p => {
+                if (!p.date) return;
+                // filter by active rarity
+                if (activeFilters[p.car_rarity] === false) return;
+
+                if (!dayPullsMap[p.date]) {
+                    dayPullsMap[p.date] = [];
+                }
+                dayPullsMap[p.date].push(p);
+            });
+
+            const gridContainer = document.getElementById('calendar-grid-days');
+            gridContainer.innerHTML = '';
+
+            const firstDayOfMonth = new Date(currentCalendarYear, currentCalendarMonth, 1);
+            const lastDayOfMonth = new Date(currentCalendarYear, currentCalendarMonth + 1, 0);
+
+            // Adjust start day for Monday start (0 = Mon, 6 = Sun)
+            let startDayOfWeek = firstDayOfMonth.getDay() - 1;
+            if (startDayOfWeek === -1) startDayOfWeek = 6;
+
+            const totalDaysInMonth = lastDayOfMonth.getDate();
+
+            // Blank padding for previous month offset
+            for (let i = 0; i < startDayOfWeek; i++) {
+                const blank = document.createElement('div');
+                blank.className = "h-14 bg-slate-900/30 rounded border border-slate-800/30 opacity-20";
+                gridContainer.appendChild(blank);
+            }
+
+            const rarityScore = { "Legendary": 6, "Epic": 5, "Ultra Rare": 4, "Super Rare": 3, "Rare": 2, "Uncommon": 1, "Common": 0 };
+            const rarityBgColors = {
+                "Legendary": "bg-amber-500/20 border-amber-500/60 text-amber-300",
+                "Epic": "bg-purple-500/20 border-purple-500/60 text-purple-300",
+                "Ultra Rare": "bg-red-500/20 border-red-500/60 text-red-300",
+                "Super Rare": "bg-yellow-400/20 border-yellow-400/60 text-yellow-200",
+                "Rare": "bg-blue-500/20 border-blue-500/60 text-blue-300",
+                "Uncommon": "bg-green-500/20 border-green-500/60 text-green-300",
+                "Common": "bg-slate-700/30 border-slate-700 text-slate-400"
+            };
+
+            for (let day = 1; day <= totalDaysInMonth; day++) {
+                const mm = String(currentCalendarMonth + 1).padStart(2, '0');
+                const dd = String(day).padStart(2, '0');
+                const dateStr = `${currentCalendarYear}-${mm}-${dd}`;
+
+                const dayPulls = dayPullsMap[dateStr] || [];
+                const dayCell = document.createElement('div');
+
+                if (dayPulls.length === 0) {
+                    dayCell.className = "h-14 bg-slate-900 border border-slate-800/80 rounded p-1 flex flex-col justify-between text-[10px] text-slate-600 font-mono";
+                    dayCell.innerHTML = `<span>${day}</span><span class="text-center">-</span>`;
+                } else {
+                    // Find highest rarity pull of the day
+                    let bestPull = dayPulls[0];
+                    let maxRarityVal = rarityScore[bestPull.car_rarity] || 0;
+                    dayPulls.forEach(p => {
+                        const val = rarityScore[p.car_rarity] || 0;
+                        if (val > maxRarityVal) {
+                            maxRarityVal = val;
+                            bestPull = p;
+                        }
+                    });
+
+                    const colorClass = rarityBgColors[bestPull.car_rarity] || rarityBgColors["Common"];
+                    dayCell.className = `h-14 rounded border p-1 flex flex-col justify-between text-[10px] font-mono cursor-pointer transition hover:scale-105 shadow-sm ${colorClass}`;
+                    
+                    // Tooltip breakdown by rarity
+                    const counts = {};
+                    dayPulls.forEach(p => {
+                        counts[p.car_rarity] = (counts[p.car_rarity] || 0) + 1;
+                    });
+                    const breakdownText = Object.entries(counts).map(([r, c]) => `${c}x ${r}`).join(', ');
+
+                    dayCell.title = `${dateStr}\nTotal Cards: ${dayPulls.length}\n${breakdownText}\nBest: ${bestPull.car_name} (${bestPull.car_rarity}, RQ ${bestPull.car_rq})`;
+                    dayCell.innerHTML = `
+                        <div class="flex justify-between font-bold">
+                            <span>${day}</span>
+                            <span class="text-[9px] px-1 rounded bg-black/40">${dayPulls.length}</span>
+                        </div>
+                        <div class="truncate text-[9px] font-semibold">${bestPull.car_name}</div>
+                    `;
+                }
+                gridContainer.appendChild(dayCell);
+            }
         }
 
         async function loadFilteredStatsSetup() {
