@@ -322,8 +322,10 @@
                     <div class="relative flex-1 min-h-[260px] bg-slate-950/60 border border-slate-800 rounded p-2 flex flex-col justify-between">
                         <div class="relative flex-1 w-full min-h-[220px]">
                             <canvas id="rqAnalyticsCanvas" class="w-full h-full"></canvas>
+                            <!-- Hover Tooltip Element -->
+                            <div id="rqChartTooltip" class="absolute hidden pointer-events-none bg-slate-900 border border-slate-700 text-slate-100 text-[10px] font-mono px-2 py-1 rounded shadow-xl z-20 whitespace-nowrap"></div>
                         </div>
-                        <!-- X-axis wrapped labels -->
+                        <!-- X-axis wrapped labels with pack opening counts -->
                         <div id="rq-xaxis-labels" style="display: grid; gap: 2px;" class="pt-2 border-t border-slate-800">
                             <!-- Populated dynamically -->
                         </div>
@@ -1523,10 +1525,11 @@
             luckEl.className = `text-2xl font-bold font-mono ${luckFactor >= 100 ? 'text-emerald-400' : 'text-amber-400'}`;
         }
 
-        // Pack Comparison Grouped Bar Chart Renderer (3 bars per pack, hides empty packs automatically)
+        // Pack Comparison Grouped Bar Chart Renderer (with hover tooltips and pack counts under X-axis)
         function renderRqAnalyticsCanvas(pulls) {
             const canvas = document.getElementById('rqAnalyticsCanvas');
             const xaxisContainer = document.getElementById('rq-xaxis-labels');
+            const tooltip = document.getElementById('rqChartTooltip');
             if (!canvas) return;
 
             const ctx = canvas.getContext('2d');
@@ -1579,10 +1582,15 @@
             });
 
             const packGroupPeaks = {};
-            PACK_ORDER.forEach(pt => { packGroupPeaks[pt] = []; });
+            const packOpenedCounts = {};
+            PACK_ORDER.forEach(pt => { 
+                packGroupPeaks[pt] = [];
+                packOpenedCounts[pt] = 0;
+            });
             Object.values(packGroups).forEach(g => {
                 if (packGroupPeaks[g.pt]) {
                     packGroupPeaks[g.pt].push(g.max);
+                    packOpenedCounts[g.pt]++;
                 }
             });
 
@@ -1612,30 +1620,29 @@
                 ctx.textAlign = 'center';
                 ctx.fillText('No pack data available yet. Open a pack to see analytics.', padding.left + plotWidth / 2, padding.top + plotHeight / 2);
                 if (xaxisContainer) xaxisContainer.innerHTML = '';
+                if (tooltip) tooltip.classList.add('hidden');
                 return;
             }
 
             const clusterWidth = plotWidth / activePacks.length;
             const barWidth = Math.min(11, Math.max(3, (clusterWidth - 10) / 3));
 
+            const interactiveBars = [];
+
             activePacks.forEach((pt, i) => {
                 const stats = packStats[pt];
-                const avgTotal = stats.cardCount > 0 ? stats.totalRqSum / stats.cardCount : 0;
+                const avgTotal = stats.cardCount > 0 ? (stats.totalRqSum / stats.cardCount).toFixed(1) : 0;
                 
                 const peaks = packGroupPeaks[pt];
-                const avgPeak = peaks.length > 0 ? peaks.reduce((a, b) => a + b, 0) / peaks.length : 0;
+                const avgPeak = peaks.length > 0 ? (peaks.reduce((a, b) => a + b, 0) / peaks.length).toFixed(1) : 0;
                 const maxVal = stats.maxRq;
 
                 const clusterCenter = padding.left + i * clusterWidth + clusterWidth / 2;
 
-                // 3 bars per pack:
-                // 1. Avg Total RQ (Emerald #34d399)
-                // 2. Avg Peak RQ (Amber #fbbf24)
-                // 3. All-Time Highest RQ (Purple #c084fc)
                 const bars = [
-                    { val: avgTotal, color: '#34d399', offset: -1.0 },
-                    { val: avgPeak, color: '#fbbf24', offset: 0.0 },
-                    { val: maxVal, color: '#c084fc', offset: 1.0 }
+                    { label: 'Avg Total RQ', val: parseFloat(avgTotal), color: '#34d399', offset: -1.0 },
+                    { label: 'Avg Peak RQ', val: parseFloat(avgPeak), color: '#fbbf24', offset: 0.0 },
+                    { label: 'All-Time High RQ', val: parseFloat(maxVal), color: '#c084fc', offset: 1.0 }
                 ];
 
                 bars.forEach(bar => {
@@ -1645,14 +1652,65 @@
 
                     ctx.fillStyle = bar.color;
                     ctx.fillRect(x, y, barWidth, barHeight);
+
+                    interactiveBars.push({
+                        x: x,
+                        y: y,
+                        w: barWidth,
+                        h: barHeight,
+                        pack: pt,
+                        label: bar.label,
+                        value: bar.val
+                    });
                 });
             });
+
+            canvas.onmousemove = function(e) {
+                if (!tooltip) return;
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+
+                let foundBar = null;
+                for (const b of interactiveBars) {
+                    if (mouseX >= b.x && mouseX <= b.x + b.w && mouseY >= b.y && mouseY <= b.y + b.h) {
+                        foundBar = b;
+                        break;
+                    }
+                }
+
+                if (foundBar) {
+                    tooltip.innerHTML = `
+                        <div class="font-bold text-slate-200">${foundBar.pack}</div>
+                        <div class="text-slate-400">${foundBar.label}: <span class="text-emerald-400 font-bold">${foundBar.value}</span></div>
+                    `;
+                    tooltip.classList.remove('hidden');
+
+                    const tooltipWidth = tooltip.offsetWidth;
+                    let leftPos = foundBar.x + foundBar.w / 2 - tooltipWidth / 2;
+                    let topPos = foundBar.y - 32;
+
+                    if (leftPos < 0) leftPos = 4;
+                    if (leftPos + tooltipWidth > rect.width) leftPos = rect.width - tooltipWidth - 4;
+                    if (topPos < 0) topPos = foundBar.y + 10;
+
+                    tooltip.style.left = `${leftPos}px`;
+                    tooltip.style.top = `${topPos}px`;
+                } else {
+                    tooltip.classList.add('hidden');
+                }
+            };
+
+            canvas.onmouseleave = function() {
+                if (tooltip) tooltip.classList.add('hidden');
+            };
 
             if (xaxisContainer) {
                 xaxisContainer.style.gridTemplateColumns = `repeat(${activePacks.length}, minmax(0, 1fr))`;
                 xaxisContainer.innerHTML = activePacks.map(pt => `
-                    <div class="text-center text-[9px] font-mono text-slate-400 break-words leading-tight px-0.5" title="${pt}">
-                        ${pt}
+                    <div class="text-center text-[9px] font-mono break-words leading-tight px-0.5" title="${pt}">
+                        <div class="text-slate-400 truncate">${pt}</div>
+                        <div class="text-emerald-400 font-bold">${packOpenedCounts[pt]} ${packOpenedCounts[pt] === 1 ? 'pack' : 'packs'}</div>
                     </div>
                 `).join('');
             }
