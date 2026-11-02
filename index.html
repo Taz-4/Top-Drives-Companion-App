@@ -35,6 +35,20 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
+
+        /* Custom Hover Tooltip Styling */
+        .tooltip-box {
+            display: none;
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 50;
+            margin-bottom: 6px;
+        }
+        .has-tooltip:hover .tooltip-box {
+            display: block;
+        }
     </style>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen p-6 font-sans relative">
@@ -91,6 +105,7 @@
 
         <!-- TAB 1: LOGGER -->
         <div id="tab-content-logger" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <!-- Form -->
             <div class="lg:col-span-4 bg-slate-800 p-6 rounded-lg border border-slate-700 space-y-4 h-fit">
                 <h2 class="text-lg font-bold text-slate-200">Log New Pack Opening</h2>
                 <hr class="border-slate-700/60 my-2">
@@ -147,6 +162,7 @@
                 </button>
             </div>
 
+            <!-- Logger Recent Table -->
             <div class="lg:col-span-8 bg-slate-800 p-6 rounded-lg border border-slate-700 space-y-3">
                 <div class="flex justify-between items-center">
                     <h2 class="text-lg font-bold text-slate-200">Recent Logged Pulls <span class="text-xs text-slate-500 font-normal">(Last 30 Cards)</span></h2>
@@ -253,11 +269,15 @@
 
             <!-- Rarity Breakdown Bars & Comparison Table -->
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Left: Rarity Visual Distribution Bars -->
                 <div class="lg:col-span-6 bg-slate-900 border border-slate-700 p-5 rounded-lg space-y-4">
                     <h3 class="text-sm font-bold text-slate-200 uppercase font-mono tracking-wider">Rarity of cards pulled</h3>
-                    <div id="rarity-bars-container" class="space-y-3 pt-2"></div>
+                    <div id="rarity-bars-container" class="space-y-3 pt-2">
+                        <!-- Populated dynamically -->
+                    </div>
                 </div>
 
+                <!-- Right: Detailed Variance & Odds Table -->
                 <div class="lg:col-span-6 bg-slate-900 border border-slate-700 p-5 rounded-lg space-y-3">
                     <h3 class="text-sm font-bold text-slate-200 uppercase font-mono tracking-wider">Drop Rate Variance vs Game Odds</h3>
                     <div class="overflow-x-auto">
@@ -279,8 +299,9 @@
                 </div>
             </div>
 
-            <!-- Compact Top 10 Packed Cards Grid + Tri-Metric Pack Comparison Chart -->
+            <!-- Top 10 Packed Cards Grid + Dual-Mode Interactive RQ Analytics Widget -->
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Left half: Compact Top 10 Table -->
                 <div class="lg:col-span-6 bg-slate-900 border border-slate-700 p-5 rounded-lg space-y-3">
                     <h3 class="text-sm font-bold text-slate-200 uppercase font-mono tracking-wider">Top 10 Most Packed Cards</h3>
                     <div class="overflow-x-auto">
@@ -301,33 +322,31 @@
                     </div>
                 </div>
 
-                <!-- Tri-Metric Pack Comparison Chart Widget -->
+                <!-- Right half: Dual-Mode Interactive RQ Analytics Canvas (Histogram / Pack Comparison) -->
                 <div class="lg:col-span-6 bg-slate-900 border border-slate-700 p-5 rounded-lg space-y-3 flex flex-col">
-                    <div class="flex justify-between items-center">
-                        <h3 class="text-sm font-bold text-slate-200 uppercase font-mono tracking-wider">Pack RQ Analytics (Avg vs Peak vs Max)</h3>
-                        <span id="pack-chart-count" class="text-[11px] font-mono text-slate-400">0 pack types</span>
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                        <h3 class="text-sm font-bold text-slate-200 uppercase font-mono tracking-wider">Car RQ Analytics</h3>
+                        <div class="bg-slate-950 border border-slate-700 p-1 rounded flex text-[10px] font-mono">
+                            <button id="rq-mode-histogram" onclick="setRqAnalyticsMode('histogram')" class="px-2.5 py-1 rounded bg-emerald-600 text-white font-bold transition">10-RQ Brackets</button>
+                            <button id="rq-mode-pack" onclick="setRqAnalyticsMode('pack')" class="px-2.5 py-1 rounded text-slate-400 hover:text-slate-200 transition">Pack Comparison</button>
+                        </div>
                     </div>
-                    <!-- Legend -->
-                    <div class="flex items-center gap-4 text-[10px] font-mono text-slate-400 pt-1">
-                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-emerald-500 inline-block"></span> Avg Pack RQ</span>
-                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-amber-400 inline-block"></span> Avg Peak RQ</span>
-                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-purple-400 inline-block"></span> Max Ever RQ</span>
+
+                    <div class="relative flex-1 min-h-[260px] bg-slate-950/60 border border-slate-800 rounded p-2 flex items-center justify-center">
+                        <canvas id="rqAnalyticsCanvas" class="w-full h-full"></canvas>
+                        <div id="rq-canvas-tooltip" class="absolute hidden bg-slate-900 border border-slate-700 p-2 rounded shadow-xl text-[10px] font-mono pointer-events-none z-20 space-y-0.5"></div>
                     </div>
-                    <div class="relative flex-1 min-h-[280px] bg-slate-950/60 border border-slate-800 rounded p-2 flex items-center justify-center">
-                        <canvas id="packComparisonCanvas" class="w-full h-full"></canvas>
-                        <div id="pack-chart-tooltip" class="absolute hidden bg-slate-900 border border-slate-700 p-2 rounded shadow-xl text-[10px] font-mono pointer-events-none z-20 space-y-0.5"></div>
-                    </div>
-                    <div class="text-[10px] text-slate-500 text-center font-mono">Comparing Average Pack RQ, Average Highest RQ per Pack, and Absolute Peak RQ by Pack Type</div>
+                    <div id="rq-analytics-subtitle" class="text-[10px] text-slate-500 text-center font-mono">Frequency distribution of cards grouped by 10-RQ rating brackets.</div>
                 </div>
             </div>
         </div>
 
-        <!-- TAB 4: CALENDAR HEATMAP (With Split Date Selection Side Panel) -->
+        <!-- TAB 4: CALENDAR HEATMAP (WITH RACINGCREST STYLE SELECTED DAY SIDE PANEL) -->
         <div id="tab-content-calendar" class="hidden bg-slate-800 p-6 rounded-lg border border-slate-700 space-y-6">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                     <h2 class="text-lg font-bold text-slate-200">Calendar Pull Heatmap</h2>
-                    <p class="text-xs text-slate-400">Daily pull distribution. Click any date to view all cars packed on that day.</p>
+                    <p class="text-xs text-slate-400">Click any date to inspect full haul details on the right panel.</p>
                 </div>
 
                 <div class="flex items-center gap-3">
@@ -356,21 +375,31 @@
                 <label class="flex items-center gap-1.5 cursor-pointer text-gray-400"><input type="checkbox" id="cal-filter-Common" checked onchange="renderCalendarHeatmap()" class="accent-gray-400"> Common</label>
             </div>
 
-            <!-- Split Calendar Grid + Side Panel -->
+            <!-- 2-Column Layout: Left Heatmap Grid + Right Side Panel -->
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                <div id="calendar-display-container" class="lg:col-span-8"></div>
-                <!-- Side Panel for Selected Date Pulls -->
+                <!-- Left Grid (8 cols) -->
+                <div id="calendar-display-container" class="lg:col-span-8">
+                    <!-- Rendered dynamically -->
+                </div>
+
+                <!-- Right Side Panel (4 cols) -->
                 <div class="lg:col-span-4 bg-slate-900 border border-slate-700 p-5 rounded-lg space-y-4 sticky top-6">
                     <div class="flex justify-between items-center border-b border-slate-800 pb-3">
                         <div>
-                            <div id="side-panel-date-title" class="text-sm font-bold font-mono text-emerald-400">Today's Pulls</div>
-                            <div id="side-panel-date-sub" class="text-[11px] text-slate-400">Select a date on the calendar</div>
+                            <div id="selected-day-title" class="text-sm font-bold font-mono text-slate-100">Selected Date</div>
+                            <div id="selected-day-sub" class="text-[11px] text-slate-400 font-mono">0 cars packed</div>
                         </div>
-                        <span id="side-panel-count-badge" class="px-2 py-0.5 rounded text-xs font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700">0 cars</span>
+                        <span id="selected-day-badge" class="px-2 py-0.5 rounded text-xs font-mono bg-slate-800 text-slate-400 border border-slate-700">None</span>
                     </div>
-                    <div id="side-panel-pills" class="flex flex-wrap gap-1.5"></div>
-                    <div id="side-panel-cards-list" class="space-y-2.5 max-h-[500px] overflow-y-auto pr-1">
-                        <div class="text-xs text-slate-500 text-center py-6">No pulls recorded for this date.</div>
+
+                    <!-- Summary Pills -->
+                    <div id="selected-day-pills" class="flex flex-wrap gap-1.5">
+                        <!-- Rendered dynamically -->
+                    </div>
+
+                    <!-- Pulled Cars Card List -->
+                    <div id="selected-day-cards-list" class="space-y-2.5 max-h-[500px] overflow-y-auto pr-1">
+                        <div class="text-xs text-slate-500 text-center py-6">Select a date to view packed cars</div>
                     </div>
                 </div>
             </div>
@@ -399,13 +428,16 @@
                 </div>
             </div>
 
-            <div id="filtered-header-banner" class="bg-slate-900 border border-slate-700 p-4 rounded-lg flex flex-col sm:flex-row justify-between items-start sm:center gap-2">
+            <!-- Filtered Header Banner -->
+            <div id="filtered-header-banner" class="bg-slate-900 border border-slate-700 p-4 rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                 <div>
                     <div id="filtered-banner-title" class="text-sm font-bold tracking-wide uppercase font-mono text-slate-200">ALL PACKS — ALL FLAVOURS</div>
                     <div class="text-[11px] text-slate-400 flex items-center gap-3 mt-1 font-mono">
                         <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-amber-400 inline-block"></span> your actual</span>
                         <span>|</span>
                         <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-white inline-block"></span> published (expected)</span>
+                        <span>|</span>
+                        <span>cards total (actual / published)</span>
                     </div>
                 </div>
                 <div class="text-right font-mono">
@@ -414,11 +446,17 @@
                 </div>
             </div>
 
+            <!-- Filtered Breakdown Grid -->
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Left: Filtered Rarity Bars with Expected Marker -->
                 <div class="lg:col-span-5 bg-slate-900 border border-slate-700 p-5 rounded-lg space-y-4">
                     <h3 class="text-sm font-bold text-slate-200 uppercase font-mono tracking-wider">Rarity Distribution</h3>
-                    <div id="filtered-bars-container" class="space-y-3 pt-2"></div>
+                    <div id="filtered-bars-container" class="space-y-3 pt-2">
+                        <!-- Populated dynamically -->
+                    </div>
                 </div>
+
+                <!-- Right: Filtered Variance & Odds Table -->
                 <div class="lg:col-span-7 bg-slate-900 border border-slate-700 p-5 rounded-lg space-y-3">
                     <h3 class="text-sm font-bold text-slate-200 uppercase font-mono tracking-wider">Drop Rate Variance vs Game Odds</h3>
                     <div class="overflow-x-auto">
@@ -455,14 +493,17 @@
                     <label class="block text-xs text-slate-400 mb-1">Date Pulled</label>
                     <input type="date" id="edit-date" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-xs text-slate-100 focus:outline-none focus:border-emerald-500">
                 </div>
+
                 <div>
                     <label class="block text-xs text-slate-400 mb-1">Pack Type</label>
                     <input type="text" id="edit-pack-type" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-xs text-slate-100 focus:outline-none focus:border-emerald-500">
                 </div>
+
                 <div>
                     <label class="block text-xs text-slate-400 mb-1">Obtained</label>
                     <input type="text" id="edit-obtained" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-xs text-slate-100 focus:outline-none focus:border-emerald-500">
                 </div>
+
                 <div>
                     <label class="block text-xs text-slate-400 mb-1">Flavour / Subtype</label>
                     <input type="text" id="edit-pack-subtype" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-xs text-slate-100 focus:outline-none focus:border-emerald-500">
@@ -527,8 +568,7 @@
         const SUPABASE_KEY = "sb_publishable_hwRaYHIp6HAYIUO9HKawSQ_k7eV0pUq";
         const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        const todayIso = new Date().toISOString().split('T')[0];
-        document.getElementById('date-pulled').value = todayIso;
+        document.getElementById('date-pulled').valueAsDate = new Date();
 
         let activeSlotsData = [];
         let currentEditPullId = null;
@@ -541,7 +581,13 @@
         let currentCalendarYear = new Date().getFullYear();
         let currentCalendarMonth = new Date().getMonth();
         let calendarViewMode = 'month';
-        let selectedCalendarDate = todayIso;
+
+        // Format today's YYYY-MM-DD
+        const todayObj = new Date();
+        const todayStr = `${todayObj.getFullYear()}-${String(todayObj.getMonth() + 1).padStart(2, '0')}-${String(todayObj.getDate()).padStart(2, '0')}`;
+        let selectedCalendarDate = todayStr;
+
+        let rqAnalyticsMode = 'histogram'; // 'histogram' or 'pack'
 
         const DEFAULT_PACK_TYPES = ['Aluminium', 'Carbon Fibre', 'Carbon Fiber', 'Ceramic', 'Ceramic Lite', 'Plastic', 'Platinum', 'Racing Pack', 'Steel', 'Titanium', 'Sapphire', 'Diamond', 'Black Diamond'];
         const DEFAULT_OBTAINED_OPTIONS = ['Adverts', 'Air Miles', 'Builder Coins', 'Cash', 'Challenge', 'Daily', 'Event', 'Free', 'Gold', 'IRL Money', 'Nismo', 'Objectives', 'Oddities Coin', 'Racing Coin', 'Spotted', 'Tri-series'];
@@ -555,6 +601,13 @@
                     "3": { "Uncommon": 15.0, "Common": 85.0 },
                     "4": { "Uncommon": 15.0, "Common": 85.0 },
                     "5": { "Rare": 1.5, "Uncommon": 68.5, "Common": 30.0 }
+                },
+                "Not regular": {
+                    "1": { "Common": 100.0 },
+                    "2": { "Rare": 1.25, "Uncommon": 32.0, "Common": 66.75 },
+                    "3": { "Rare": 1.25, "Uncommon": 32.0, "Common": 66.75 },
+                    "4": { "Rare": 1.25, "Uncommon": 32.0, "Common": 66.75 },
+                    "5": { "Rare": 1.25, "Uncommon": 32.0, "Common": 66.75 }
                 }
             },
             "Steel": {
@@ -564,6 +617,13 @@
                     "3": { "Rare": 1.25, "Uncommon": 32.0, "Common": 66.75 },
                     "4": { "Rare": 1.25, "Uncommon": 32.0, "Common": 66.75 },
                     "5": { "Super Rare": 1.0, "Rare": 37.5, "Uncommon": 61.5 }
+                },
+                "Not regular": {
+                    "1": { "Uncommon": 100.0 },
+                    "2": { "Rare": 1.25, "Uncommon": 32.0, "Common": 66.75 },
+                    "3": { "Rare": 1.25, "Uncommon": 32.0, "Common": 66.75 },
+                    "4": { "Rare": 1.25, "Uncommon": 32.0, "Common": 66.75 },
+                    "5": { "Rare": 1.25, "Uncommon": 32.0, "Common": 66.75 }
                 }
             },
             "Aluminium": {
@@ -573,6 +633,13 @@
                     "3": { "Rare": 2.0, "Uncommon": 98.0 },
                     "4": { "Super Rare": 3.5, "Rare": 20.0, "Uncommon": 76.5 },
                     "5": { "Ultra Rare": 1.5, "Super Rare": 18.5, "Rare": 80.0 }
+                },
+                "Not regular": {
+                    "1": { "Rare": 1.5, "Uncommon": 98.5 },
+                    "2": { "Rare": 1.5, "Uncommon": 98.5 },
+                    "3": { "Rare": 1.5, "Uncommon": 98.5 },
+                    "4": { "Super Rare": 3.0, "Rare": 17.5, "Uncommon": 79.5 },
+                    "5": { "Ultra Rare": 1.25, "Super Rare": 17.5, "Rare": 81.25 }
                 }
             },
             "Ceramic": {
@@ -582,10 +649,33 @@
                     "3": { "Super Rare": 2.5, "Rare": 18.5, "Uncommon": 79.0 },
                     "4": { "Legendary": 0.1, "Epic": 0.25, "Ultra Rare": 0.5, "Super Rare": 34.15, "Rare": 65.0 },
                     "5": { "Legendary": 0.65, "Epic": 2.5, "Ultra Rare": 14.0, "Super Rare": 82.85 }
+                },
+                "Not regular": {
+                    "1": { "Rare": 5.0, "Uncommon": 95.0 },
+                    "2": { "Rare": 5.0, "Uncommon": 95.0 },
+                    "3": { "Super Rare": 1.75, "Rare": 16.0, "Uncommon": 82.25 },
+                    "4": { "Legendary": 0.06, "Epic": 0.09, "Ultra Rare": 0.33, "Super Rare": 24.0, "Rare": 75.52 },
+                    "5": { "Legendary": 0.45, "Epic": 2.0, "Ultra Rare": 11.0, "Super Rare": 86.55 }
+                }
+            },
+            "Ceramic Lite": {
+                "Not regular": {
+                    "1": { "Rare": 5.0, "Uncommon": 95.0 },
+                    "2": { "Rare": 5.0, "Uncommon": 95.0 },
+                    "3": { "Rare": 20.0, "Uncommon": 80.0 },
+                    "4": { "Rare": 100.0 },
+                    "5": { "Legendary": 0.5, "Epic": 2.0, "Ultra Rare": 7.5, "Super Rare": 90.0 }
                 }
             },
             "Carbon Fibre": {
                 "Regular": {
+                    "1": { "Super Rare": 2.5, "Rare": 97.5 },
+                    "2": { "Super Rare": 5.0, "Rare": 95.0 },
+                    "3": { "Super Rare": 10.0, "Rare": 90.0 },
+                    "4": { "Legendary": 0.5, "Epic": 2.75, "Ultra Rare": 7.5, "Super Rare": 89.25 },
+                    "5": { "Legendary": 2.5, "Epic": 17.75, "Ultra Rare": 79.75 }
+                },
+                "Not regular": {
                     "1": { "Super Rare": 2.5, "Rare": 97.5 },
                     "2": { "Super Rare": 5.0, "Rare": 95.0 },
                     "3": { "Super Rare": 10.0, "Rare": 90.0 },
@@ -600,6 +690,114 @@
                     "3": { "Super Rare": 10.0, "Rare": 90.0 },
                     "4": { "Legendary": 0.5, "Epic": 2.75, "Ultra Rare": 7.5, "Super Rare": 89.25 },
                     "5": { "Legendary": 2.5, "Epic": 17.75, "Ultra Rare": 79.75 }
+                },
+                "Not regular": {
+                    "1": { "Super Rare": 2.5, "Rare": 97.5 },
+                    "2": { "Super Rare": 5.0, "Rare": 95.0 },
+                    "3": { "Super Rare": 10.0, "Rare": 90.0 },
+                    "4": { "Legendary": 0.5, "Epic": 2.75, "Ultra Rare": 7.5, "Super Rare": 89.25 },
+                    "5": { "Legendary": 2.5, "Epic": 17.75, "Ultra Rare": 79.75 }
+                }
+            },
+            "Super Carbon": {
+                "Regular": {
+                    "1": { "Ultra Rare": 5.0, "Rare": 95.0 },
+                    "2": { "Ultra Rare": 5.0, "Rare": 95.0 },
+                    "3": { "Ultra Rare": 5.0, "Rare": 95.0 },
+                    "4": { "Ultra Rare": 10.0, "Super Rare": 90.0 },
+                    "5": { "Legendary": 3.0, "Epic": 20.0, "Ultra Rare": 77.0 }
+                },
+                "Not regular": {
+                    "1": { "Ultra Rare": 5.0, "Rare": 95.0 },
+                    "2": { "Ultra Rare": 5.0, "Rare": 95.0 },
+                    "3": { "Ultra Rare": 5.0, "Rare": 95.0 },
+                    "4": { "Ultra Rare": 10.0, "Super Rare": 90.0 },
+                    "5": { "Legendary": 3.0, "Epic": 20.0, "Ultra Rare": 77.0 }
+                }
+            },
+            "Platinum": {
+                "Regular": {
+                    "1": { "Ultra Rare": 5.0, "Rare": 95.0 },
+                    "2": { "Ultra Rare": 10.0, "Super Rare": 90.0 },
+                    "3": { "Ultra Rare": 10.0, "Super Rare": 90.0 },
+                    "4": { "Ultra Rare": 100.0 },
+                    "5": { "Legendary": 5.0, "Epic": 35.0, "Ultra Rare": 60.0 }
+                },
+                "Not regular": {
+                    "1": { "Ultra Rare": 5.0, "Rare": 95.0 },
+                    "2": { "Ultra Rare": 10.0, "Super Rare": 90.0 },
+                    "3": { "Ultra Rare": 10.0, "Super Rare": 90.0 },
+                    "4": { "Ultra Rare": 100.0 },
+                    "5": { "Legendary": 5.0, "Epic": 35.0, "Ultra Rare": 60.0 }
+                }
+            },
+            "Titanium": {
+                "Regular": {
+                    "1": { "Epic": 5.0, "Super Rare": 95.0 },
+                    "2": { "Epic": 5.0, "Super Rare": 95.0 },
+                    "3": { "Epic": 10.0, "Super Rare": 90.0 },
+                    "4": { "Epic": 10.0, "Ultra Rare": 90.0 },
+                    "5": { "Legendary": 20.0, "Epic": 80.0 }
+                },
+                "Not regular": {
+                    "1": { "Epic": 5.0, "Super Rare": 95.0 },
+                    "2": { "Epic": 5.0, "Super Rare": 95.0 },
+                    "3": { "Epic": 10.0, "Super Rare": 90.0 },
+                    "4": { "Epic": 10.0, "Ultra Rare": 90.0 },
+                    "5": { "Legendary": 20.0, "Epic": 80.0 }
+                }
+            },
+            "Sapphire": {
+                "Regular": {
+                    "1": { "Epic": 5.0, "Ultra Rare": 95.0 },
+                    "2": { "Epic": 10.0, "Ultra Rare": 90.0 },
+                    "3": { "Epic": 10.0, "Ultra Rare": 90.0 },
+                    "4": { "Epic": 100.0 },
+                    "5": { "Legendary": 35.0, "Epic": 65.0 }
+                },
+                "Not regular": {
+                    "1": { "Epic": 5.0, "Ultra Rare": 95.0 },
+                    "2": { "Epic": 10.0, "Ultra Rare": 90.0 },
+                    "3": { "Epic": 10.0, "Ultra Rare": 90.0 },
+                    "4": { "Epic": 100.0 },
+                    "5": { "Legendary": 35.0, "Epic": 65.0 }
+                }
+            },
+            "Diamond": {
+                "Regular": {
+                    "1": { "Legendary": 5.0, "Ultra Rare": 95.0 },
+                    "2": { "Legendary": 5.0, "Ultra Rare": 95.0 },
+                    "3": { "Legendary": 5.0, "Ultra Rare": 95.0 },
+                    "4": { "Legendary": 10.0, "Epic": 90.0 },
+                    "5": { "Legendary": 100.0 }
+                },
+                "Not regular": {
+                    "1": { "Legendary": 5.0, "Ultra Rare": 95.0 },
+                    "2": { "Legendary": 5.0, "Ultra Rare": 95.0 },
+                    "3": { "Legendary": 5.0, "Ultra Rare": 95.0 },
+                    "4": { "Legendary": 10.0, "Epic": 90.0 },
+                    "5": { "Legendary": 100.0 }
+                }
+            },
+            "Black Diamond": {
+                "Regular": {
+                    "1": { "Legendary": 5.0, "Ultra Rare": 95.0 },
+                    "2": { "Legendary": 5.0, "Ultra Rare": 95.0 },
+                    "3": { "Legendary": 10.0, "Epic": 90.0 },
+                    "4": { "Legendary": 50.0, "Epic": 50.0 },
+                    "5": { "Legendary": 100.0 }
+                },
+                "Not regular": {
+                    "1": { "Legendary": 5.0, "Ultra Rare": 95.0 },
+                    "2": { "Legendary": 5.0, "Ultra Rare": 95.0 },
+                    "3": { "Legendary": 10.0, "Epic": 90.0 },
+                    "4": { "Legendary": 50.0, "Epic": 50.0 },
+                    "5": { "Legendary": 100.0 }
+                }
+            },
+            "Racing Pack": {
+                "Regular": {
+                    "1": { "Legendary": 0.5, "Epic": 1.5, "Ultra Rare": 8.0, "Super Rare": 30.0, "Rare": 60.0 }
                 }
             }
         };
@@ -610,30 +808,51 @@
             lastAction = { type: actionType, data: dataPayload };
             const btn = document.getElementById('global-undo-btn');
             const label = document.getElementById('undo-label');
+            
             btn.disabled = false;
             btn.className = "bg-slate-800 hover:bg-slate-700 border border-emerald-600/60 text-emerald-400 font-medium text-xs px-3 py-1.5 rounded flex items-center space-x-1.5 cursor-pointer transition shadow-sm";
             label.textContent = `Undo: ${description}`;
-        }
-
-        async function triggerGlobalUndo() {
-            if (!lastAction) return;
-            if (lastAction.type === 'SUBMIT_PACK') {
-                const idsToDelete = lastAction.data.map(row => row.id);
-                const { error } = await db.from('pulls').delete().in('id', idsToDelete);
-                if (!error) { loadPulls(); clearLastAction(); }
-            } else if (lastAction.type === 'DELETE_ROW') {
-                const { error } = await db.from('pulls').insert(lastAction.data);
-                if (!error) { loadPulls(); clearLastAction(); }
-            }
         }
 
         function clearLastAction() {
             lastAction = null;
             const btn = document.getElementById('global-undo-btn');
             const label = document.getElementById('undo-label');
+            
             btn.disabled = true;
             btn.className = "bg-slate-800 border border-slate-700 text-slate-500 font-medium text-xs px-3 py-1.5 rounded flex items-center space-x-1.5 cursor-not-allowed transition";
             label.textContent = "Undo (Ready)";
+        }
+
+        async function triggerGlobalUndo() {
+            if (!lastAction) return;
+
+            if (lastAction.type === 'SUBMIT_PACK') {
+                const idsToDelete = lastAction.data.map(row => row.id);
+                const { error } = await db.from('pulls').delete().in('id', idsToDelete);
+                
+                if (error) {
+                    alert('Error undoing pack submission: ' + error.message);
+                } else {
+                    loadPulls();
+                    if (!document.getElementById('tab-content-history').classList.contains('hidden')) {
+                        loadHistoryPulls();
+                    }
+                    clearLastAction();
+                }
+            } else if (lastAction.type === 'DELETE_ROW') {
+                const { error } = await db.from('pulls').insert(lastAction.data);
+
+                if (error) {
+                    alert('Error undoing row deletion: ' + error.message);
+                } else {
+                    loadPulls();
+                    if (!document.getElementById('tab-content-history').classList.contains('hidden')) {
+                        loadHistoryPulls();
+                    }
+                    clearLastAction();
+                }
+            }
         }
 
         class CustomDropdown {
@@ -645,23 +864,47 @@
                 this.options = this.loadOptions();
                 this.init();
             }
+
             loadOptions() {
                 const saved = JSON.parse(localStorage.getItem(this.storageKey) || 'null');
-                return saved !== null ? saved : [...this.defaultOptions];
+                let list = saved !== null ? saved : [...this.defaultOptions];
+                return this.sortOptions(list);
             }
-            saveOptions() { localStorage.setItem(this.storageKey, JSON.stringify(this.options)); }
+
+            saveOptions() {
+                localStorage.setItem(this.storageKey, JSON.stringify(this.options));
+            }
+
+            sortOptions(arr) {
+                return [...arr].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+            }
+
             addOption(val) {
                 const trimmed = (val || '').trim();
-                if (trimmed && !this.options.some(o => o.toLowerCase() === trimmed.toLowerCase())) {
+                if (!trimmed) return;
+                if (!this.options.some(opt => opt.toLowerCase() === trimmed.toLowerCase())) {
                     this.options.push(trimmed);
+                    this.options = this.sortOptions(this.options);
                     this.saveOptions();
                 }
             }
+
+            deleteOption(optionToDelete, e) {
+                if (e) e.stopPropagation();
+                this.options = this.options.filter(opt => opt !== optionToDelete);
+                this.saveOptions();
+                if (this.input.value === optionToDelete) this.input.value = '';
+                this.render();
+            }
+
             render() {
                 const query = this.input.value.trim().toLowerCase();
-                const filtered = this.options.filter(o => o.toLowerCase().includes(query));
+                const filtered = this.options.filter(opt => opt.toLowerCase().includes(query));
+
                 this.dropdown.innerHTML = '';
-                if (query && !this.options.some(o => o.toLowerCase() === query)) {
+
+                const exactMatch = this.options.some(opt => opt.toLowerCase() === query);
+                if (query && !exactMatch) {
                     const addRow = document.createElement('div');
                     addRow.className = 'p-2 text-xs text-emerald-400 hover:bg-slate-800 cursor-pointer font-semibold border-b border-slate-800';
                     addRow.textContent = `+ Add "${this.input.value.trim()}"`;
@@ -674,20 +917,55 @@
                     };
                     this.dropdown.appendChild(addRow);
                 }
+
                 filtered.forEach(opt => {
                     const row = document.createElement('div');
-                    row.className = 'p-2 hover:bg-slate-800 cursor-pointer text-xs flex justify-between items-center border-b border-slate-800/60 text-slate-100';
-                    row.textContent = opt;
-                    row.onmousedown = (e) => { e.preventDefault(); this.input.value = opt; this.close(); };
+                    row.className = 'p-2 hover:bg-slate-800 cursor-pointer text-xs flex justify-between items-center border-b border-slate-800/60 last:border-0 text-slate-100';
+
+                    const textSpan = document.createElement('span');
+                    textSpan.textContent = opt;
+                    textSpan.className = 'flex-1';
+                    textSpan.onmousedown = (e) => {
+                        e.preventDefault();
+                        this.input.value = opt;
+                        this.close();
+                    };
+
+                    const delBtn = document.createElement('button');
+                    delBtn.type = 'button';
+                    delBtn.className = 'text-slate-500 hover:text-red-400 font-bold px-1.5 py-0.5 rounded text-xs ml-2 hover:bg-slate-700/50 transition';
+                    delBtn.textContent = '✕';
+                    delBtn.onmousedown = (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        this.deleteOption(opt, e);
+                    };
+
+                    row.appendChild(textSpan);
+                    row.appendChild(delBtn);
                     this.dropdown.appendChild(row);
                 });
             }
-            open() { document.querySelectorAll('.custom-dropdown-list').forEach(el => el.classList.add('hidden')); this.render(); this.dropdown.classList.remove('hidden'); }
-            close() { this.dropdown.classList.add('hidden'); }
+
+            open() {
+                document.querySelectorAll('.custom-dropdown-list').forEach(el => el.classList.add('hidden'));
+                this.render();
+                this.dropdown.classList.remove('hidden');
+            }
+
+            close() {
+                this.dropdown.classList.add('hidden');
+            }
+
             init() {
                 this.input.addEventListener('focus', () => this.open());
-                this.input.addEventListener('input', () => { this.open(); this.render(); });
-                this.input.addEventListener('blur', () => { setTimeout(() => this.close(), 180); });
+                this.input.addEventListener('input', () => {
+                    this.open();
+                    this.render();
+                });
+                this.input.addEventListener('blur', () => {
+                    setTimeout(() => this.close(), 180);
+                });
             }
         }
 
@@ -707,24 +985,37 @@
                 } else {
                     content.classList.add('hidden');
                     if (t === 'logger') {
-                        btn.className = "px-4 py-2 text-sm font-medium rounded-t-lg text-emerald-400/85 hover:text-emerald-300 cursor-pointer flex items-center gap-1.5 border border-emerald-600/30 bg-emerald-950/20";
+                        btn.className = "px-4 py-2 text-sm font-medium rounded-t-lg text-emerald-400/80 hover:text-emerald-300 cursor-pointer flex items-center gap-1.5 border border-emerald-600/30 bg-emerald-950/20";
                     } else {
                         btn.className = "px-4 py-2 text-sm font-medium rounded-t-lg text-slate-400 hover:text-slate-200 cursor-pointer";
                     }
                 }
             });
 
-            if (tabName === 'history') loadHistoryPulls();
-            else if (tabName === 'analytics') loadAnalyticsData();
-            else if (tabName === 'calendar') loadCalendarData();
-            else if (tabName === 'filtered') loadFilteredStatsSetup();
-            else loadPulls();
+            if (tabName === 'history') {
+                loadHistoryPulls();
+            } else if (tabName === 'analytics') {
+                loadAnalyticsData();
+            } else if (tabName === 'calendar') {
+                loadCalendarData();
+            } else if (tabName === 'filtered') {
+                loadFilteredStatsSetup();
+            } else {
+                loadPulls();
+            }
         }
 
         function toggleSort(column) {
-            if (currentSortColumn === column) currentSortAscending = !currentSortAscending;
-            else { currentSortColumn = column; currentSortAscending = column !== 'date'; }
-            if (!document.getElementById('tab-content-history').classList.contains('hidden')) loadHistoryPulls();
+            if (currentSortColumn === column) {
+                currentSortAscending = !currentSortAscending;
+            } else {
+                currentSortColumn = column;
+                currentSortAscending = column !== 'date';
+            }
+
+            if (!document.getElementById('tab-content-history').classList.contains('hidden')) {
+                loadHistoryPulls();
+            }
         }
 
         function populateCardCountOptions() {
@@ -755,6 +1046,7 @@
             const regular = document.getElementById('regular-pack').value;
             const container = document.getElementById('flavour-container');
             const subtypeInput = document.getElementById('pack-subtype');
+
             if (regular === 'No') {
                 container.classList.remove('hidden');
                 if (subtypeInput.value === 'Regular') subtypeInput.value = '';
@@ -790,35 +1082,54 @@
         async function searchCarsForSlot(slotIndex) {
             const query = document.getElementById(`slot-input-${slotIndex}`).value.trim();
             const suggestions = document.getElementById(`slot-suggestions-${slotIndex}`);
-            if (query.length < 2) { suggestions.classList.add('hidden'); return; }
-            const { data } = await db.from('cars').select('id, name, rarity, rq').ilike('name', `%${query}%`).order('rq', { ascending: false }).limit(300);
+
+            document.querySelectorAll('[id^="slot-suggestions-"]').forEach(el => {
+                if (el.id !== `slot-suggestions-${slotIndex}`) el.classList.add('hidden');
+            });
+
+            if (query.length < 2) {
+                suggestions.classList.add('hidden');
+                return;
+            }
+
+            const { data } = await db.from('cars')
+                .select('id, name, rarity, rq')
+                .ilike('name', `%${query}%`)
+                .order('rq', { ascending: false })
+                .limit(300);
+
             if (!data || data.length === 0) {
                 suggestions.innerHTML = '<div class="p-2 text-xs text-slate-500">No matching cars</div>';
                 suggestions.classList.remove('hidden');
                 return;
             }
+
             suggestions.innerHTML = data.map(car => {
                 const classes = getRarityClass(car.rarity);
                 const safeName = car.name.replace(/'/g, "\\'");
                 return `
                     <div onclick="selectCarForSlot(${slotIndex}, '${car.id}', '${safeName}', '${car.rarity}', ${car.rq})" 
-                         class="p-2 hover:bg-slate-800 cursor-pointer text-xs flex justify-between items-center border-b border-slate-800">
+                         class="p-2 hover:bg-slate-800 cursor-pointer text-xs flex justify-between items-center border-b border-slate-800 last:border-0">
                         <span class="text-slate-100 font-medium">${car.name}</span>
                         <span class="font-mono ${classes.text}">RQ ${car.rq} • ${car.rarity}</span>
                     </div>
                 `;
             }).join('');
+
             suggestions.classList.remove('hidden');
         }
 
         function selectCarForSlot(slotIndex, id, name, rarity, rq) {
             activeSlotsData[slotIndex] = { id, name, rarity, rq };
             document.getElementById(`slot-input-${slotIndex}`).value = `${name} (RQ ${rq})`;
+
             const badge = document.getElementById(`slot-badge-${slotIndex}`);
             const classes = getRarityClass(rarity);
             badge.textContent = rarity;
             badge.className = `text-[10px] font-mono px-1.5 py-0.5 rounded font-semibold ${classes.badge}`;
+
             document.getElementById(`slot-suggestions-${slotIndex}`).classList.add('hidden');
+
             const nextInput = document.getElementById(`slot-input-${slotIndex + 1}`);
             if (nextInput) nextInput.focus();
         }
@@ -830,26 +1141,58 @@
             const regularPack = document.getElementById('regular-pack').value;
             let packSubtype = document.getElementById('pack-subtype').value.trim();
 
-            if (!date || !packType || !obtained) { alert('Please complete all required fields.'); return; }
+            if (!date || !packType || !obtained) {
+                alert('Please complete all required fields.');
+                return;
+            }
+
             packTypeDropdown.addOption(packType);
             obtainedDropdown.addOption(obtained);
 
-            if (regularPack === 'Yes') packSubtype = 'Regular';
-            else { if (!packSubtype) { alert('Please enter a collection flavour.'); return; } flavourDropdown.addOption(packSubtype); }
+            if (regularPack === 'Yes') {
+                packSubtype = 'Regular';
+            } else {
+                if (!packSubtype) {
+                    alert('Please enter a collection flavour.');
+                    return;
+                }
+                flavourDropdown.addOption(packSubtype);
+            }
 
             const count = parseInt(document.getElementById('card-count-select').value) || 5;
-            for (let i = 0; i < count; i++) { if (!activeSlotsData[i]) { alert(`Please select a car for Card ${i + 1}.`); return; } }
+
+            for (let i = 0; i < count; i++) {
+                if (!activeSlotsData[i]) {
+                    alert(`Please select a car for Card ${i + 1}.`);
+                    return;
+                }
+            }
 
             const packGroupId = crypto.randomUUID();
+
             const rowsToInsert = activeSlotsData.slice(0, count).map((car, idx) => ({
-                date, pack_type: packType, obtained, pack_subtype: packSubtype,
-                car_name: car.name, car_rarity: car.rarity, car_rq: car.rq, car_id: car.id,
-                pack_group_id: packGroupId, slot_number: idx + 1, is_legacy: false
+                date: date,
+                pack_type: packType,
+                obtained: obtained,
+                pack_subtype: packSubtype,
+                car_name: car.name,
+                car_rarity: car.rarity,
+                car_rq: car.rq,
+                car_id: car.id,
+                pack_group_id: packGroupId,
+                slot_number: idx + 1,
+                is_legacy: false
             }));
 
             const { data, error } = await db.from('pulls').insert(rowsToInsert).select();
-            if (error) alert('Error submitting pack: ' + error.message);
-            else { setLastAction('SUBMIT_PACK', data, `${packType} Pack (${count} Cards)`); generateCardSlots(); loadPulls(); }
+
+            if (error) {
+                alert('Error submitting pack: ' + error.message);
+            } else {
+                setLastAction('SUBMIT_PACK', data, `${packType} Pack (${count} Cards)`);
+                generateCardSlots();
+                loadPulls();
+            }
         }
 
         function formatDisplayDate(dateString) {
@@ -857,31 +1200,77 @@
             const parts = dateString.split('-');
             if (parts.length === 3) {
                 const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-                return `${parseInt(parts[2], 10)}-${months[parseInt(parts[1], 10) - 1]}-${parts[0]}`;
+                const monthIdx = parseInt(parts[1], 10) - 1;
+                return `${parseInt(parts[2], 10)}-${months[monthIdx]}-${parts[0]}`;
             }
             return dateString;
         }
 
         async function loadPulls() {
-            const { data } = await db.from('pulls').select('*').order('created_at', { ascending: false }).order('slot_number', { ascending: true }).limit(30);
-            document.getElementById('pulls-table-body').innerHTML = (!data || data.length === 0) ? '<tr><td colspan="9" class="p-4 text-center text-slate-500">No logged pulls found</td></tr>' : renderTableRows(data);
+            const { data, error } = await db
+                .from('pulls')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .order('slot_number', { ascending: true })
+                .limit(30);
+
+            const tbody = document.getElementById('pulls-table-body');
+            if (error || !data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" class="p-4 text-center text-slate-500">No logged pulls found</td></tr>';
+                return;
+            }
+            tbody.innerHTML = renderTableRows(data);
         }
 
         async function loadHistoryPulls() {
             const query = document.getElementById('history-search-input').value.trim();
-            let dbQuery = db.from('pulls').select('*').order(currentSortColumn, { ascending: currentSortAscending }).order('pack_group_id', { ascending: true, nullsFirst: false }).order('slot_number', { ascending: true }).limit(200);
-            if (query) dbQuery = dbQuery.or(`car_name.ilike.%${query}%,pack_type.ilike.%${query}%,pack_subtype.ilike.%${query}%,obtained.ilike.%${query}%`);
-            const { data } = await dbQuery;
-            document.getElementById('history-table-body').innerHTML = (!data || data.length === 0) ? '<tr><td colspan="9" class="p-4 text-center text-slate-500">No matching pulls found</td></tr>' : renderTableRows(data);
+            let dbQuery = db
+                .from('pulls')
+                .select('*')
+                .order(currentSortColumn, { ascending: currentSortAscending })
+                .order('pack_group_id', { ascending: true, nullsFirst: false })
+                .order('slot_number', { ascending: true })
+                .limit(200);
+
+            if (query) {
+                dbQuery = dbQuery.or(`car_name.ilike.%${query}%,pack_type.ilike.%${query}%,pack_subtype.ilike.%${query}%,obtained.ilike.%${query}%`);
+            }
+
+            const { data, error } = await dbQuery;
+            const tbody = document.getElementById('history-table-body');
+            if (error || !data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" class="p-4 text-center text-slate-500">No matching pulls found</td></tr>';
+                return;
+            }
+            tbody.innerHTML = renderTableRows(data);
         }
 
         async function fetchAllDatabasePulls() {
-            let allData = [], page = 0, fetchMore = true;
-            while (fetchMore && page < 100) {
-                const { data } = await db.from('pulls').select('*').range(page * 1000, (page + 1) * 1000 - 1);
-                if (!data || data.length === 0) fetchMore = false;
-                else { allData = allData.concat(data); if (data.length < 1000) fetchMore = false; }
+            let allData = [];
+            let pageSize = 1000;
+            let page = 0;
+            let fetchMore = true;
+
+            while (fetchMore) {
+                const start = page * pageSize;
+                const end = start + pageSize - 1;
+                const { data, error } = await db.from('pulls').select('*').range(start, end);
+
+                if (error) {
+                    alert('Error loading data: ' + error.message);
+                    break;
+                }
+
+                if (!data || data.length === 0) {
+                    fetchMore = false;
+                } else {
+                    allData = allData.concat(data);
+                    if (data.length < pageSize) {
+                        fetchMore = false;
+                    }
+                }
                 page++;
+                if (page > 100) break;
             }
             cachedAllPulls = allData;
             return allData;
@@ -892,9 +1281,8 @@
             tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-500">Fetching all records from database...</td></tr>';
 
             const allData = await fetchAllDatabasePulls();
-            const dataToAnalyze = allData.filter(d => !d.is_legacy);
 
-            if (dataToAnalyze.length === 0) {
+            if (allData.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-500">No data available for analytics yet</td></tr>';
                 document.getElementById('stat-total-cards').textContent = '0';
                 document.getElementById('stat-packs-opened').textContent = '0';
@@ -908,17 +1296,32 @@
             }
 
             const warningBanner = document.getElementById('analytics-warning');
-            if (warningBanner) {
-                if (allData.length > 15000) warningBanner.classList.remove('hidden');
-                else warningBanner.classList.add('hidden');
+            if (allData.length > 15000) {
+                if (warningBanner) warningBanner.classList.remove('hidden');
+            } else {
+                if (warningBanner) warningBanner.classList.add('hidden');
+            }
+
+            const dataToAnalyze = allData.filter(d => !d.is_legacy);
+
+            if (dataToAnalyze.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-500">No new pack logs found (legacy records excluded)</td></tr>';
+                document.getElementById('stat-total-cards').textContent = '0';
+                document.getElementById('stat-packs-opened').textContent = '0';
+                document.getElementById('stat-this-week').textContent = '0';
+                document.getElementById('stat-best-pull').innerHTML = '<div class="text-slate-500 text-xs">None</div>';
+                document.getElementById('stat-luck-factor').textContent = '100.0%';
+                return;
             }
 
             const totalCards = dataToAnalyze.length;
-
+            
             const packGroups = {};
             dataToAnalyze.forEach(pull => {
                 const groupId = pull.pack_group_id || pull.id;
-                if (!packGroups[groupId]) packGroups[groupId] = [];
+                if (!packGroups[groupId]) {
+                    packGroups[groupId] = [];
+                }
                 packGroups[groupId].push(pull);
             });
 
@@ -936,7 +1339,9 @@
             let packsThisWeek = 0;
             Object.values(packGroups).forEach(groupPulls => {
                 const sampleDate = groupPulls[0].date ? new Date(groupPulls[0].date) : null;
-                if (sampleDate && sampleDate >= sevenDaysAgo) packsThisWeek++;
+                if (sampleDate && sampleDate >= sevenDaysAgo) {
+                    packsThisWeek++;
+                }
             });
 
             const rarityRank = { "Legendary": 4, "Epic": 3, "Ultra Rare": 2, "Super Rare": 1, "Rare": 0, "Uncommon": 0, "Common": 0 };
@@ -971,7 +1376,7 @@
             document.getElementById('stat-packs-subtitle').textContent = earliestDate ? `since ${formatDisplayDate(earliestDate)}` : 'Packs opened';
             document.getElementById('stat-this-week').textContent = packsThisWeek;
 
-            // Top 10 Most Packed Cards
+            // Compact Top 10 Most Packed Cards
             const carCountsMap = {};
             dataToAnalyze.forEach(p => {
                 const rawName = (p.car_name || 'Unknown').trim();
@@ -1015,7 +1420,9 @@
                 }).join('');
             }
 
-            // Actual Counts and Expected Drop Odds
+            // Render Interactive Dual-Mode RQ Canvas Widget
+            renderRqAnalyticsCanvas(dataToAnalyze);
+
             const actualCounts = { "Legendary": 0, "Epic": 0, "Ultra Rare": 0, "Super Rare": 0, "Rare": 0, "Uncommon": 0, "Common": 0 };
             dataToAnalyze.forEach(pull => {
                 const r = pull.car_rarity;
@@ -1040,6 +1447,7 @@
 
                         groupPulls.forEach(pull => {
                             let slotNum = pull.slot_number || 1;
+                            
                             let mappedSlot;
                             if (totalVariantSlots === 1) {
                                 mappedSlot = 1;
@@ -1124,149 +1532,212 @@
             const luckEl = document.getElementById('stat-luck-factor');
             luckEl.textContent = `${luckFactor}%`;
             luckEl.className = `text-2xl font-bold font-mono ${luckFactor >= 100 ? 'text-emerald-400' : 'text-amber-400'}`;
-
-            // Render Pack Comparison Chart with pack groups
-            renderPackComparisonChart(packGroups);
         }
 
-        // Tri-Metric Pack Comparison Chart Implementation
-        function renderPackComparisonChart(packGroups) {
-            const canvas = document.getElementById('packComparisonCanvas');
-            const tooltip = document.getElementById('pack-chart-tooltip');
-            const countLabel = document.getElementById('pack-chart-count');
+        // Mode Switcher for RQ Analytics
+        function setRqAnalyticsMode(mode) {
+            rqAnalyticsMode = mode;
+            const btnH = document.getElementById('rq-mode-histogram');
+            const btnP = document.getElementById('rq-mode-pack');
+            const sub = document.getElementById('rq-analytics-subtitle');
+
+            if (mode === 'histogram') {
+                btnH.className = "px-2.5 py-1 rounded bg-emerald-600 text-white font-bold transition";
+                btnP.className = "px-2.5 py-1 rounded text-slate-400 hover:text-slate-200 transition";
+                sub.textContent = "Frequency distribution of cards grouped by 10-RQ rating brackets.";
+            } else {
+                btnP.className = "px-2.5 py-1 rounded bg-emerald-600 text-white font-bold transition";
+                btnH.className = "px-2.5 py-1 rounded text-slate-400 hover:text-slate-200 transition";
+                sub.textContent = "Average pulled RQ vs Peak (Highest) RQ across logged pack types.";
+            }
+
+            if (cachedAllPulls.length > 0) {
+                renderRqAnalyticsCanvas(cachedAllPulls.filter(d => !d.is_legacy));
+            }
+        }
+
+        // Dual-Mode RQ Analytics Canvas Rendering (Histogram or Pack Comparison)
+        function renderRqAnalyticsCanvas(pulls) {
+            const canvas = document.getElementById('rqAnalyticsCanvas');
+            const tooltip = document.getElementById('rq-canvas-tooltip');
             if (!canvas) return;
-
-            const packStats = {};
-            Object.values(packGroups).forEach(group => {
-                const sample = group[0];
-                const pType = (sample.pack_type || 'Unknown').trim();
-                if (!packStats[pType]) {
-                    packStats[pType] = { totalRqSum: 0, cardCount: 0, maxPackRqList: [], absoluteMax: 0 };
-                }
-                let packMaxRq = 0;
-                group.forEach(card => {
-                    const rq = card.car_rq || 0;
-                    packStats[pType].totalRqSum += rq;
-                    packStats[pType].cardCount++;
-                    if (rq > packMaxRq) packMaxRq = rq;
-                    if (rq > packStats[pType].absoluteMax) packStats[pType].absoluteMax = rq;
-                });
-                packStats[pType].maxPackRqList.push(packMaxRq);
-            });
-
-            // Pack rarity sequence: Lowest to Highest
-            const packRarityOrder = [
-                'Plastic', 'Steel', 'Aluminium', 'Racing Pack', 'Ceramic Lite',
-                'Ceramic', 'Carbon Fibre', 'Carbon Fiber', 'Super Carbon',
-                'Platinum', 'Titanium', 'Sapphire', 'Diamond', 'Black Diamond'
-            ];
-
-            const packNames = Object.keys(packStats).sort((a, b) => {
-                const idxA = packRarityOrder.indexOf(a);
-                const idxB = packRarityOrder.indexOf(b);
-                if (idxA !== -1 && idxB !== -1) return idxA - idxB;
-                if (idxA !== -1) return -1;
-                if (idxB !== -1) return 1;
-                return a.localeCompare(b);
-            });
-
-            countLabel.textContent = `${packNames.length} pack types`;
 
             const ctx = canvas.getContext('2d');
             const dpr = window.devicePixelRatio || 1;
             const rect = canvas.getBoundingClientRect();
+            
             canvas.width = rect.width * dpr;
             canvas.height = rect.height * dpr;
             ctx.scale(dpr, dpr);
 
             const width = rect.width;
             const height = rect.height;
-            const padding = { left: 35, right: 20, top: 20, bottom: 50 };
-            const plotWidth = width - padding.left - padding.right;
-            const plotHeight = height - padding.top - padding.bottom;
 
             ctx.clearRect(0, 0, width, height);
 
-            // Draw Y-Axis Grid (RQ 0 to 100)
-            ctx.strokeStyle = '#334155';
-            ctx.lineWidth = 1;
-            ctx.fillStyle = '#64748b';
-            ctx.font = '9px monospace';
-            ctx.textAlign = 'right';
+            const padding = { left: 40, right: 20, top: 25, bottom: 35 };
+            const plotWidth = width - padding.left - padding.right;
+            const plotHeight = height - padding.top - padding.bottom;
 
-            for (let rq = 0; rq <= 100; rq += 25) {
-                const y = padding.top + plotHeight - (rq / 100) * plotHeight;
-                ctx.beginPath();
-                ctx.moveTo(padding.left, y);
-                ctx.lineTo(width - padding.right, y);
-                ctx.stroke();
-                ctx.fillText(rq, padding.left - 5, y + 3);
-            }
+            const activeBars = [];
 
-            if (packNames.length === 0) return;
-
-            const groupWidth = plotWidth / packNames.length;
-            const barWidth = Math.max(4, Math.floor((groupWidth - 12) / 3));
-
-            const renderedBars = [];
-
-            packNames.forEach((pType, idx) => {
-                const stats = packStats[pType];
-                const avgPackRq = stats.cardCount > 0 ? (stats.totalRqSum / stats.cardCount) : 0;
-                const avgPeakRq = stats.maxPackRqList.length > 0 ? (stats.maxPackRqList.reduce((a, b) => a + b, 0) / stats.maxPackRqList.length) : 0;
-                const maxRq = stats.absoluteMax;
-
-                const groupX = padding.left + idx * groupWidth + (groupWidth - (barWidth * 3 + 4)) / 2;
-
-                const metrics = [
-                    { label: 'Avg Pack RQ', val: avgPackRq, color: '#10b981' },
-                    { label: 'Avg Peak RQ', val: avgPeakRq, color: '#fbbf24' },
-                    { label: 'Max Ever RQ', val: maxRq, color: '#c084fc' }
+            if (rqAnalyticsMode === 'histogram') {
+                // HISTOGRAM MODE: 10-RQ Rating Brackets (10-19 up to 90-100)
+                const brackets = [
+                    { label: "10-19", min: 10, max: 19, color: "#9ca3af" },
+                    { label: "20-29", min: 20, max: 29, color: "#4ade80" },
+                    { label: "30-39", min: 30, max: 39, color: "#60a5fa" },
+                    { label: "40-49", min: 40, max: 49, color: "#fde047" },
+                    { label: "50-64", min: 50, max: 64, color: "#f87171" },
+                    { label: "65-79", min: 65, max: 79, color: "#c084fc" },
+                    { label: "80-100", min: 80, max: 100, color: "#fbbf24" }
                 ];
 
-                metrics.forEach((m, mIdx) => {
-                    const bx = groupX + mIdx * (barWidth + 2);
-                    const bHeight = (m.val / 100) * plotHeight;
-                    const by = padding.top + plotHeight - bHeight;
-
-                    ctx.fillStyle = m.color;
-                    ctx.fillRect(bx, by, barWidth, bHeight);
-
-                    renderedBars.push({
-                        x: bx, y: by, w: barWidth, h: bHeight,
-                        packType: pType, metricLabel: m.label, value: m.val
-                    });
+                const bracketCounts = brackets.map(() => 0);
+                pulls.forEach(p => {
+                    const rq = p.car_rq || 10;
+                    const bIdx = brackets.findIndex(b => rq >= b.min && rq <= b.max);
+                    if (bIdx !== -1) bracketCounts[bIdx]++;
                 });
 
-                ctx.save();
-                ctx.translate(groupX + (barWidth * 3 + 4) / 2, height - padding.bottom + 12);
-                ctx.rotate(-Math.PI / 6);
-                ctx.fillStyle = '#cbd5e1';
-                ctx.font = '10px monospace';
-                ctx.textAlign = 'right';
-                ctx.fillText(pType, 0, 0);
-                ctx.restore();
-            });
+                const maxCount = Math.max(...bracketCounts, 1);
 
+                // Grid Y-Axis
+                ctx.strokeStyle = '#334155';
+                ctx.lineWidth = 1;
+                ctx.fillStyle = '#64748b';
+                ctx.font = '9px monospace';
+                ctx.textAlign = 'right';
+
+                const steps = 4;
+                for (let i = 0; i <= steps; i++) {
+                    const val = Math.round((maxCount / steps) * i);
+                    const y = padding.top + plotHeight - (i / steps) * plotHeight;
+                    ctx.beginPath();
+                    ctx.moveTo(padding.left, y);
+                    ctx.lineTo(width - padding.right, y);
+                    ctx.stroke();
+                    ctx.fillText(val, padding.left - 6, y + 3);
+                }
+
+                // Draw Bars
+                const barGap = 8;
+                const barWidth = (plotWidth - (brackets.length - 1) * barGap) / brackets.length;
+
+                brackets.forEach((b, idx) => {
+                    const count = bracketCounts[idx];
+                    const barH = (count / maxCount) * plotHeight;
+                    const x = padding.left + idx * (barWidth + barGap);
+                    const y = padding.top + plotHeight - barH;
+
+                    // Bar fill
+                    ctx.fillStyle = b.color;
+                    ctx.beginPath();
+                    ctx.roundRect(x, y, barWidth, barH, [4, 4, 0, 0]);
+                    ctx.fill();
+
+                    // Value label on top
+                    if (count > 0) {
+                        ctx.fillStyle = '#f8fafc';
+                        ctx.textAlign = 'center';
+                        ctx.font = 'bold 9px monospace';
+                        ctx.fillText(count, x + barWidth / 2, Math.max(padding.top + 10, y - 4));
+                    }
+
+                    // X-Axis Label
+                    ctx.fillStyle = '#94a3b8';
+                    ctx.textAlign = 'center';
+                    ctx.font = '9px monospace';
+                    ctx.fillText(b.label, x + barWidth / 2, height - padding.bottom + 14);
+
+                    activeBars.push({ x, y, w: barWidth, h: barH, title: `RQ ${b.label}`, subtitle: `${count} cars pulled` });
+                });
+
+            } else {
+                // PACK COMPARISON MODE: Average vs Peak RQ by Pack Type
+                const packStats = {};
+                pulls.forEach(p => {
+                    const pt = (p.pack_type || 'Other').trim();
+                    if (!packStats[pt]) packStats[pt] = { sum: 0, count: 0, peak: 0 };
+                    const rq = p.car_rq || 0;
+                    packStats[pt].sum += rq;
+                    packStats[pt].count++;
+                    if (rq > packStats[pt].peak) packStats[pt].peak = rq;
+                });
+
+                const packList = Object.keys(packStats).filter(pt => packStats[pt].count > 0).slice(0, 7);
+                const maxVal = 100;
+
+                ctx.strokeStyle = '#334155';
+                ctx.lineWidth = 1;
+                ctx.fillStyle = '#64748b';
+                ctx.font = '9px monospace';
+                ctx.textAlign = 'right';
+
+                for (let rq = 20; rq <= 100; rq += 20) {
+                    const y = padding.top + plotHeight - (rq / maxVal) * plotHeight;
+                    ctx.beginPath();
+                    ctx.moveTo(padding.left, y);
+                    ctx.lineTo(width - padding.right, y);
+                    ctx.stroke();
+                    ctx.fillText(rq, padding.left - 6, y + 3);
+                }
+
+                if (packList.length === 0) return;
+
+                const groupGap = 12;
+                const groupWidth = (plotWidth - (packList.length - 1) * groupGap) / packList.length;
+                const subBarW = (groupWidth - 4) / 2;
+
+                packList.forEach((pt, idx) => {
+                    const stats = packStats[pt];
+                    const avg = (stats.sum / stats.count).toFixed(1);
+                    const peak = stats.peak;
+
+                    const groupX = padding.left + idx * (groupWidth + groupGap);
+
+                    // Avg Bar (Emerald)
+                    const avgH = (avg / maxVal) * plotHeight;
+                    const avgY = padding.top + plotHeight - avgH;
+                    ctx.fillStyle = '#10b981';
+                    ctx.beginPath();
+                    ctx.roundRect(groupX, avgY, subBarW, avgH, [3, 3, 0, 0]);
+                    ctx.fill();
+
+                    // Peak Bar (Amber)
+                    const peakH = (peak / maxVal) * plotHeight;
+                    const peakY = padding.top + plotHeight - peakH;
+                    ctx.fillStyle = '#fbbf24';
+                    ctx.beginPath();
+                    ctx.roundRect(groupX + subBarW + 4, peakY, subBarW, peakH, [3, 3, 0, 0]);
+                    ctx.fill();
+
+                    // X-Axis Label
+                    ctx.fillStyle = '#94a3b8';
+                    ctx.textAlign = 'center';
+                    ctx.font = '9px monospace';
+                    const shortLabel = pt.length > 8 ? pt.substring(0, 7) + '…' : pt;
+                    ctx.fillText(shortLabel, groupX + groupWidth / 2, height - padding.bottom + 14);
+
+                    activeBars.push({ x: groupX, y: Math.min(avgY, peakY), w: groupWidth, h: plotHeight, title: pt, subtitle: `Avg RQ: ${avg} | Peak RQ: ${peak}` });
+                });
+            }
+
+            // Canvas Hover Tooltip
             canvas.onmousemove = function(e) {
                 const canvasRect = canvas.getBoundingClientRect();
                 const mouseX = e.clientX - canvasRect.left;
                 const mouseY = e.clientY - canvasRect.top;
 
-                let hovered = null;
-                renderedBars.forEach(bar => {
-                    if (mouseX >= bar.x - 2 && mouseX <= bar.x + bar.w + 2 && mouseY >= bar.y && mouseY <= padding.top + plotHeight) {
-                        hovered = bar;
-                    }
-                });
+                let hovered = activeBars.find(b => mouseX >= b.x && mouseX <= b.x + b.w && mouseY >= padding.top && mouseY <= height - padding.bottom);
 
                 if (hovered) {
                     canvas.style.cursor = 'pointer';
-                    tooltip.style.left = `${Math.min(width - 150, Math.max(10, mouseX + 10))}px`;
-                    tooltip.style.top = `${Math.max(10, mouseY - 45)}px`;
+                    tooltip.style.left = `${Math.min(width - 140, Math.max(10, mouseX + 10))}px`;
+                    tooltip.style.top = `${Math.max(10, mouseY - 35)}px`;
                     tooltip.innerHTML = `
-                        <div class="font-bold text-slate-100">${hovered.packType}</div>
-                        <div class="text-emerald-400">${hovered.metricLabel}: <span class="font-mono font-bold">${hovered.value.toFixed(1)}</span></div>
+                        <div class="font-bold text-slate-100">${hovered.title}</div>
+                        <div class="text-emerald-400 font-mono">${hovered.subtitle}</div>
                     `;
                     tooltip.classList.remove('hidden');
                 } else {
@@ -1274,13 +1745,17 @@
                     tooltip.classList.add('hidden');
                 }
             };
-            canvas.onmouseleave = function() { tooltip.classList.add('hidden'); };
+
+            canvas.onmouseleave = function() {
+                tooltip.classList.add('hidden');
+            };
         }
 
         async function loadCalendarData() {
-            if (cachedAllPulls.length === 0) await fetchAllDatabasePulls();
+            if (cachedAllPulls.length === 0) {
+                await fetchAllDatabasePulls();
+            }
             renderCalendarHeatmap();
-            renderSidePanelPulls(selectedCalendarDate);
         }
 
         function setCalendarViewMode(mode) {
@@ -1288,6 +1763,7 @@
             const btnMonth = document.getElementById('cal-mode-month');
             const btnYear = document.getElementById('cal-mode-year');
             const navMonth = document.getElementById('cal-month-nav');
+
             if (mode === 'month') {
                 btnMonth.className = "px-3 py-1 rounded bg-emerald-600 text-white font-bold transition";
                 btnYear.className = "px-3 py-1 rounded text-slate-400 hover:text-slate-200 transition";
@@ -1302,74 +1778,19 @@
 
         function changeCalendarMonth(direction) {
             currentCalendarMonth += direction;
-            if (currentCalendarMonth > 11) { currentCalendarMonth = 0; currentCalendarYear++; }
-            else if (currentCalendarMonth < 0) { currentCalendarMonth = 11; currentCalendarYear--; }
+            if (currentCalendarMonth > 11) {
+                currentCalendarMonth = 0;
+                currentCalendarYear++;
+            } else if (currentCalendarMonth < 0) {
+                currentCalendarMonth = 11;
+                currentCalendarYear--;
+            }
             renderCalendarHeatmap();
         }
 
         function selectCalendarDate(dateStr) {
             selectedCalendarDate = dateStr;
             renderCalendarHeatmap();
-            renderSidePanelPulls(dateStr);
-        }
-
-        function renderSidePanelPulls(dateStr) {
-            const titleEl = document.getElementById('side-panel-date-title');
-            const subEl = document.getElementById('side-panel-date-sub');
-            const countBadge = document.getElementById('side-panel-count-badge');
-            const pillsEl = document.getElementById('side-panel-pills');
-            const listEl = document.getElementById('side-panel-cards-list');
-
-            titleEl.textContent = formatDisplayDate(dateStr);
-            subEl.textContent = dateStr;
-
-            const dayPulls = cachedAllPulls.filter(d => !d.is_legacy && d.date === dateStr);
-            // Sort side panel cards from highest to lowest RQ
-            dayPulls.sort((a, b) => (b.car_rq || 0) - (a.car_rq || 0));
-
-            countBadge.textContent = `${dayPulls.length} ${dayPulls.length === 1 ? 'car' : 'cars'}`;
-
-            if (dayPulls.length === 0) {
-                pillsEl.innerHTML = '';
-                listEl.innerHTML = '<div class="text-xs text-slate-500 text-center py-6">No pulls recorded for this date.</div>';
-                return;
-            }
-
-            const rarityOrder = ["Legendary", "Epic", "Ultra Rare", "Super Rare", "Rare", "Uncommon", "Common"];
-            const rarityBadges = {
-                "Legendary": "bg-amber-500/20 text-amber-300 border-amber-500/40",
-                "Epic": "bg-purple-500/20 text-purple-300 border-purple-500/40",
-                "Ultra Rare": "bg-red-500/20 text-red-300 border-red-500/40",
-                "Super Rare": "bg-yellow-400/20 text-yellow-300 border-yellow-400/40",
-                "Rare": "bg-blue-500/20 text-blue-300 border-blue-500/40",
-                "Uncommon": "bg-green-500/20 text-green-300 border-green-500/40",
-                "Common": "bg-slate-700/40 text-slate-400 border-slate-600"
-            };
-
-            const counts = {};
-            dayPulls.forEach(p => { counts[p.car_rarity] = (counts[p.car_rarity] || 0) + 1; });
-            pillsEl.innerHTML = rarityOrder.filter(r => counts[r]).map(r => `
-                <span class="px-2 py-0.5 rounded border text-[10px] font-mono flex items-center gap-1.5 ${rarityBadges[r]}">
-                    <span class="bg-black/60 px-1 rounded font-bold text-white">${counts[r]}x</span>
-                    <span>${r}</span>
-                </span>
-            `).join('');
-
-            listEl.innerHTML = dayPulls.map(pull => {
-                const cfg = getRarityClass(pull.car_rarity);
-                return `
-                    <div class="bg-slate-950/70 border border-slate-800 p-3 rounded space-y-1">
-                        <div class="flex justify-between items-center text-xs">
-                            <span class="font-medium text-slate-100 truncate max-w-[180px]" title="${pull.car_name}">${pull.car_name}</span>
-                            <span class="font-mono font-bold ${cfg.text}">RQ ${pull.car_rq}</span>
-                        </div>
-                        <div class="flex justify-between items-center text-[10px] text-slate-400 font-mono">
-                            <span class="px-1.5 py-0.5 rounded ${cfg.badge}">${pull.car_rarity}</span>
-                            <span>${pull.pack_type} • ${pull.obtained}</span>
-                        </div>
-                    </div>
-                `;
-            }).join('');
         }
 
         function renderCalendarHeatmap() {
@@ -1377,6 +1798,7 @@
             container.innerHTML = '';
 
             const dataToAnalyze = cachedAllPulls.filter(d => !d.is_legacy);
+
             const rarityOrder = ["Legendary", "Epic", "Ultra Rare", "Super Rare", "Rare", "Uncommon", "Common"];
             const activeFilters = {};
             rarityOrder.forEach(r => {
@@ -1386,7 +1808,9 @@
 
             const dayPullsMap = {};
             dataToAnalyze.forEach(p => {
-                if (!p.date || activeFilters[p.car_rarity] === false) return;
+                if (!p.date) return;
+                if (activeFilters[p.car_rarity] === false) return;
+
                 if (!dayPullsMap[p.date]) dayPullsMap[p.date] = [];
                 dayPullsMap[p.date].push(p);
             });
@@ -1402,10 +1826,24 @@
                 "Common": "bg-slate-700/30 border-slate-700 text-slate-400"
             };
 
+            const rarityBadges = {
+                "Legendary": "bg-amber-500/20 text-amber-300 border-amber-500/40",
+                "Epic": "bg-purple-500/20 text-purple-300 border-purple-500/40",
+                "Ultra Rare": "bg-red-500/20 text-red-300 border-red-500/40",
+                "Super Rare": "bg-yellow-400/20 text-yellow-300 border-yellow-400/40",
+                "Rare": "bg-blue-500/20 text-blue-300 border-blue-500/40",
+                "Uncommon": "bg-green-500/20 text-green-300 border-green-500/40",
+                "Common": "bg-slate-700/40 text-slate-400 border-slate-600"
+            };
+
             const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+            // Render Right Side Panel for Selected Date
+            renderSelectedDayPanel(dayPullsMap[selectedCalendarDate] || [], selectedCalendarDate);
 
             if (calendarViewMode === 'month') {
                 document.getElementById('calendar-month-label').textContent = `${monthNames[currentCalendarMonth]} ${currentCalendarYear}`;
+
                 const monthWrapper = document.createElement('div');
                 monthWrapper.className = "bg-slate-900 border border-slate-700 p-5 rounded-lg space-y-4";
 
@@ -1419,12 +1857,13 @@
 
                 const firstDay = new Date(currentCalendarYear, currentCalendarMonth, 1);
                 const lastDay = new Date(currentCalendarYear, currentCalendarMonth + 1, 0);
+
                 let startOffset = firstDay.getDay() - 1;
                 if (startOffset === -1) startOffset = 6;
 
                 for (let i = 0; i < startOffset; i++) {
                     const blank = document.createElement('div');
-                    blank.className = "h-16 bg-slate-900/30 rounded border border-slate-800/30 opacity-20";
+                    blank.className = "h-14 bg-slate-900/30 rounded border border-slate-800/30 opacity-20";
                     grid.appendChild(blank);
                 }
 
@@ -1432,35 +1871,71 @@
                     const mm = String(currentCalendarMonth + 1).padStart(2, '0');
                     const dd = String(day).padStart(2, '0');
                     const dateStr = `${currentCalendarYear}-${mm}-${dd}`;
-                    const dayPulls = dayPullsMap[dateStr] || [];
-                    const isSelected = (dateStr === selectedCalendarDate);
 
+                    const dayPulls = dayPullsMap[dateStr] || [];
                     const cell = document.createElement('div');
-                    cell.onclick = () => selectCalendarDate(dateStr);
+
+                    const isSelected = (dateStr === selectedCalendarDate);
+                    const selectedRing = isSelected ? "ring-2 ring-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.5)] z-10" : "";
 
                     if (dayPulls.length === 0) {
-                        cell.className = `h-16 bg-slate-900 border rounded p-1 flex flex-col justify-between text-[10px] text-slate-600 font-mono cursor-pointer transition hover:border-slate-500 ${isSelected ? 'border-emerald-400 ring-1 ring-emerald-400' : 'border-slate-800/80'}`;
+                        cell.className = `h-14 bg-slate-900 border border-slate-800/80 rounded p-1 flex flex-col justify-between text-[10px] text-slate-600 font-mono cursor-pointer hover:border-slate-600 transition ${selectedRing}`;
                         cell.innerHTML = `<span>${day}</span><span class="text-center">-</span>`;
                     } else {
-                        let bestPull = dayPulls[0], maxVal = rarityScore[bestPull.car_rarity] || 0;
-                        dayPulls.forEach(p => { if ((rarityScore[p.car_rarity] || 0) > maxVal) { maxVal = rarityScore[p.car_rarity]; bestPull = p; } });
+                        let bestPull = dayPulls[0];
+                        let maxVal = rarityScore[bestPull.car_rarity] || 0;
+                        dayPulls.forEach(p => {
+                            const val = rarityScore[p.car_rarity] || 0;
+                            if (val > maxVal) { maxVal = val; bestPull = p; }
+                        });
+
                         const colorClass = rarityBgColors[bestPull.car_rarity] || rarityBgColors["Common"];
                         const rqCfg = getRarityClass(bestPull.car_rarity);
+                        cell.className = `has-tooltip relative h-14 rounded border p-1 flex flex-col justify-between text-[10px] font-mono cursor-pointer transition hover:scale-105 shadow-sm ${colorClass} ${selectedRing}`;
 
-                        cell.className = `h-16 rounded border p-1.5 flex flex-col justify-between text-[10px] font-mono cursor-pointer transition hover:scale-105 shadow-sm ${colorClass} ${isSelected ? 'border-emerald-400 ring-2 ring-emerald-400' : ''}`;
+                        const counts = {};
+                        dayPulls.forEach(p => { counts[p.car_rarity] = (counts[p.car_rarity] || 0) + 1; });
+                        
+                        let pillsHtml = rarityOrder.filter(r => counts[r]).map(r => `
+                            <span class="px-1.5 py-0.5 rounded border text-[9px] font-mono flex items-center gap-1 ${rarityBadges[r]}">
+                                <span class="bg-slate-800 text-slate-200 border border-slate-700 px-1 rounded font-bold">${counts[r]}x</span>
+                                <span>${r}</span>
+                            </span>
+                        `).join('');
+
                         cell.innerHTML = `
+                            <div class="tooltip-box bg-slate-950 border border-slate-700 p-2.5 rounded-lg shadow-2xl space-y-1.5 w-56 text-left pointer-events-none">
+                                <div class="flex justify-between items-center text-[10px] font-bold text-slate-300 border-b border-slate-800 pb-1">
+                                    <span>${dateStr}</span>
+                                    <span class="text-slate-200 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700 font-mono">${dayPulls.length} Pulls</span>
+                                </div>
+                                <div class="flex flex-wrap gap-1">
+                                    ${pillsHtml}
+                                </div>
+                                <div class="text-[9px] text-slate-400 pt-1 border-t border-slate-800/60">
+                                    Top: <span class="text-slate-200 font-semibold block truncate">${bestPull.car_name}</span>
+                                    <span class="font-mono font-bold text-emerald-400">RQ ${bestPull.car_rq}</span>
+                                </div>
+                            </div>
+
                             <div class="flex justify-between font-bold items-center">
                                 <span>${day}</span>
                                 <span class="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-slate-950/75 ${rqCfg.text} border border-slate-700/80">RQ ${bestPull.car_rq}</span>
                             </div>
-                            <div class="truncate text-[9px] font-semibold text-slate-200" title="${bestPull.car_name}">${bestPull.car_name}</div>
+                            <div class="truncate text-[9px] font-semibold" title="${bestPull.car_name}">
+                                ${bestPull.car_name}
+                            </div>
                         `;
                     }
+
+                    cell.onclick = () => selectCalendarDate(dateStr);
                     grid.appendChild(cell);
                 }
+
                 monthWrapper.appendChild(grid);
                 container.appendChild(monthWrapper);
             } else {
+                // YEAR VIEW (12 Condensed Mini Month Grids)
                 const yearGrid = document.createElement('div');
                 yearGrid.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4";
 
@@ -1479,12 +1954,13 @@
 
                     const firstDay = new Date(currentCalendarYear, m, 1);
                     const lastDay = new Date(currentCalendarYear, m + 1, 0);
+
                     let startOffset = firstDay.getDay() - 1;
                     if (startOffset === -1) startOffset = 6;
 
                     for (let i = 0; i < startOffset; i++) {
                         const blank = document.createElement('div');
-                        blank.className = "h-6 bg-slate-900/20 opacity-10";
+                        blank.className = "h-5 bg-slate-900/20 opacity-10";
                         mDaysGrid.appendChild(blank);
                     }
 
@@ -1492,22 +1968,56 @@
                         const mm = String(m + 1).padStart(2, '0');
                         const dd = String(day).padStart(2, '0');
                         const dateStr = `${currentCalendarYear}-${mm}-${dd}`;
-                        const dayPulls = dayPullsMap[dateStr] || [];
-                        const isSelected = (dateStr === selectedCalendarDate);
 
+                        const dayPulls = dayPullsMap[dateStr] || [];
                         const dCell = document.createElement('div');
-                        dCell.onclick = () => selectCalendarDate(dateStr);
+
+                        const isSelected = (dateStr === selectedCalendarDate);
+                        const selectedRing = isSelected ? "ring-2 ring-emerald-400 z-10" : "";
 
                         if (dayPulls.length === 0) {
-                            dCell.className = `h-6 bg-slate-950/40 rounded text-[9px] text-slate-600 font-mono flex items-center justify-center cursor-pointer hover:bg-slate-800 ${isSelected ? 'border border-emerald-400' : ''}`;
+                            dCell.className = `h-5 bg-slate-950/40 rounded text-[8px] text-slate-700 font-mono flex items-center justify-center cursor-pointer hover:border-slate-600 transition ${selectedRing}`;
                             dCell.textContent = day;
                         } else {
-                            let bestPull = dayPulls[0], maxVal = rarityScore[bestPull.car_rarity] || 0;
-                            dayPulls.forEach(p => { if ((rarityScore[p.car_rarity] || 0) > maxVal) { maxVal = rarityScore[p.car_rarity]; bestPull = p; } });
+                            let bestPull = dayPulls[0];
+                            let maxVal = rarityScore[bestPull.car_rarity] || 0;
+                            dayPulls.forEach(p => {
+                                const val = rarityScore[p.car_rarity] || 0;
+                                if (val > maxVal) { maxVal = val; bestPull = p; }
+                            });
+
                             const colorClass = rarityBgColors[bestPull.car_rarity] || rarityBgColors["Common"];
-                            dCell.className = `h-6 rounded text-[9px] font-mono font-bold flex items-center justify-center cursor-pointer transition hover:scale-110 ${colorClass} ${isSelected ? 'ring-2 ring-emerald-400' : ''}`;
-                            dCell.textContent = day;
+                            dCell.className = `has-tooltip relative h-5 rounded text-[8px] font-mono font-bold flex items-center justify-center cursor-pointer transition hover:scale-110 ${colorClass} ${selectedRing}`;
+
+                            const counts = {};
+                            dayPulls.forEach(p => { counts[p.car_rarity] = (counts[p.car_rarity] || 0) + 1; });
+                            
+                            let pillsHtml = rarityOrder.filter(r => counts[r]).map(r => `
+                                <span class="px-1.5 py-0.5 rounded border text-[9px] font-mono flex items-center gap-1 ${rarityBadges[r]}">
+                                    <span class="bg-slate-800 text-slate-200 border border-slate-700 px-1 rounded font-bold">${counts[r]}x</span>
+                                    <span>${r}</span>
+                                </span>
+                            `).join('');
+
+                            dCell.innerHTML = `
+                                <div class="tooltip-box bg-slate-950 border border-slate-700 p-2.5 rounded-lg shadow-2xl space-y-1.5 w-56 text-left pointer-events-none">
+                                    <div class="flex justify-between items-center text-[10px] font-bold text-slate-300 border-b border-slate-800 pb-1">
+                                        <span>${dateStr}</span>
+                                        <span class="text-slate-200 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700 font-mono">${dayPulls.length} Pulls</span>
+                                    </div>
+                                    <div class="flex flex-wrap gap-1">
+                                        ${pillsHtml}
+                                    </div>
+                                    <div class="text-[9px] text-slate-400 pt-1 border-t border-slate-800/60">
+                                        Top: <span class="text-slate-200 font-semibold block truncate">${bestPull.car_name}</span>
+                                        <span class="font-mono font-bold text-emerald-400">RQ ${bestPull.car_rq}</span>
+                                    </div>
+                                </div>
+                                ${day}
+                            `;
                         }
+
+                        dCell.onclick = () => selectCalendarDate(dateStr);
                         mDaysGrid.appendChild(dCell);
                     }
                     mBox.appendChild(mDaysGrid);
@@ -1517,61 +2027,457 @@
             }
         }
 
+        // Render Side Panel showing packed cars for selected date
+        function renderSelectedDayPanel(dayPulls, dateStr) {
+            document.getElementById('selected-day-title').textContent = formatDisplayDate(dateStr);
+            document.getElementById('selected-day-sub').textContent = `${dayPulls.length} ${dayPulls.length === 1 ? 'car' : 'cars'} packed`;
+
+            const badgeEl = document.getElementById('selected-day-badge');
+            const pillsContainer = document.getElementById('selected-day-pills');
+            const cardsContainer = document.getElementById('selected-day-cards-list');
+
+            if (dayPulls.length === 0) {
+                badgeEl.textContent = "No Pulls";
+                badgeEl.className = "px-2 py-0.5 rounded text-xs font-mono bg-slate-800 text-slate-400 border border-slate-700";
+                pillsContainer.innerHTML = '';
+                cardsContainer.innerHTML = '<div class="text-xs text-slate-500 text-center py-6">No cars logged on this date.</div>';
+                return;
+            }
+
+            const rarityOrder = ["Legendary", "Epic", "Ultra Rare", "Super Rare", "Rare", "Uncommon", "Common"];
+            const rarityBadges = {
+                "Legendary": "bg-amber-500/20 text-amber-300 border-amber-500/40",
+                "Epic": "bg-purple-500/20 text-purple-300 border-purple-500/40",
+                "Ultra Rare": "bg-red-500/20 text-red-300 border-red-500/40",
+                "Super Rare": "bg-yellow-400/20 text-yellow-300 border-yellow-400/40",
+                "Rare": "bg-blue-500/20 text-blue-300 border-blue-500/40",
+                "Uncommon": "bg-green-500/20 text-green-300 border-green-500/40",
+                "Common": "bg-slate-700/40 text-slate-400 border-slate-600"
+            };
+
+            let highestRarity = "Common";
+            const counts = {};
+            dayPulls.forEach(p => {
+                counts[p.car_rarity] = (counts[p.car_rarity] || 0) + 1;
+            });
+
+            for (const r of rarityOrder) {
+                if (counts[r]) {
+                    highestRarity = r;
+                    break;
+                }
+            }
+
+            const topCfg = getRarityClass(highestRarity);
+            badgeEl.textContent = `Top: ${highestRarity}`;
+            badgeEl.className = `px-2 py-0.5 rounded text-xs font-mono font-bold ${topCfg.badge}`;
+
+            pillsContainer.innerHTML = rarityOrder.filter(r => counts[r]).map(r => `
+                <span class="px-2 py-0.5 rounded border text-[10px] font-mono flex items-center gap-1.5 ${rarityBadges[r]}">
+                    <span class="bg-black/60 px-1 rounded font-bold text-white">${counts[r]}x</span>
+                    <span>${r}</span>
+                </span>
+            `).join('');
+
+            // Sort day pulls by RQ descending
+            const sortedPulls = [...dayPulls].sort((a, b) => (b.car_rq || 0) - (a.car_rq || 0));
+
+            cardsContainer.innerHTML = sortedPulls.map(pull => {
+                const cfg = getRarityClass(pull.car_rarity);
+                const slotText = pull.slot_number ? `<span class="text-[10px] text-slate-500 font-mono">Slot #${pull.slot_number}</span>` : '';
+                return `
+                    <div class="bg-slate-950/70 border border-slate-800 p-3 rounded-lg flex items-center justify-between gap-3 hover:border-slate-700 transition shadow-sm">
+                        <div class="min-w-0 flex-1 space-y-0.5">
+                            <div class="text-xs font-medium text-slate-100 truncate" title="${pull.car_name}">${pull.car_name}</div>
+                            <div class="text-[10px] text-slate-400 font-mono flex items-center gap-2">
+                                <span>${pull.pack_type || 'Pack'}</span>
+                                ${slotText}
+                            </div>
+                        </div>
+                        <div class="flex flex-col items-end gap-1 shrink-0">
+                            <span class="font-mono font-bold text-xs ${cfg.text}">RQ ${pull.car_rq || 0}</span>
+                            <span class="px-1.5 py-0.2 rounded text-[9px] font-semibold ${cfg.badge}">${pull.car_rarity}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
         async function loadFilteredStatsSetup() {
             const allData = cachedAllPulls.length > 0 ? cachedAllPulls : await fetchAllDatabasePulls();
             const dataToAnalyze = allData.filter(d => !d.is_legacy);
-            const packTypesSet = new Set(), flavoursSet = new Set();
-            dataToAnalyze.forEach(p => { if (p.pack_type) packTypesSet.add(p.pack_type.trim()); if (p.pack_subtype) flavoursSet.add(p.pack_subtype.trim()); });
+            
+            const packTypesSet = new Set();
+            const flavoursSet = new Set();
+
+            dataToAnalyze.forEach(p => {
+                if (p.pack_type) packTypesSet.add(p.pack_type.trim());
+                if (p.pack_subtype) flavoursSet.add(p.pack_subtype.trim());
+            });
 
             const packSelect = document.getElementById('filter-pack-type');
             const currentPackVal = packSelect.value;
             packSelect.innerHTML = '<option value="ALL">All Pack Types</option>';
             Array.from(packTypesSet).sort().forEach(pt => {
                 const opt = document.createElement('option');
-                opt.value = pt; opt.textContent = pt;
+                opt.value = pt;
+                opt.textContent = pt;
                 if (pt === currentPackVal) opt.selected = true;
                 packSelect.appendChild(opt);
             });
+
+            const flavourSelect = document.getElementById('filter-flavour');
+            const currentFlavourVal = flavourSelect.value;
+            flavourSelect.innerHTML = '<option value="ALL">All Flavours</option>';
+            Array.from(flavoursSet).sort().forEach(fl => {
+                const opt = document.createElement('option');
+                opt.value = fl;
+                opt.textContent = fl;
+                if (fl === currentFlavourVal) opt.selected = true;
+                flavourSelect.appendChild(opt);
+            });
+
             loadFilteredStats();
         }
 
         async function loadFilteredStats() {
             const allData = cachedAllPulls.length > 0 ? cachedAllPulls : await fetchAllDatabasePulls();
             const dataToAnalyze = allData.filter(d => !d.is_legacy);
+
             const selectedPackType = document.getElementById('filter-pack-type').value;
-            const filteredPulls = dataToAnalyze.filter(p => selectedPackType === 'ALL' || (p.pack_type && p.pack_type.trim() === selectedPackType));
+            const selectedFlavour = document.getElementById('filter-flavour').value;
+
+            const filteredPulls = dataToAnalyze.filter(p => {
+                const matchPack = (selectedPackType === 'ALL' || (p.pack_type && p.pack_type.trim() === selectedPackType));
+                const matchFlavour = (selectedFlavour === 'ALL' || (p.pack_subtype && p.pack_subtype.trim() === selectedFlavour));
+                return matchPack && matchFlavour;
+            });
+
+            const bannerTitle = `${selectedPackType === 'ALL' ? 'ALL PACKS' : selectedPackType.toUpperCase()} — ${selectedFlavour === 'ALL' ? 'ALL FLAVOURS' : selectedFlavour.toUpperCase()}`;
+            document.getElementById('filtered-banner-title').textContent = bannerTitle;
+
+            const packGroups = {};
+            filteredPulls.forEach(pull => {
+                const groupId = pull.pack_group_id || pull.id;
+                if (!packGroups[groupId]) packGroups[groupId] = [];
+                packGroups[groupId].push(pull);
+            });
+
+            const uniquePacks = Object.keys(packGroups).length;
+            const totalCards = filteredPulls.length;
+
+            document.getElementById('filtered-banner-packs').textContent = `${uniquePacks} ${uniquePacks === 1 ? 'pack' : 'packs'}`;
+            document.getElementById('filtered-banner-cards').textContent = `${totalCards} cards analyzed`;
 
             const actualCounts = { "Legendary": 0, "Epic": 0, "Ultra Rare": 0, "Super Rare": 0, "Rare": 0, "Uncommon": 0, "Common": 0 };
-            filteredPulls.forEach(p => { if (actualCounts[p.car_rarity] !== undefined) actualCounts[p.car_rarity]++; });
-            
-            document.getElementById('filtered-banner-packs').textContent = `${Object.keys(filteredPulls).length} pulls`;
-            document.getElementById('filtered-banner-cards').textContent = `${filteredPulls.length} cards analyzed`;
+            filteredPulls.forEach(pull => {
+                const r = pull.car_rarity;
+                if (actualCounts[r] !== undefined) actualCounts[r]++;
+            });
+
+            const expectedCounts = { "Legendary": 0, "Epic": 0, "Ultra Rare": 0, "Super Rare": 0, "Rare": 0, "Uncommon": 0, "Common": 0 };
+
+            Object.values(packGroups).forEach(groupPulls => {
+                const totalInBundle = groupPulls.length;
+                const sample = groupPulls[0];
+                const packType = sample.pack_type ? sample.pack_type.trim() : '';
+                const rawSubtype = sample.pack_subtype ? sample.pack_subtype.trim().toLowerCase() : '';
+                const isRegular = (rawSubtype === 'regular' || rawSubtype === '');
+                const subtypeKey = isRegular ? 'Regular' : 'Not regular';
+
+                if (PACK_ODDS_DATA[packType]) {
+                    const packVariant = PACK_ODDS_DATA[packType][subtypeKey] || PACK_ODDS_DATA[packType]['Regular'];
+                    
+                    if (packVariant) {
+                        const totalVariantSlots = Object.keys(packVariant).length || 5;
+
+                        groupPulls.forEach(pull => {
+                            let slotNum = pull.slot_number || 1;
+                            let mappedSlot;
+                            if (totalVariantSlots === 1) {
+                                mappedSlot = 1;
+                            } else {
+                                mappedSlot = Math.floor(((slotNum - 1) * 5) / totalInBundle) + 1;
+                                if (mappedSlot > 5) mappedSlot = 5;
+                                if (mappedSlot < 1) mappedSlot = 1;
+                            }
+
+                            const slotData = packVariant[mappedSlot] || packVariant[String(mappedSlot)] || packVariant[1];
+                            if (slotData) {
+                                for (const [rarity, pct] of Object.entries(slotData)) {
+                                    expectedCounts[rarity] = (expectedCounts[rarity] || 0) + (pct / 100);
+                                }
+                            }
+                        });
+                    }
+                }
+            });
+
+            const rarities = ["Legendary", "Epic", "Ultra Rare", "Super Rare", "Rare", "Uncommon", "Common"];
+            const maxVal = Math.max(...rarities.map(r => Math.max(actualCounts[r], expectedCounts[r]))) || 1;
+
+            let barsHtml = '';
+            rarities.forEach(rarity => {
+                const count = actualCounts[rarity];
+                const expected = expectedCounts[rarity] || 0;
+                const actPctWidth = count === 0 ? 0 : Math.max(4, Math.round((count / maxVal) * 100));
+                const expPosPct = Math.min(100, Math.max(0, (expected / maxVal) * 100));
+                const cfg = getRarityClass(rarity);
+
+                barsHtml += `
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-xs">
+                            <span class="font-medium ${cfg.text}">${rarity}</span>
+                            <span class="font-mono font-bold text-slate-100">${count} / ${expected.toFixed(1)}</span>
+                        </div>
+                        <div class="w-full bg-slate-800 rounded-full h-2.5 relative overflow-hidden">
+                            <div class="h-2.5 rounded-full transition-all duration-500 absolute left-0 top-0" style="width: ${actPctWidth}%; background-color: ${cfg.hex};"></div>
+                            <div class="absolute top-0 bottom-0 w-0.5 bg-white shadow-[0_0_3px_rgba(0,0,0,0.9)] z-10" style="left: ${expPosPct}%;" title="Expected: ${expected.toFixed(1)}"></div>
+                        </div>
+                    </div>
+                `;
+            });
+            document.getElementById('filtered-bars-container').innerHTML = barsHtml;
+
+            const tbody = document.getElementById('filtered-table-body');
+            if (filteredPulls.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-500">No pulls found matching selected filters</td></tr>';
+                return;
+            }
+
+            let html = '';
+            rarities.forEach(rarity => {
+                const actual = actualCounts[rarity];
+                const actualPct = totalCards > 0 ? ((actual / totalCards) * 100).toFixed(2) : '0.00';
+                const expected = expectedCounts[rarity] || 0;
+                const expectedPct = totalCards > 0 ? ((expected / totalCards) * 100).toFixed(2) : '0.00';
+                const variance = (parseFloat(actualPct) - parseFloat(expectedPct)).toFixed(2);
+                const varColor = variance >= 0 ? 'text-emerald-400' : 'text-red-400';
+                const cfg = getRarityClass(rarity);
+
+                html += `
+                    <tr class="hover:bg-slate-800/50 transition">
+                        <td class="py-3 px-3 font-medium ${cfg.text}">${rarity}</td>
+                        <td class="py-3 px-3 text-right font-mono">${actual}</td>
+                        <td class="py-3 px-3 text-right font-mono">${actualPct}%</td>
+                        <td class="py-3 px-3 text-right font-mono text-slate-400">${expectedPct}% (${expected.toFixed(1)})</td>
+                        <td class="py-3 px-3 text-right font-mono ${varColor}">${variance > 0 ? '+' : ''}${variance}%</td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
         }
 
         function renderTableRows(rows) {
+            let lastPackGroupId = null;
+            let packColorToggle = false;
+
+            const ACCENT_COLOR_A = 'border-l-4 border-orange-500';
+            const ACCENT_COLOR_B = 'border-l-4 border-fuchsia-500';
+            const ACCENT_LEGACY  = 'border-l-4 border-slate-600/60';
+
             return rows.map(pull => {
                 const classes = getRarityClass(pull.car_rarity);
+                const safeName = (pull.car_name || '').replace(/'/g, "\\'");
+                const safeType = (pull.pack_type || '').replace(/'/g, "\\'");
+                const safeObtained = (pull.obtained || '').replace(/'/g, "\\'");
+                const safeSubtype = (pull.pack_subtype || '').replace(/'/g, "\\'");
+
+                let currentBorderClass = '';
+
+                if (pull.is_legacy) {
+                    currentBorderClass = ACCENT_LEGACY;
+                } else {
+                    if (pull.pack_group_id) {
+                        if (pull.pack_group_id !== lastPackGroupId) {
+                            packColorToggle = !packColorToggle;
+                            lastPackGroupId = pull.pack_group_id;
+                        }
+                        currentBorderClass = packColorToggle ? ACCENT_COLOR_A : ACCENT_COLOR_B;
+                    } else {
+                        currentBorderClass = ACCENT_COLOR_A;
+                    }
+                }
+
+                const legacyBadge = pull.is_legacy 
+                    ? `<span class="ml-1.5 px-1.5 py-0.5 text-[9px] font-mono tracking-wider text-slate-400 bg-slate-800 border border-slate-700/80 rounded uppercase select-none">Legacy</span>`
+                    : '';
+
                 const slotText = pull.slot_number ? `<span class="text-[10px] text-slate-500 font-mono"> #${pull.slot_number}</span>` : '';
+
                 return `
                     <tr class="hover:bg-slate-800/50 transition">
-                        <td class="py-2.5 px-3 whitespace-nowrap">${formatDisplayDate(pull.date)}</td>
-                        <td class="py-2.5 px-3 whitespace-nowrap font-medium text-slate-200">${pull.pack_type || '-'}${slotText}</td>
+                        <td class="py-2.5 px-3 whitespace-nowrap ${currentBorderClass}">${formatDisplayDate(pull.date)}</td>
+                        <td class="py-2.5 px-3 whitespace-nowrap font-medium text-slate-200">
+                            ${pull.pack_type || '-'}${slotText}
+                        </td>
                         <td class="py-2.5 px-3 whitespace-nowrap text-slate-300">${pull.obtained || '-'}</td>
                         <td class="py-2.5 px-3 whitespace-nowrap">${pull.pack_subtype || '-'}</td>
-                        <td class="py-2.5 px-3 font-medium text-slate-100">${pull.car_name || 'N/A'}</td>
+                        <td class="py-2.5 px-3 font-medium text-slate-100 min-w-[160px]">
+                            <div class="flex items-center">
+                                <span>${pull.car_name || 'N/A'}</span>
+                                ${legacyBadge}
+                            </div>
+                        </td>
                         <td class="py-2.5 px-3 font-mono text-right pr-4 ${classes.text}">${pull.car_rq || '-'}</td>
-                        <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded text-[10px] font-semibold ${classes.badge}">${pull.car_rarity || ''}</span></td>
-                        <td class="py-2.5 px-2 text-center"><button onclick="deletePull('${pull.id}')" class="text-slate-500 hover:text-red-400 font-bold px-2 py-1 text-xs rounded bg-slate-900 border border-slate-700">✕</button></td>
+                        <td class="py-2.5 px-3">
+                            <span class="px-2 py-0.5 rounded text-[10px] font-semibold whitespace-nowrap inline-block ${classes.badge}">
+                                ${pull.car_rarity || ''}
+                            </span>
+                        </td>
+                        <td class="py-2.5 px-2 text-center">
+                            <button onclick="openEditModal('${pull.id}', '${pull.date}', '${safeType}', '${safeObtained}', '${safeSubtype}', '${safeName}', '${pull.car_rarity || ''}', ${pull.car_rq || 0}, '${pull.car_id || ''}')" class="text-slate-400 hover:text-emerald-400 text-xs px-2 py-1 rounded bg-slate-900 border border-slate-700 transition">✎</button>
+                        </td>
+                        <td class="py-2.5 px-2 text-center">
+                            <button onclick="deletePull('${pull.id}')" class="text-slate-500 hover:text-red-400 font-bold px-2 py-1 text-xs rounded bg-slate-900 border border-slate-700 transition">✕</button>
+                        </td>
                     </tr>
                 `;
             }).join('');
         }
 
+        function openEditModal(pullId, date, packType, obtained, packSubtype, carName, carRarity, carRq, carId) {
+            currentEditPullId = pullId;
+            pendingEditSelection = { id: carId, name: carName, rarity: carRarity, rq: carRq };
+
+            document.getElementById('edit-date').value = date || '';
+            document.getElementById('edit-pack-type').value = packType || '';
+            document.getElementById('edit-obtained').value = obtained || '';
+            document.getElementById('edit-pack-subtype').value = packSubtype || '';
+
+            document.getElementById('edit-car-search').value = '';
+            document.getElementById('edit-car-results').innerHTML = '';
+            document.getElementById('edit-car-results').classList.add('hidden');
+
+            document.getElementById('preview-car-name').textContent = `${carName} (RQ ${carRq})`;
+            const badge = document.getElementById('preview-car-badge');
+            const classes = getRarityClass(carRarity);
+            badge.textContent = carRarity;
+            badge.className = `px-2 py-0.5 rounded text-[10px] font-semibold ${classes.badge}`;
+
+            document.getElementById('edit-modal').classList.remove('hidden');
+        }
+
+        function closeEditModal() {
+            currentEditPullId = null;
+            pendingEditSelection = null;
+            document.getElementById('edit-modal').classList.add('hidden');
+        }
+
+        async function searchCarsForEdit() {
+            const query = document.getElementById('edit-car-search').value.trim();
+            const container = document.getElementById('edit-car-results');
+
+            if (query.length < 2) {
+                container.classList.add('hidden');
+                return;
+            }
+
+            const { data } = await db.from('cars')
+                .select('id, name, rarity, rq')
+                .ilike('name', `%${query}%`)
+                .order('rq', { ascending: false })
+                .limit(300);
+
+            if (!data || data.length === 0) {
+                container.innerHTML = '<div class="p-2 text-xs text-slate-500">No matching cars found</div>';
+                container.classList.remove('hidden');
+                return;
+            }
+
+            container.innerHTML = data.map(car => {
+                const classes = getRarityClass(car.rarity);
+                const safeName = car.name.replace(/'/g, "\\'");
+                return `
+                    <div onclick="selectReplacementCar('${car.id}', '${safeName}', '${car.rarity}', ${car.rq})" 
+                         class="p-2 hover:bg-slate-800 cursor-pointer text-xs flex justify-between items-center border-b border-slate-800 last:border-0 rounded">
+                        <span class="text-slate-100 font-medium">${car.name}</span>
+                        <span class="font-mono ${classes.text}">RQ ${car.rq} • ${car.rarity}</span>
+                    </div>
+                `;
+            }).join('');
+
+            container.classList.remove('hidden');
+        }
+
+        function selectReplacementCar(id, name, rarity, rq) {
+            pendingEditSelection = { id, name, rarity, rq };
+            document.getElementById('preview-car-name').textContent = `${name} (RQ ${rq})`;
+
+            const badge = document.getElementById('preview-car-badge');
+            const classes = getRarityClass(rarity);
+            badge.textContent = rarity;
+            badge.className = `px-2 py-0.5 rounded text-[10px] font-semibold ${classes.badge}`;
+
+            document.getElementById('edit-car-results').classList.add('hidden');
+        }
+
+        async function saveEditedEntry() {
+            if (!currentEditPullId) return;
+
+            const updatedDate = document.getElementById('edit-date').value;
+            const updatedPackType = document.getElementById('edit-pack-type').value.trim();
+            const updatedObtained = document.getElementById('edit-obtained').value.trim();
+            const updatedSubtype = document.getElementById('edit-pack-subtype').value.trim();
+
+            const updatePayload = {
+                date: updatedDate,
+                pack_type: updatedPackType,
+                obtained: updatedObtained,
+                pack_subtype: updatedSubtype
+            };
+
+            if (pendingEditSelection) {
+                updatePayload.car_id = pendingEditSelection.id;
+                updatePayload.car_name = pendingEditSelection.name;
+                updatePayload.car_rarity = pendingEditSelection.rarity;
+                updatePayload.car_rq = pendingEditSelection.rq;
+            }
+
+            const { error } = await db.from('pulls').update(updatePayload).eq('id', currentEditPullId);
+
+            if (error) {
+                alert('Error updating pull: ' + error.message);
+            } else {
+                closeEditModal();
+                loadPulls();
+                if (!document.getElementById('tab-content-history').classList.contains('hidden')) {
+                    loadHistoryPulls();
+                }
+            }
+        }
+
         async function deletePull(id) {
             if (!confirm('Are you sure you want to delete this logged pull?')) return;
+
+            const { data: rowData, error: fetchError } = await db.from('pulls').select('*').eq('id', id).single();
+
+            if (fetchError || !rowData) {
+                alert('Error fetching record for deletion.');
+                return;
+            }
+
             const { error } = await db.from('pulls').delete().eq('id', id);
-            if (!error) loadPulls();
+
+            if (error) {
+                alert('Error deleting pull: ' + error.message);
+            } else {
+                setLastAction('DELETE_ROW', [rowData], `Delete (${rowData.car_name})`);
+                loadPulls();
+                if (!document.getElementById('tab-content-history').classList.contains('hidden')) {
+                    loadHistoryPulls();
+                }
+            }
         }
+
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('[id^="slot-input-"]') && !event.target.closest('[id^="slot-suggestions-"]')) {
+                document.querySelectorAll('[id^="slot-suggestions-"]').forEach(el => el.classList.add('hidden'));
+            }
+            if (!event.target.closest('.custom-dropdown-container')) {
+                document.querySelectorAll('.custom-dropdown-list').forEach(el => el.classList.add('hidden'));
+            }
+        });
 
         packTypeDropdown = new CustomDropdown({ inputId: 'pack-type', dropdownId: 'pack-type-dropdown', storageKey: 'savedPackTypes_v2', defaultOptions: DEFAULT_PACK_TYPES });
         obtainedDropdown = new CustomDropdown({ inputId: 'obtained', dropdownId: 'obtained-dropdown', storageKey: 'savedObtainedOptions_v1', defaultOptions: DEFAULT_OBTAINED_OPTIONS });
