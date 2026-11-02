@@ -330,7 +330,6 @@
                             <!-- Populated dynamically -->
                         </div>
                     </div>
-                    <div class="text-[10px] text-slate-500 text-center font-mono">Comparing Average Total RQ, Average Peak RQ, and All-Time Highest RQ across active packs.</div>
                 </div>
             </div>
         </div>
@@ -1411,7 +1410,7 @@
                 }).join('');
             }
 
-            // Render Grouped Bar Chart RQ Analytics Widget (Dynamic + Auto-Hide empty packs)
+            // Render Grouped Bar Chart RQ Analytics Widget
             renderRqAnalyticsCanvas(dataToAnalyze);
 
             const actualCounts = { "Legendary": 0, "Epic": 0, "Ultra Rare": 0, "Super Rare": 0, "Rare": 0, "Uncommon": 0, "Common": 0 };
@@ -1525,7 +1524,18 @@
             luckEl.className = `text-2xl font-bold font-mono ${luckFactor >= 100 ? 'text-emerald-400' : 'text-amber-400'}`;
         }
 
-        // Pack Comparison Grouped Bar Chart Renderer (with hover tooltips and pack counts under X-axis)
+        // Helper to determine rarity color dynamically based on RQ value
+        function getRarityColorForRq(rq) {
+            if (rq >= 80) return '#fbbf24'; // Legendary (Gold)
+            if (rq >= 65) return '#c084fc'; // Epic (Purple)
+            if (rq >= 50) return '#f87171'; // Ultra Rare (Red)
+            if (rq >= 40) return '#fde047'; // Super Rare (Yellow)
+            if (rq >= 30) return '#60a5fa'; // Rare (Blue)
+            if (rq >= 20) return '#4ade80'; // Uncommon (Green)
+            return '#9ca3af';             // Common (Gray)
+        }
+
+        // Pack Comparison Grouped Bar Chart Renderer (with rarity-based bar colors and interactive tooltips)
         function renderRqAnalyticsCanvas(pulls) {
             const canvas = document.getElementById('rqAnalyticsCanvas');
             const xaxisContainer = document.getElementById('rq-xaxis-labels');
@@ -1594,7 +1604,6 @@
                 }
             });
 
-            // Filter out packs with 0 data so they don't appear on the chart
             const activePacks = PACK_ORDER.filter(pt => packStats[pt].cardCount > 0);
 
             // Grid Y-Axis
@@ -1640,9 +1649,9 @@
                 const clusterCenter = padding.left + i * clusterWidth + clusterWidth / 2;
 
                 const bars = [
-                    { label: 'Avg Total RQ', val: parseFloat(avgTotal), color: '#34d399', offset: -1.0 },
-                    { label: 'Avg Peak RQ', val: parseFloat(avgPeak), color: '#fbbf24', offset: 0.0 },
-                    { label: 'All-Time High RQ', val: parseFloat(maxVal), color: '#c084fc', offset: 1.0 }
+                    { label: 'Avg Total RQ', val: parseFloat(avgTotal), color: getRarityColorForRq(parseFloat(avgTotal)), offset: -1.0 },
+                    { label: 'Avg Peak RQ', val: parseFloat(avgPeak), color: getRarityColorForRq(parseFloat(avgPeak)), offset: 0.0 },
+                    { label: 'All-Time High RQ', val: parseFloat(maxVal), color: getRarityColorForRq(parseFloat(maxVal)), offset: 1.0 }
                 ];
 
                 bars.forEach(bar => {
