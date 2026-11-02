@@ -399,7 +399,7 @@
                 </div>
             </div>
 
-            <div id="filtered-header-banner" class="bg-slate-900 border border-slate-700 p-4 rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+            <div id="filtered-header-banner" class="bg-slate-900 border border-slate-700 p-4 rounded-lg flex flex-col sm:flex-row justify-between items-start sm:center gap-2">
                 <div>
                     <div id="filtered-banner-title" class="text-sm font-bold tracking-wide uppercase font-mono text-slate-200">ALL PACKS — ALL FLAVOURS</div>
                     <div class="text-[11px] text-slate-400 flex items-center gap-3 mt-1 font-mono">
@@ -892,7 +892,9 @@
             tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-500">Fetching all records from database...</td></tr>';
 
             const allData = await fetchAllDatabasePulls();
-            if (allData.length === 0) {
+            const dataToAnalyze = allData.filter(d => !d.is_legacy);
+
+            if (dataToAnalyze.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-500">No data available for analytics yet</td></tr>';
                 document.getElementById('stat-total-cards').textContent = '0';
                 document.getElementById('stat-packs-opened').textContent = '0';
@@ -906,24 +908,13 @@
             }
 
             const warningBanner = document.getElementById('analytics-warning');
-            if (allData.length > 15000) {
-                if (warningBanner) warningBanner.classList.remove('hidden');
-            } else {
-                if (warningBanner) warningBanner.classList.add('hidden');
-            }
-
-            const dataToAnalyze = allData.filter(d => !d.is_legacy);
-            if (dataToAnalyze.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-500">No new pack logs found (legacy records excluded)</td></tr>';
-                document.getElementById('stat-total-cards').textContent = '0';
-                document.getElementById('stat-packs-opened').textContent = '0';
-                document.getElementById('stat-this-week').textContent = '0';
-                document.getElementById('stat-best-pull').innerHTML = '<div class="text-slate-500 text-xs">None</div>';
-                document.getElementById('stat-luck-factor').textContent = '100.0%';
-                return;
+            if (warningBanner) {
+                if (allData.length > 15000) warningBanner.classList.remove('hidden');
+                else warningBanner.classList.add('hidden');
             }
 
             const totalCards = dataToAnalyze.length;
+
             const packGroups = {};
             dataToAnalyze.forEach(pull => {
                 const groupId = pull.pack_group_id || pull.id;
@@ -932,6 +923,7 @@
             });
 
             const uniquePacks = Object.keys(packGroups).length;
+
             let earliestDate = null;
             dataToAnalyze.forEach(p => {
                 if (p.date && (!earliestDate || p.date < earliestDate)) {
@@ -944,9 +936,7 @@
             let packsThisWeek = 0;
             Object.values(packGroups).forEach(groupPulls => {
                 const sampleDate = groupPulls[0].date ? new Date(groupPulls[0].date) : null;
-                if (sampleDate && sampleDate >= sevenDaysAgo) {
-                    packsThisWeek++;
-                }
+                if (sampleDate && sampleDate >= sevenDaysAgo) packsThisWeek++;
             });
 
             const rarityRank = { "Legendary": 4, "Epic": 3, "Ultra Rare": 2, "Super Rare": 1, "Rare": 0, "Uncommon": 0, "Common": 0 };
@@ -981,7 +971,7 @@
             document.getElementById('stat-packs-subtitle').textContent = earliestDate ? `since ${formatDisplayDate(earliestDate)}` : 'Packs opened';
             document.getElementById('stat-this-week').textContent = packsThisWeek;
 
-            // Compact Top 10 Most Packed Cards
+            // Top 10 Most Packed Cards
             const carCountsMap = {};
             dataToAnalyze.forEach(p => {
                 const rawName = (p.car_name || 'Unknown').trim();
@@ -1025,9 +1015,7 @@
                 }).join('');
             }
 
-            // Render Pack RQ Comparison Chart
-            renderPackComparisonChart(packGroups);
-
+            // Actual Counts and Expected Drop Odds
             const actualCounts = { "Legendary": 0, "Epic": 0, "Ultra Rare": 0, "Super Rare": 0, "Rare": 0, "Uncommon": 0, "Common": 0 };
             dataToAnalyze.forEach(pull => {
                 const r = pull.car_rarity;
@@ -1046,8 +1034,10 @@
 
                 if (PACK_ODDS_DATA[packType]) {
                     const packVariant = PACK_ODDS_DATA[packType][subtypeKey] || PACK_ODDS_DATA[packType]['Regular'];
+                    
                     if (packVariant) {
                         const totalVariantSlots = Object.keys(packVariant).length || 5;
+
                         groupPulls.forEach(pull => {
                             let slotNum = pull.slot_number || 1;
                             let mappedSlot;
@@ -1058,6 +1048,7 @@
                                 if (mappedSlot > 5) mappedSlot = 5;
                                 if (mappedSlot < 1) mappedSlot = 1;
                             }
+
                             const slotData = packVariant[mappedSlot] || packVariant[String(mappedSlot)] || packVariant[1];
                             if (slotData) {
                                 for (const [rarity, pct] of Object.entries(slotData)) {
@@ -1133,9 +1124,12 @@
             const luckEl = document.getElementById('stat-luck-factor');
             luckEl.textContent = `${luckFactor}%`;
             luckEl.className = `text-2xl font-bold font-mono ${luckFactor >= 100 ? 'text-emerald-400' : 'text-amber-400'}`;
+
+            // Render Pack Comparison Chart with pack groups
+            renderPackComparisonChart(packGroups);
         }
 
-        // Tri-Metric Pack Comparison Chart Implementation with Rarity Ordering
+        // Tri-Metric Pack Comparison Chart Implementation
         function renderPackComparisonChart(packGroups) {
             const canvas = document.getElementById('packComparisonCanvas');
             const tooltip = document.getElementById('pack-chart-tooltip');
@@ -1160,19 +1154,19 @@
                 packStats[pType].maxPackRqList.push(packMaxRq);
             });
 
-            // Requested Rarity Tier Ordering for Packs
-            const PACK_TIER_ORDER = [
-                'Plastic', 'Steel', 'Aluminium', 'Racing Pack', 'Ceramic Lite', 
-                'Ceramic', 'Carbon Fibre', 'Carbon Fiber', 'Super Carbon', 
+            // Pack rarity sequence: Lowest to Highest
+            const packRarityOrder = [
+                'Plastic', 'Steel', 'Aluminium', 'Racing Pack', 'Ceramic Lite',
+                'Ceramic', 'Carbon Fibre', 'Carbon Fiber', 'Super Carbon',
                 'Platinum', 'Titanium', 'Sapphire', 'Diamond', 'Black Diamond'
             ];
 
             const packNames = Object.keys(packStats).sort((a, b) => {
-                let idxA = PACK_TIER_ORDER.findIndex(p => p.toLowerCase() === a.trim().toLowerCase());
-                let idxB = PACK_TIER_ORDER.findIndex(p => p.toLowerCase() === b.trim().toLowerCase());
-                if (idxA === -1) idxA = 999;
-                if (idxB === -1) idxB = 999;
-                if (idxA !== idxB) return idxA - idxB;
+                const idxA = packRarityOrder.indexOf(a);
+                const idxB = packRarityOrder.indexOf(b);
+                if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+                if (idxA !== -1) return -1;
+                if (idxB !== -1) return 1;
                 return a.localeCompare(b);
             });
 
@@ -1225,9 +1219,9 @@
                 const groupX = padding.left + idx * groupWidth + (groupWidth - (barWidth * 3 + 4)) / 2;
 
                 const metrics = [
-                    { label: 'Avg Pack RQ', val: avgPackRq, color: '#10b981' }, // emerald-500
-                    { label: 'Avg Peak RQ', val: avgPeakRq, color: '#fbbf24' }, // amber-400
-                    { label: 'Max Ever RQ', val: maxRq, color: '#c084fc' }     // purple-400
+                    { label: 'Avg Pack RQ', val: avgPackRq, color: '#10b981' },
+                    { label: 'Avg Peak RQ', val: avgPeakRq, color: '#fbbf24' },
+                    { label: 'Max Ever RQ', val: maxRq, color: '#c084fc' }
                 ];
 
                 metrics.forEach((m, mIdx) => {
@@ -1244,7 +1238,6 @@
                     });
                 });
 
-                // X-Axis Pack Label with rotation/wrapping
                 ctx.save();
                 ctx.translate(groupX + (barWidth * 3 + 4) / 2, height - padding.bottom + 12);
                 ctx.rotate(-Math.PI / 6);
@@ -1255,7 +1248,6 @@
                 ctx.restore();
             });
 
-            // Hover tooltip on canvas
             canvas.onmousemove = function(e) {
                 const canvasRect = canvas.getBoundingClientRect();
                 const mouseX = e.clientX - canvasRect.left;
@@ -1332,8 +1324,7 @@
             subEl.textContent = dateStr;
 
             const dayPulls = cachedAllPulls.filter(d => !d.is_legacy && d.date === dateStr);
-            
-            // Sort cards by RQ highest to lowest as requested
+            // Sort side panel cards from highest to lowest RQ
             dayPulls.sort((a, b) => (b.car_rq || 0) - (a.car_rq || 0));
 
             countBadge.textContent = `${dayPulls.length} ${dayPulls.length === 1 ? 'car' : 'cars'}`;
