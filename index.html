@@ -1455,14 +1455,14 @@
             });
 
             const rarities = ["Legendary", "Epic", "Ultra Rare", "Super Rare", "Rare", "Uncommon", "Common"];
-            const maxVal = Math.max(...rarities.map(r => Math.max(actualCounts[r], expectedCounts[r]))) || 1;
 
             let barsHtml = '';
             rarities.forEach(rarity => {
                 const count = actualCounts[rarity];
                 const expected = expectedCounts[rarity] || 0;
-                const actPctWidth = count === 0 ? 0 : Math.max(4, Math.round((count / maxVal) * 100));
-                const expPosPct = Math.min(100, Math.max(0, (expected / maxVal) * 100));
+                const localMax = Math.max(count, expected, 0.1);
+                const actPctWidth = count === 0 ? 0 : Math.min(100, Math.max(4, Math.round((count / localMax) * 100)));
+                const expPosPct = Math.min(100, Math.max(0, Math.round((expected / localMax) * 100)));
                 const cfg = getRarityClass(rarity);
 
                 barsHtml += `
@@ -2122,14 +2122,14 @@
             });
 
             const rarities = ["Legendary", "Epic", "Ultra Rare", "Super Rare", "Rare", "Uncommon", "Common"];
-            const maxVal = Math.max(...rarities.map(r => Math.max(actualCounts[r], expectedCounts[r]))) || 1;
 
             let barsHtml = '';
             rarities.forEach(rarity => {
                 const count = actualCounts[rarity];
                 const expected = expectedCounts[rarity] || 0;
-                const actPctWidth = count === 0 ? 0 : Math.max(4, Math.round((count / maxVal) * 100));
-                const expPosPct = Math.min(100, Math.max(0, (expected / maxVal) * 100));
+                const localMax = Math.max(count, expected, 0.1);
+                const actPctWidth = count === 0 ? 0 : Math.min(100, Math.max(4, Math.round((count / localMax) * 100)));
+                const expPosPct = Math.min(100, Math.max(0, Math.round((expected / localMax) * 100)));
                 const cfg = getRarityClass(rarity);
 
                 barsHtml += `
