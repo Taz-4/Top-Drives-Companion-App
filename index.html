@@ -240,7 +240,7 @@
                 <span>Storage notice: Your database has exceeded 15,000 rows. Consider reviewing data archiving if approaching your tier threshold.</span>
             </div>
 
-            <!-- Summary Cards Grid (Fixed Top 3 Pull Text Wrapping) -->
+            <!-- Summary Cards Grid -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                 <div class="bg-slate-900 border border-slate-700 p-4 rounded-lg space-y-1">
                     <div id="stat-packs-opened" class="text-2xl font-bold font-mono text-slate-100">0</div>
@@ -255,7 +255,7 @@
                     <div class="text-xs text-slate-400">This week (last 7 days)</div>
                 </div>
                 
-                <!-- Fixed Tiered Best Pulls Card (No Clipping) -->
+                <!-- Tiered Best Pulls Card -->
                 <div class="bg-slate-900 border border-slate-700 p-3 rounded-lg flex flex-col justify-between space-y-1">
                     <div class="text-[10px] uppercase font-mono text-slate-400 font-bold">Top 3 Best Pulls</div>
                     <div id="stat-best-pull" class="space-y-1 text-xs">
@@ -269,18 +269,18 @@
                 </div>
             </div>
 
-            <!-- Rarity Breakdown Bars & Comparison Table -->
+            <!-- Rarity Breakdown Bars & Comparison Table (Matched 6/6 Grid) -->
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                <!-- Left: Rarity Visual Distribution Bars -->
-                <div class="lg:col-span-5 bg-slate-900 border border-slate-700 p-5 rounded-lg space-y-4">
+                <!-- Left: Rarity Visual Distribution Bars (Expanded to col-span-6) -->
+                <div class="lg:col-span-6 bg-slate-900 border border-slate-700 p-5 rounded-lg space-y-4">
                     <h3 class="text-sm font-bold text-slate-200 uppercase font-mono tracking-wider">Rarity of cards pulled</h3>
                     <div id="rarity-bars-container" class="space-y-3 pt-2">
                         <!-- Populated dynamically -->
                     </div>
                 </div>
 
-                <!-- Right: Detailed Variance & Odds Table -->
-                <div class="lg:col-span-7 bg-slate-900 border border-slate-700 p-5 rounded-lg space-y-3">
+                <!-- Right: Detailed Variance & Odds Table (Set to col-span-6) -->
+                <div class="lg:col-span-6 bg-slate-900 border border-slate-700 p-5 rounded-lg space-y-3">
                     <h3 class="text-sm font-bold text-slate-200 uppercase font-mono tracking-wider">Drop Rate Variance vs Game Odds</h3>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left text-xs text-slate-300">
@@ -333,7 +333,7 @@
             </div>
         </div>
 
-        <!-- TAB 4: CALENDAR HEATMAP (With Month / Year View & Rarity Popover Tooltips) -->
+        <!-- TAB 4: CALENDAR HEATMAP -->
         <div id="tab-content-calendar" class="hidden bg-slate-800 p-6 rounded-lg border border-slate-700 space-y-6">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
@@ -1307,7 +1307,6 @@
                 }
             });
 
-            // FIXED Top 3 Best Pulls Card Layout (No Overlaps)
             const rarityRank = { "Legendary": 4, "Epic": 3, "Ultra Rare": 2, "Super Rare": 1, "Rare": 0, "Uncommon": 0, "Common": 0 };
             const sortedByBest = [...dataToAnalyze].sort((a, b) => {
                 const scoreA = ((a.car_rq || 0) * 10) + (rarityRank[a.car_rarity] || 0);
@@ -1627,12 +1626,15 @@
                         const colorClass = rarityBgColors[bestPull.car_rarity] || rarityBgColors["Common"];
                         cell.className = `has-tooltip relative h-14 rounded border p-1 flex flex-col justify-between text-[10px] font-mono cursor-pointer transition hover:scale-105 shadow-sm ${colorClass}`;
 
-                        // Count breakdown for Popover Pill Tooltip
+                        // Count breakdown for Popover Pill Tooltip with High-Contrast Count Badges
                         const counts = {};
                         dayPulls.forEach(p => { counts[p.car_rarity] = (counts[p.car_rarity] || 0) + 1; });
                         
                         let pillsHtml = rarityOrder.filter(r => counts[r]).map(r => `
-                            <span class="px-1.5 py-0.5 rounded border text-[9px] font-mono font-bold ${rarityBadges[r]}">${counts[r]}x ${r}</span>
+                            <span class="px-1.5 py-0.5 rounded border text-[9px] font-mono flex items-center gap-1 ${rarityBadges[r]}">
+                                <span class="bg-black/60 px-1 rounded font-bold text-white">${counts[r]}x</span>
+                                <span>${r}</span>
+                            </span>
                         `).join('');
 
                         cell.innerHTML = `
@@ -1649,12 +1651,12 @@
                                 </div>
                             </div>
 
-                            <div class="flex justify-between font-bold">
+                            <div class="flex justify-between font-bold items-center">
                                 <span>${day}</span>
-                                <span class="text-[9px] px-1 rounded bg-black/50">${dayPulls.length}</span>
+                                <span class="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-black/50 text-emerald-400 border border-emerald-500/30">RQ ${bestPull.car_rq}</span>
                             </div>
-                            <div class="truncate text-[9px] font-semibold" title="${bestPull.car_name} (RQ ${bestPull.car_rq})">
-                                ${bestPull.car_name} <span class="opacity-75 font-mono">(RQ ${bestPull.car_rq})</span>
+                            <div class="truncate text-[9px] font-semibold" title="${bestPull.car_name}">
+                                ${bestPull.car_name}
                             </div>
                         `;
                     }
@@ -1719,7 +1721,10 @@
                             dayPulls.forEach(p => { counts[p.car_rarity] = (counts[p.car_rarity] || 0) + 1; });
                             
                             let pillsHtml = rarityOrder.filter(r => counts[r]).map(r => `
-                                <span class="px-1.5 py-0.5 rounded border text-[9px] font-mono font-bold ${rarityBadges[r]}">${counts[r]}x ${r}</span>
+                                <span class="px-1.5 py-0.5 rounded border text-[9px] font-mono flex items-center gap-1 ${rarityBadges[r]}">
+                                    <span class="bg-black/60 px-1 rounded font-bold text-white">${counts[r]}x</span>
+                                    <span>${r}</span>
+                                </span>
                             `).join('');
 
                             dCell.innerHTML = `
