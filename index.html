@@ -85,7 +85,6 @@
         <!-- Tabs -->
         <div class="border-b border-slate-800">
             <nav class="flex space-x-2">
-                <!-- Highlighted Main Pack Logger Tab Button -->
                 <button id="tab-btn-logger" onclick="switchTab('logger')" class="px-5 py-2.5 text-sm font-bold rounded-t-lg bg-emerald-600 text-white border-b-2 border-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.4)] cursor-pointer flex items-center gap-2">
                     <span class="animate-pulse">⭐</span> Pack Logger
                 </button>
@@ -240,8 +239,8 @@
                 <span>Storage notice: Your database has exceeded 15,000 rows. Consider reviewing data archiving if approaching your tier threshold.</span>
             </div>
 
-            <!-- Summary Cards Grid -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <!-- Top Summary Cards Grid (4 Compact Cards) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div class="bg-slate-900 border border-slate-700 p-4 rounded-lg space-y-1">
                     <div id="stat-packs-opened" class="text-2xl font-bold font-mono text-slate-100">0</div>
                     <div id="stat-packs-subtitle" class="text-xs text-slate-400">Packs opened</div>
@@ -254,24 +253,23 @@
                     <div id="stat-this-week" class="text-2xl font-bold font-mono text-slate-100">0</div>
                     <div class="text-xs text-slate-400">This week (last 7 days)</div>
                 </div>
-                
-                <!-- Tiered Best Pulls Card -->
-                <div class="bg-slate-900 border border-slate-700 p-3 rounded-lg flex flex-col justify-between space-y-1">
-                    <div class="text-[10px] uppercase font-mono text-slate-400 font-bold">Top 3 Best Pulls</div>
-                    <div id="stat-best-pull" class="space-y-1 text-xs">
-                        <div class="text-slate-500">None</div>
-                    </div>
-                </div>
-
                 <div class="bg-slate-900 border border-slate-700 p-4 rounded-lg space-y-1">
                     <div id="stat-luck-factor" class="text-2xl font-bold font-mono text-emerald-400">100.0%</div>
                     <div class="text-xs text-slate-400">Overall Luck Factor</div>
                 </div>
             </div>
 
-            <!-- Rarity Breakdown Bars & Comparison Table (Matched 6/6 Grid) -->
+            <!-- Full-Width Top 3 Best Pulls Horizontal Spread Banner -->
+            <div class="bg-slate-900 border border-slate-700 p-4 rounded-lg space-y-2">
+                <div class="text-[10px] uppercase font-mono text-slate-400 font-bold tracking-wider">Top 3 Best Pulls (Highest Rated)</div>
+                <div id="stat-best-pull" class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div class="text-slate-500 text-xs">None</div>
+                </div>
+            </div>
+
+            <!-- Rarity Breakdown Bars & Comparison Table -->
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                <!-- Left: Rarity Visual Distribution Bars (Expanded to col-span-6) -->
+                <!-- Left: Rarity Visual Distribution Bars -->
                 <div class="lg:col-span-6 bg-slate-900 border border-slate-700 p-5 rounded-lg space-y-4">
                     <h3 class="text-sm font-bold text-slate-200 uppercase font-mono tracking-wider">Rarity of cards pulled</h3>
                     <div id="rarity-bars-container" class="space-y-3 pt-2">
@@ -279,7 +277,7 @@
                     </div>
                 </div>
 
-                <!-- Right: Detailed Variance & Odds Table (Set to col-span-6) -->
+                <!-- Right: Detailed Variance & Odds Table -->
                 <div class="lg:col-span-6 bg-slate-900 border border-slate-700 p-5 rounded-lg space-y-3">
                     <h3 class="text-sm font-bold text-slate-200 uppercase font-mono tracking-wider">Drop Rate Variance vs Game Odds</h3>
                     <div class="overflow-x-auto">
@@ -301,7 +299,7 @@
                 </div>
             </div>
 
-            <!-- Compact Top 10 Packed Cards Grid + Open Slot for Future Chart -->
+            <!-- Compact Top 10 Packed Cards Grid + Interactive Scatter Plot Widget -->
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 <!-- Left half: Compact Top 10 Table -->
                 <div class="lg:col-span-6 bg-slate-900 border border-slate-700 p-5 rounded-lg space-y-3">
@@ -324,11 +322,17 @@
                     </div>
                 </div>
 
-                <!-- Right half: Ready for Future Chart / Extra Stat Block -->
-                <div class="lg:col-span-6 bg-slate-900/60 border border-dashed border-slate-700 p-6 rounded-lg flex flex-col items-center justify-center text-center space-y-2">
-                    <span class="text-2xl">📊</span>
-                    <h4 class="text-xs font-bold font-mono uppercase text-slate-400">Future Chart / Visual Widget Slot</h4>
-                    <p class="text-[11px] text-slate-500 max-w-xs">Space allocated for future metrics (e.g. Luck Trends over time, Pack Breakdown by Source, or RQ Scatter Plots).</p>
+                <!-- Right half: Interactive Scatter Plot (RQ vs Rarity) -->
+                <div class="lg:col-span-6 bg-slate-900 border border-slate-700 p-5 rounded-lg space-y-3 flex flex-col">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-sm font-bold text-slate-200 uppercase font-mono tracking-wider">Car RQ vs Rarity Distribution</h3>
+                        <span id="scatter-point-count" class="text-[11px] font-mono text-slate-400">0 cards plotted</span>
+                    </div>
+                    <div class="relative flex-1 min-h-[260px] bg-slate-950/60 border border-slate-800 rounded p-2 flex items-center justify-center">
+                        <canvas id="rqScatterCanvas" class="w-full h-full cursor-crosshair"></canvas>
+                        <div id="scatter-tooltip" class="absolute hidden bg-slate-900 border border-slate-700 p-2 rounded shadow-xl text-[10px] font-mono pointer-events-none z-20 space-y-0.5"></div>
+                    </div>
+                    <div class="text-[10px] text-slate-500 text-center font-mono">X-Axis: Rarity Tier (Common ➔ Legendary) | Y-Axis: Car RQ (10 ➔ 100)</div>
                 </div>
             </div>
         </div>
@@ -549,13 +553,12 @@
 
         let currentCalendarYear = new Date().getFullYear();
         let currentCalendarMonth = new Date().getMonth();
-        let calendarViewMode = 'month'; // 'month' or 'year'
+        let calendarViewMode = 'month';
 
         const DEFAULT_PACK_TYPES = ['Aluminium', 'Carbon Fibre', 'Carbon Fiber', 'Ceramic', 'Ceramic Lite', 'Plastic', 'Platinum', 'Racing Pack', 'Steel', 'Titanium', 'Sapphire', 'Diamond', 'Black Diamond'];
         const DEFAULT_OBTAINED_OPTIONS = ['Adverts', 'Air Miles', 'Builder Coins', 'Cash', 'Challenge', 'Daily', 'Event', 'Free', 'Gold', 'IRL Money', 'Nismo', 'Objectives', 'Oddities Coin', 'Racing Coin', 'Spotted', 'Tri-series'];
         const DEFAULT_FLAVOUR_OPTIONS = [];
 
-        // STRICT CSV PACK ODDS PARSED FROM MANUAL PACK ODDS CSV
         const PACK_ODDS_DATA = {
             "Plastic": {
                 "Regular": {
@@ -1251,7 +1254,7 @@
                 document.getElementById('stat-packs-opened').textContent = '0';
                 document.getElementById('stat-packs-subtitle').textContent = 'Packs opened';
                 document.getElementById('stat-this-week').textContent = '0';
-                document.getElementById('stat-best-pull').innerHTML = '<div class="text-slate-500">None</div>';
+                document.getElementById('stat-best-pull').innerHTML = '<div class="text-slate-500 text-xs">None</div>';
                 document.getElementById('stat-luck-factor').textContent = '100.0%';
                 document.getElementById('rarity-bars-container').innerHTML = '<div class="text-xs text-slate-500 text-center py-4">No data</div>';
                 document.getElementById('top-cards-table-body').innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-500">No data</td></tr>';
@@ -1272,7 +1275,7 @@
                 document.getElementById('stat-total-cards').textContent = '0';
                 document.getElementById('stat-packs-opened').textContent = '0';
                 document.getElementById('stat-this-week').textContent = '0';
-                document.getElementById('stat-best-pull').innerHTML = '<div class="text-slate-500">None</div>';
+                document.getElementById('stat-best-pull').innerHTML = '<div class="text-slate-500 text-xs">None</div>';
                 document.getElementById('stat-luck-factor').textContent = '100.0%';
                 return;
             }
@@ -1317,21 +1320,21 @@
             const top3 = sortedByBest.slice(0, 3);
             const bestEl = document.getElementById('stat-best-pull');
             if (top3.length > 0) {
-                const medals = ['🥇', '🥈', '🥉'];
+                const medals = ['🥇 1st', '🥈 2nd', '🥉 3rd'];
                 bestEl.innerHTML = top3.map((pull, idx) => {
                     const cfg = getRarityClass(pull.car_rarity);
                     return `
-                        <div class="flex items-center justify-between text-[11px] bg-slate-950/40 px-1.5 py-1 rounded gap-1 overflow-hidden">
-                            <div class="flex items-center gap-1 min-w-0 truncate">
-                                <span>${medals[idx]}</span>
-                                <span class="truncate font-medium text-slate-200" title="${pull.car_name}">${pull.car_name}</span>
+                        <div class="flex items-center justify-between text-xs bg-slate-950/60 border border-slate-700/80 px-3 py-2 rounded gap-2 overflow-hidden">
+                            <div class="flex items-center gap-2 min-w-0 truncate">
+                                <span class="font-mono font-bold text-slate-400">${medals[idx]}</span>
+                                <span class="truncate font-medium text-slate-100" title="${pull.car_name}">${pull.car_name}</span>
                             </div>
-                            <span class="font-mono font-bold whitespace-nowrap text-[10px] ${cfg.text}">RQ ${pull.car_rq || 0}</span>
+                            <span class="font-mono font-bold whitespace-nowrap text-xs ${cfg.text}">RQ ${pull.car_rq || 0}</span>
                         </div>
                     `;
                 }).join('');
             } else {
-                bestEl.innerHTML = '<div class="text-slate-500">None</div>';
+                bestEl.innerHTML = '<div class="text-slate-500 text-xs">None</div>';
             }
 
             document.getElementById('stat-total-cards').textContent = totalCards;
@@ -1382,6 +1385,9 @@
                     `;
                 }).join('');
             }
+
+            // Render Interactive Scatter Plot (RQ vs Rarity)
+            renderRqScatterPlot(dataToAnalyze);
 
             const actualCounts = { "Legendary": 0, "Epic": 0, "Ultra Rare": 0, "Super Rare": 0, "Rare": 0, "Uncommon": 0, "Common": 0 };
             dataToAnalyze.forEach(pull => {
@@ -1494,6 +1500,140 @@
             luckEl.className = `text-2xl font-bold font-mono ${luckFactor >= 100 ? 'text-emerald-400' : 'text-amber-400'}`;
         }
 
+        // Interactive RQ vs Rarity Scatter Plot Implementation
+        function renderRqScatterPlot(pulls) {
+            const canvas = document.getElementById('rqScatterCanvas');
+            const tooltip = document.getElementById('scatter-tooltip');
+            const countLabel = document.getElementById('scatter-point-count');
+            if (!canvas) return;
+
+            const ctx = canvas.getContext('2d');
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            ctx.scale(dpr, dpr);
+
+            const width = rect.width;
+            const height = rect.height;
+
+            const rarityLevels = ["Common", "Uncommon", "Rare", "Super Rare", "Ultra Rare", "Epic", "Legendary"];
+            const rarityColors = {
+                "Common": "#9ca3af",
+                "Uncommon": "#4ade80",
+                "Rare": "#60a5fa",
+                "Super Rare": "#fde047",
+                "Ultra Rare": "#f87171",
+                "Epic": "#c084fc",
+                "Legendary": "#fbbf24"
+            };
+
+            const padding = { left: 40, right: 20, top: 20, bottom: 35 };
+            const plotWidth = width - padding.left - padding.right;
+            const plotHeight = height - padding.top - padding.bottom;
+
+            ctx.clearRect(0, 0, width, height);
+
+            // Draw Y-Axis Grid Lines (RQ 10 to 100)
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 1;
+            ctx.fillStyle = '#64748b';
+            ctx.font = '9px monospace';
+            ctx.textAlign = 'right';
+
+            for (let rq = 20; rq <= 100; rq += 20) {
+                const y = padding.top + plotHeight - ((rq - 10) / 90) * plotHeight;
+                ctx.beginPath();
+                ctx.moveTo(padding.left, y);
+                ctx.lineTo(width - padding.right, y);
+                ctx.stroke();
+                ctx.fillText(rq, padding.left - 6, y + 3);
+            }
+
+            // Draw X-Axis Labels (Rarities)
+            ctx.textAlign = 'center';
+            rarityLevels.forEach((rarity, idx) => {
+                const x = padding.left + (idx / (rarityLevels.length - 1)) * plotWidth;
+                ctx.fillStyle = rarityColors[rarity] || '#94a3b8';
+                ctx.fillText(rarity.replace(' ', '\n'), x, height - padding.bottom + 15);
+            });
+
+            // Map pulls to points with jitter to prevent overlap
+            const points = [];
+            pulls.forEach(p => {
+                const rarityIdx = rarityLevels.indexOf(p.car_rarity);
+                if (rarityIdx === -1) return;
+                const rq = p.car_rq || 10;
+
+                const baseX = padding.left + (rarityIdx / (rarityLevels.length - 1)) * plotWidth;
+                const baseY = padding.top + plotHeight - ((rq - 10) / 90) * plotHeight;
+
+                // Add slight random jitter so overlapping points are visible
+                const jitterX = (Math.random() - 0.5) * 16;
+                const jitterY = (Math.random() - 0.5) * 8;
+
+                points.push({
+                    x: baseX + jitterX,
+                    y: baseY + jitterY,
+                    car: p
+                });
+            });
+
+            countLabel.textContent = `${points.length} cards plotted`;
+
+            // Draw points
+            points.forEach(pt => {
+                const cfg = getRarityClass(pt.car.car_rarity);
+                ctx.beginPath();
+                ctx.arc(pt.x, pt.y, 4, 0, 2 * Math.PI);
+                ctx.fillStyle = cfg.hex;
+                ctx.globalAlpha = 0.8;
+                ctx.fill();
+                ctx.strokeStyle = '#0f172a';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                ctx.globalAlpha = 1.0;
+            });
+
+            // Interactive Hover Tooltip
+            canvas.onmousemove = function(e) {
+                const canvasRect = canvas.getBoundingClientRect();
+                const mouseX = e.clientX - canvasRect.left;
+                const mouseY = e.clientY - canvasRect.top;
+
+                let hovered = null;
+                let minDist = 12;
+
+                points.forEach(pt => {
+                    const dist = Math.hypot(pt.x - mouseX, pt.y - mouseY);
+                    if (dist < minDist) {
+                        minDist = dist;
+                        hovered = pt;
+                    }
+                });
+
+                if (hovered) {
+                    canvas.style.cursor = 'pointer';
+                    tooltip.style.left = `${Math.min(width - 150, Math.max(10, mouseX + 10))}px`;
+                    tooltip.style.top = `${Math.max(10, mouseY - 40)}px`;
+                    tooltip.innerHTML = `
+                        <div class="font-bold text-slate-100">${hovered.car.car_name}</div>
+                        <div class="text-emerald-400 font-mono">RQ ${hovered.car.car_rq} • ${hovered.car.car_rarity}</div>
+                        <div class="text-[9px] text-slate-400">${hovered.car.pack_type} (${formatDisplayDate(hovered.car.date)})</div>
+                    `;
+                    tooltip.classList.remove('hidden');
+                } else {
+                    canvas.style.cursor = 'crosshair';
+                    tooltip.classList.add('hidden');
+                }
+            };
+
+            canvas.onmouseleave = function() {
+                tooltip.classList.add('hidden');
+            };
+        }
+
         async function loadCalendarData() {
             if (cachedAllPulls.length === 0) {
                 await fetchAllDatabasePulls();
@@ -1537,7 +1677,6 @@
 
             const dataToAnalyze = cachedAllPulls.filter(d => !d.is_legacy);
 
-            // Active rarity filters
             const rarityOrder = ["Legendary", "Epic", "Ultra Rare", "Super Rare", "Rare", "Uncommon", "Common"];
             const activeFilters = {};
             rarityOrder.forEach(r => {
@@ -1545,7 +1684,6 @@
                 activeFilters[r] = chk ? chk.checked : true;
             });
 
-            // Group pulls by YYYY-MM-DD
             const dayPullsMap = {};
             dataToAnalyze.forEach(p => {
                 if (!p.date) return;
@@ -1624,9 +1762,9 @@
                         });
 
                         const colorClass = rarityBgColors[bestPull.car_rarity] || rarityBgColors["Common"];
+                        const rqCfg = getRarityClass(bestPull.car_rarity);
                         cell.className = `has-tooltip relative h-14 rounded border p-1 flex flex-col justify-between text-[10px] font-mono cursor-pointer transition hover:scale-105 shadow-sm ${colorClass}`;
 
-                        // Count breakdown for Popover Pill Tooltip with High-Contrast Count Badges
                         const counts = {};
                         dayPulls.forEach(p => { counts[p.car_rarity] = (counts[p.car_rarity] || 0) + 1; });
                         
@@ -1638,7 +1776,7 @@
                         `).join('');
 
                         cell.innerHTML = `
-                            <div class="tooltip-box bg-slate-950 border border-slate-700 p-2.5 rounded-lg shadow-2xl space-y-1.5 w-48 text-left pointer-events-none">
+                            <div class="tooltip-box bg-slate-950 border border-slate-700 p-2.5 rounded-lg shadow-2xl space-y-1.5 w-56 text-left pointer-events-none">
                                 <div class="flex justify-between items-center text-[10px] font-bold text-slate-300 border-b border-slate-800 pb-1">
                                     <span>${dateStr}</span>
                                     <span class="text-emerald-400 font-mono">${dayPulls.length} Pulls</span>
@@ -1646,14 +1784,15 @@
                                 <div class="flex flex-wrap gap-1">
                                     ${pillsHtml}
                                 </div>
-                                <div class="text-[9px] text-slate-400 pt-1 border-t border-slate-800/60 truncate">
-                                    Top: <span class="text-slate-200 font-semibold">${bestPull.car_name}</span> (RQ ${bestPull.car_rq})
+                                <div class="text-[9px] text-slate-400 pt-1 border-t border-slate-800/60">
+                                    Top: <span class="text-slate-200 font-semibold block truncate">${bestPull.car_name}</span>
+                                    <span class="font-mono font-bold text-emerald-400">RQ ${bestPull.car_rq}</span>
                                 </div>
                             </div>
 
                             <div class="flex justify-between font-bold items-center">
                                 <span>${day}</span>
-                                <span class="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-black/50 text-emerald-400 border border-emerald-500/30">RQ ${bestPull.car_rq}</span>
+                                <span class="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-slate-950/75 ${rqCfg.text} border border-slate-700/80">RQ ${bestPull.car_rq}</span>
                             </div>
                             <div class="truncate text-[9px] font-semibold" title="${bestPull.car_name}">
                                 ${bestPull.car_name}
@@ -1666,7 +1805,7 @@
                 monthWrapper.appendChild(grid);
                 container.appendChild(monthWrapper);
             } else {
-                // YEAR VIEW (12 Condensed Mini Month Grids)
+                // YEAR VIEW (12 Condensed Mini Month Grids with Fixed Wider Tooltips)
                 const yearGrid = document.createElement('div');
                 yearGrid.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4";
 
@@ -1728,7 +1867,7 @@
                             `).join('');
 
                             dCell.innerHTML = `
-                                <div class="tooltip-box bg-slate-950 border border-slate-700 p-2 rounded-lg shadow-2xl space-y-1.5 w-44 text-left pointer-events-none">
+                                <div class="tooltip-box bg-slate-950 border border-slate-700 p-2.5 rounded-lg shadow-2xl space-y-1.5 w-56 text-left pointer-events-none">
                                     <div class="flex justify-between items-center text-[10px] font-bold text-slate-300 border-b border-slate-800 pb-1">
                                         <span>${dateStr}</span>
                                         <span class="text-emerald-400 font-mono">${dayPulls.length} Pulls</span>
@@ -1736,8 +1875,9 @@
                                     <div class="flex flex-wrap gap-1">
                                         ${pillsHtml}
                                     </div>
-                                    <div class="text-[9px] text-slate-400 pt-1 border-t border-slate-800/60 truncate">
-                                        Top: <span class="text-slate-200 font-semibold">${bestPull.car_name}</span> (RQ ${bestPull.car_rq})
+                                    <div class="text-[9px] text-slate-400 pt-1 border-t border-slate-800/60">
+                                        Top: <span class="text-slate-200 font-semibold block truncate">${bestPull.car_name}</span>
+                                        <span class="font-mono font-bold text-emerald-400">RQ ${bestPull.car_rq}</span>
                                     </div>
                                 </div>
                                 ${day}
