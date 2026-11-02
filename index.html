@@ -324,11 +324,11 @@
                             <canvas id="rqAnalyticsCanvas" class="w-full h-full"></canvas>
                         </div>
                         <!-- X-axis wrapped labels -->
-                        <div id="rq-xaxis-labels" style="display: grid; grid-template-columns: repeat(13, minmax(0, 1fr)); gap: 2px;" class="pt-2 border-t border-slate-800">
+                        <div id="rq-xaxis-labels" style="display: grid; gap: 2px;" class="pt-2 border-t border-slate-800">
                             <!-- Populated dynamically -->
                         </div>
                     </div>
-                    <div class="text-[10px] text-slate-500 text-center font-mono">Comparing Average Total RQ, Average Peak RQ, and All-Time Highest RQ across all packs.</div>
+                    <div class="text-[10px] text-slate-500 text-center font-mono">Comparing Average Total RQ, Average Peak RQ, and All-Time Highest RQ across active packs.</div>
                 </div>
             </div>
         </div>
@@ -1409,7 +1409,7 @@
                 }).join('');
             }
 
-            // Render Pack Comparison RQ Analytics Canvas Widget
+            // Render Grouped Bar Chart RQ Analytics Widget (Dynamic + Auto-Hide empty packs)
             renderRqAnalyticsCanvas(dataToAnalyze);
 
             const actualCounts = { "Legendary": 0, "Epic": 0, "Ultra Rare": 0, "Super Rare": 0, "Rare": 0, "Uncommon": 0, "Common": 0 };
@@ -1523,7 +1523,7 @@
             luckEl.className = `text-2xl font-bold font-mono ${luckFactor >= 100 ? 'text-emerald-400' : 'text-amber-400'}`;
         }
 
-        // Pack Comparison Canvas Renderer (Fixed Order, Wrapped Labels, Rarity-Colored Points/Lines)
+        // Pack Comparison Grouped Bar Chart Renderer (3 bars per pack, hides empty packs automatically)
         function renderRqAnalyticsCanvas(pulls) {
             const canvas = document.getElementById('rqAnalyticsCanvas');
             const xaxisContainer = document.getElementById('rq-xaxis-labels');
@@ -1586,22 +1586,8 @@
                 }
             });
 
-            const avgTotalRqData = [];
-            const avgPeakRqData = [];
-            const maxRqData = [];
-
-            PACK_ORDER.forEach(pt => {
-                const stats = packStats[pt];
-                const avgTotal = stats.cardCount > 0 ? stats.totalRqSum / stats.cardCount : 0;
-                
-                const peaks = packGroupPeaks[pt];
-                const avgPeak = peaks.length > 0 ? peaks.reduce((a, b) => a + b, 0) / peaks.length : 0;
-                const maxVal = stats.maxRq;
-
-                avgTotalRqData.push(avgTotal);
-                avgPeakRqData.push(avgPeak);
-                maxRqData.push(maxVal);
-            });
+            // Filter out packs with 0 data so they don't appear on the chart
+            const activePacks = PACK_ORDER.filter(pt => packStats[pt].cardCount > 0);
 
             // Grid Y-Axis
             ctx.strokeStyle = '#334155';
@@ -1620,72 +1606,51 @@
                 ctx.fillText(rq, padding.left - 6, y + 3);
             }
 
-            const stepX = plotWidth / (PACK_ORDER.length - 1 || 1);
-
-            function getX(i) {
-                return padding.left + i * stepX;
-            }
-            function getY(val) {
-                return padding.top + plotHeight - (Math.min(100, Math.max(0, val)) / maxRqLimit) * plotHeight;
-            }
-
-            function getRqRarityColor(rq) {
-                if (rq >= 80) return '#fbbf24'; // Legendary
-                if (rq >= 65) return '#c084fc'; // Epic
-                if (rq >= 50) return '#f87171'; // Ultra Rare
-                if (rq >= 40) return '#fde047'; // Super Rare
-                if (rq >= 30) return '#60a5fa'; // Rare
-                if (rq <= 28) return '#9ca3af'; // Common (e.g. 27.8)
-                return '#4ade80'; // Uncommon
+            if (activePacks.length === 0) {
+                ctx.fillStyle = '#94a3b8';
+                ctx.font = '11px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('No pack data available yet. Open a pack to see analytics.', padding.left + plotWidth / 2, padding.top + plotHeight / 2);
+                if (xaxisContainer) xaxisContainer.innerHTML = '';
+                return;
             }
 
-            const series = [
-                { data: avgTotalRqData, dash: [] },
-                { data: avgPeakRqData, dash: [4, 4] },
-                { data: maxRqData, dash: [2, 2] }
-            ];
+            const clusterWidth = plotWidth / activePacks.length;
+            const barWidth = Math.min(11, Math.max(3, (clusterWidth - 10) / 3));
 
-            series.forEach(s => {
-                ctx.setLineDash(s.dash);
-                ctx.lineWidth = 2;
+            activePacks.forEach((pt, i) => {
+                const stats = packStats[pt];
+                const avgTotal = stats.cardCount > 0 ? stats.totalRqSum / stats.cardCount : 0;
                 
-                for (let i = 0; i < PACK_ORDER.length - 1; i++) {
-                    const val1 = s.data[i];
-                    const val2 = s.data[i + 1];
-                    if (val1 === 0 && val2 === 0) continue;
+                const peaks = packGroupPeaks[pt];
+                const avgPeak = peaks.length > 0 ? peaks.reduce((a, b) => a + b, 0) / peaks.length : 0;
+                const maxVal = stats.maxRq;
 
-                    const x1 = getX(i);
-                    const y1 = getY(val1);
-                    const x2 = getX(i + 1);
-                    const y2 = getY(val2);
+                const clusterCenter = padding.left + i * clusterWidth + clusterWidth / 2;
 
-                    ctx.beginPath();
-                    ctx.moveTo(x1, y1);
-                    ctx.lineTo(x2, y2);
-                    ctx.strokeStyle = getRqRarityColor((val1 + val2) / 2);
-                    ctx.stroke();
-                }
-                ctx.setLineDash([]);
+                // 3 bars per pack:
+                // 1. Avg Total RQ (Emerald #34d399)
+                // 2. Avg Peak RQ (Amber #fbbf24)
+                // 3. All-Time Highest RQ (Purple #c084fc)
+                const bars = [
+                    { val: avgTotal, color: '#34d399', offset: -1.0 },
+                    { val: avgPeak, color: '#fbbf24', offset: 0.0 },
+                    { val: maxVal, color: '#c084fc', offset: 1.0 }
+                ];
 
-                PACK_ORDER.forEach((pt, i) => {
-                    const val = s.data[i];
-                    if (val === 0) return;
-                    const x = getX(i);
-                    const y = getY(val);
-                    const color = getRqRarityColor(val);
+                bars.forEach(bar => {
+                    const barHeight = (Math.min(100, Math.max(0, bar.val)) / maxRqLimit) * plotHeight;
+                    const x = clusterCenter + bar.offset * barWidth - (barWidth / 2);
+                    const y = padding.top + plotHeight - barHeight;
 
-                    ctx.beginPath();
-                    ctx.arc(x, y, 3.5, 0, Math.PI * 2);
-                    ctx.fillStyle = color;
-                    ctx.fill();
-                    ctx.lineWidth = 1.5;
-                    ctx.strokeStyle = '#0f172a';
-                    ctx.stroke();
+                    ctx.fillStyle = bar.color;
+                    ctx.fillRect(x, y, barWidth, barHeight);
                 });
             });
 
             if (xaxisContainer) {
-                xaxisContainer.innerHTML = PACK_ORDER.map(pt => `
+                xaxisContainer.style.gridTemplateColumns = `repeat(${activePacks.length}, minmax(0, 1fr))`;
+                xaxisContainer.innerHTML = activePacks.map(pt => `
                     <div class="text-center text-[9px] font-mono text-slate-400 break-words leading-tight px-0.5" title="${pt}">
                         ${pt}
                     </div>
