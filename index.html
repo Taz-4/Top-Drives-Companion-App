@@ -466,6 +466,27 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Filtered Top 10 Most Packed Cards Widget -->
+            <div class="bg-slate-900 border border-slate-700 p-5 rounded-lg space-y-3">
+                <h3 class="text-sm font-bold text-slate-200 uppercase font-mono tracking-wider">Top 10 Most Packed Cards (Filtered Criteria)</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs text-slate-300">
+                        <thead class="bg-slate-800 text-slate-400 uppercase font-mono select-none">
+                            <tr>
+                                <th class="py-2 px-2.5 w-10 text-center">Rank</th>
+                                <th class="py-2 px-2.5">Car Name</th>
+                                <th class="py-2 px-2.5 text-right w-16">RQ</th>
+                                <th class="py-2 px-2.5 w-24">Rarity</th>
+                                <th class="py-2 px-2.5 text-right w-16">Pulls</th>
+                            </tr>
+                        </thead>
+                        <tbody id="filtered-top-cards-table-body" class="divide-y divide-slate-800">
+                            <tr><td colspan="5" class="p-4 text-center text-slate-500">Select parameters...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -2197,6 +2218,7 @@
             const tbody = document.getElementById('filtered-table-body');
             if (filteredPulls.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-500">No pulls found matching selected filters</td></tr>';
+                document.getElementById('filtered-top-cards-table-body').innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-500">No data found</td></tr>';
                 return;
             }
 
@@ -2221,6 +2243,50 @@
                 `;
             });
             tbody.innerHTML = html;
+
+            // Populate Filtered Top 10 Most Packed Cards Table
+            const carCountsMap = {};
+            filteredPulls.forEach(p => {
+                const rawName = (p.car_name || 'Unknown').trim();
+                const normalizedName = rawName.replace(/\s*\([^)]*\)/g, '').trim().toLowerCase();
+                const displayName = rawName.replace(/\s*\([^)]*\)/g, '').trim();
+
+                if (!carCountsMap[normalizedName]) {
+                    carCountsMap[normalizedName] = {
+                        name: displayName,
+                        count: 0,
+                        maxRq: p.car_rq || 0,
+                        rarity: p.car_rarity || 'Common'
+                    };
+                }
+                carCountsMap[normalizedName].count++;
+                if ((p.car_rq || 0) > carCountsMap[normalizedName].maxRq) {
+                    carCountsMap[normalizedName].maxRq = p.car_rq || 0;
+                    carCountsMap[normalizedName].rarity = p.car_rarity || 'Common';
+                }
+            });
+
+            const sortedTopFilteredCars = Object.values(carCountsMap).sort((a, b) => b.count - a.count).slice(0, 10);
+            const filteredTopCardsTbody = document.getElementById('filtered-top-cards-table-body');
+            
+            if (sortedTopFilteredCars.length === 0) {
+                filteredTopCardsTbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-500">No data found</td></tr>';
+            } else {
+                filteredTopCardsTbody.innerHTML = sortedTopFilteredCars.map((car, idx) => {
+                    const cfg = getRarityClass(car.rarity);
+                    const rankMedals = ['🥇', '🥈', '🥉'];
+                    const rankDisplay = idx < 3 ? rankMedals[idx] : `#${idx + 1}`;
+                    return `
+                        <tr class="hover:bg-slate-800/50 transition">
+                            <td class="py-2 px-2.5 text-center font-mono font-bold text-slate-300">${rankDisplay}</td>
+                            <td class="py-2 px-2.5 font-medium text-slate-100 truncate max-w-[200px]" title="${car.name}">${car.name}</td>
+                            <td class="py-2 px-2.5 text-right font-mono ${cfg.text}">${car.maxRq}</td>
+                            <td class="py-2 px-2.5"><span class="px-1.5 py-0.5 rounded text-[9px] font-semibold ${cfg.badge}">${car.rarity}</span></td>
+                            <td class="py-2 px-2.5 text-right font-mono font-bold text-emerald-400">${car.count}</td>
+                        </tr>
+                    `;
+                }).join('');
+            }
         }
 
         function renderTableRows(rows) {
