@@ -1252,6 +1252,36 @@
             tbody.innerHTML = renderTableRows(data);
         }
 
+        async function fetchAllDatabaseCars() {
+            let allCars = [];
+            let pageSize = 1000;
+            let page = 0;
+            let fetchMore = true;
+
+            while (fetchMore) {
+                const start = page * pageSize;
+                const end = start + pageSize - 1;
+                const { data, error } = await db.from('cars').select('id, name, model_year, rq, rarity').range(start, end);
+
+                if (error) {
+                    console.warn('Error fetching cars table:', error.message);
+                    break;
+                }
+
+                if (!data || data.length === 0) {
+                    fetchMore = false;
+                } else {
+                    allCars = allCars.concat(data);
+                    if (data.length < pageSize) {
+                        fetchMore = false;
+                    }
+                }
+                page++;
+                if (page > 100) break;
+            }
+            return allCars;
+        }
+
         async function fetchAllDatabasePulls() {
             let allData = [];
             let pageSize = 1000;
@@ -1383,26 +1413,42 @@
             document.getElementById('stat-packs-subtitle').textContent = earliestDate ? `since ${formatDisplayDate(earliestDate)}` : 'Packs opened';
             document.getElementById('stat-this-week').textContent = packsThisWeek;
 
-            // Compact Top 10 Most Packed Cards
+            // Compact Top 10 Most Packed Cards (using latest RQ & rarity from cars table)
+            const allCars = await fetchAllDatabaseCars();
+            const carsById = {};
+            const carsByName = {};
+            allCars.forEach(c => {
+                if (c.id) carsById[String(c.id).trim()] = c;
+                const cleanName = (c.name || '').replace(/\s*\([^)]*\)/g, '').trim().toLowerCase();
+                if (cleanName && !carsByName[cleanName]) {
+                    carsByName[cleanName] = c;
+                }
+            });
+
             const carCountsMap = {};
             dataToAnalyze.forEach(p => {
                 const rawName = (p.car_name || 'Unknown').trim();
                 const normalizedName = rawName.replace(/\s*\([^)]*\)/g, '').trim().toLowerCase();
                 const displayName = rawName.replace(/\s*\([^)]*\)/g, '').trim();
+                const matchedCar = (p.car_id && carsById[String(p.car_id).trim()]) || carsByName[normalizedName] || null;
 
-                if (!carCountsMap[normalizedName]) {
-                    carCountsMap[normalizedName] = {
-                        name: displayName,
+                const groupKey = matchedCar ? String(matchedCar.id) : normalizedName;
+                const liveName = matchedCar ? matchedCar.name : displayName;
+                const liveRq = matchedCar && matchedCar.rq !== null && matchedCar.rq !== undefined ? matchedCar.rq : (p.car_rq || 0);
+                const liveRarity = matchedCar && matchedCar.rarity ? matchedCar.rarity : (p.car_rarity || 'Common');
+
+                if (!carCountsMap[groupKey]) {
+                    carCountsMap[groupKey] = {
+                        name: liveName,
                         count: 0,
-                        maxRq: p.car_rq || 0,
-                        rarity: p.car_rarity || 'Common'
+                        currentRq: liveRq,
+                        rarity: liveRarity
                     };
                 }
-                carCountsMap[normalizedName].count++;
-                if ((p.car_rq || 0) > carCountsMap[normalizedName].maxRq) {
-                    carCountsMap[normalizedName].maxRq = p.car_rq || 0;
-                    carCountsMap[normalizedName].rarity = p.car_rarity || 'Common';
-                }
+                carCountsMap[groupKey].count++;
+                carCountsMap[groupKey].name = liveName;
+                carCountsMap[groupKey].currentRq = liveRq;
+                carCountsMap[groupKey].rarity = liveRarity;
             });
 
             const sortedTopCars = Object.values(carCountsMap).sort((a, b) => b.count - a.count).slice(0, 10);
@@ -1419,7 +1465,7 @@
                         <tr class="hover:bg-slate-800/50 transition">
                             <td class="py-2 px-2.5 text-center font-mono font-bold text-slate-300">${rankDisplay}</td>
                             <td class="py-2 px-2.5 font-medium text-slate-100 truncate max-w-[140px]" title="${car.name}">${car.name}</td>
-                            <td class="py-2 px-2.5 text-right font-mono ${cfg.text}">${car.maxRq}</td>
+                            <td class="py-2 px-2.5 text-right font-mono ${cfg.text}">${car.currentRq}</td>
                             <td class="py-2 px-2.5"><span class="px-1.5 py-0.5 rounded text-[9px] font-semibold ${cfg.badge}">${car.rarity}</span></td>
                             <td class="py-2 px-2.5 text-right font-mono font-bold text-emerald-400">${car.count}</td>
                         </tr>
